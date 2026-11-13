@@ -34,54 +34,61 @@
         </p>
       </section>
       <nav class="guide-contents" aria-label="On this page">
-        <a href="#install">01 / Install</a><a href="#embed">02 / Embed</a
+        <a href="#install">01 / CDN or npm</a><a href="#embed">02 / Embed</a
         ><a href="#buttons">03 / Add actions</a
         ><a href="#renderers">04 / Render results</a
         ><a href="#lifecycle">05 / Connect your host</a>
         <a href="#workspace">06 / Tabs and language</a>
       </nav>
-      <section class="guide-section" id="cdn">
-        <p class="eyebrow">NO BUILD STEP</p>
-        <h2>Start with a single HTML file</h2>
+      <section id="install" class="guide-section">
+        <p class="eyebrow">01 / INTEGRATE</p>
+        <h2>Choose how to load LDForge</h2>
         <p>
-          <a href="./wikidata-cats.html">Try the live Wikidata cat grid</a>,
-          then download its HTML or
-          <a
-            href="https://github.com/mightymax/ldforge/blob/main/examples/wikidata-cats.html"
-            >copy the source</a
-          >
-          into your own static site. No npm, framework, API key or Node server
-          is required. Serve the file over HTTP(S).
+          Use <a href="#cdn">CDN imports</a> for a single static HTML page, or
+          <a href="#npm">npm with a bundler</a> for an existing application.
+          Both approaches use the same editor and plugin APIs.
         </p>
-        <p>
-          Three version-pinned esm.sh imports provide the HTTP executor, editor
-          and cards renderer. Load the editor stylesheet separately:
-        </p>
-        <pre><code>import { createHttpExecutor } from 'https://esm.sh/@ldforge/core@0.1.2?standalone';
+        <div id="cdn">
+          <h3>CDN: start with a single HTML file</h3>
+          <p>
+            <a href="./wikidata-cats.html">Try the live Wikidata cat grid</a>,
+            then download its HTML or
+            <a
+              href="https://github.com/mightymax/ldforge/blob/main/examples/wikidata-cats.html"
+              >copy the source</a
+            >
+            into your own static site. No npm, framework, API key or Node server
+            is required. Serve the file over HTTP(S).
+          </p>
+          <p>
+            Three version-pinned esm.sh imports provide the HTTP executor,
+            editor and cards renderer. Load the editor stylesheet separately:
+          </p>
+          <pre><code>import { createHttpExecutor } from 'https://esm.sh/@ldforge/core@0.1.2?standalone';
 import { createEditor } from 'https://esm.sh/@ldforge/editor@0.1.2?standalone';
 import { createCardsRenderer } from 'https://esm.sh/@ldforge/renderers@0.1.2?standalone';</code></pre>
-        <pre><code>&lt;link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@ldforge/editor@0.1.2/dist/styles.css" /&gt;</code></pre>
-        <p>
-          Use <code>?standalone</code> to bundle the editor’s dependencies into
-          one module: no import map is needed. Keep all LDForge URLs on the same
-          version. CSS is loaded separately from jsDelivr. The example connects
-          to <code>https://query.wikidata.org/sparql</code> using GET and calls
-          <code>editor.run()</code> once on load. Remove that call to wait for a
-          click on Run query. Internet access is required.
-        </p>
-        <p>
-          The query selects twelve domestic cats with images. Its
-          <code># view=cards</code> header selects the card grid;
-          <code>card_title</code>, <code>card_text</code>,
-          <code>card_image</code>, <code>card_button</code> and
-          <code>card_button_url</code> map the result columns to each card.
-          Links to Wikidata let visitors find the original images and licenses.
-          The public endpoint may be busy; Run query retries the request.
-        </p>
-      </section>
-      <section id="install" class="guide-section">
-        <p class="eyebrow">01 / INSTALL</p>
-        <h2>Install the npm packages</h2>
+          <pre><code>&lt;link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@ldforge/editor@0.1.2/dist/styles.css" /&gt;</code></pre>
+          <p>
+            Use <code>?standalone</code> to bundle the editor’s dependencies
+            into one module: no import map is needed. Keep all LDForge URLs on
+            the same version. CSS is loaded separately from jsDelivr. The
+            example connects to
+            <code>https://query.wikidata.org/sparql</code> using GET and calls
+            <code>editor.run()</code> once on load. Remove that call to wait for
+            a click on Run query. Internet access is required.
+          </p>
+          <p>
+            The query selects twelve domestic cats with images. Its
+            <code># view=cards</code> header selects the card grid;
+            <code>card_title</code>, <code>card_text</code>,
+            <code>card_image</code>, <code>card_button</code> and
+            <code>card_button_url</code> map the result columns to each card.
+            Links to Wikidata let visitors find the original images and
+            licenses. The public endpoint may be busy; Run query retries the
+            request.
+          </p>
+        </div>
+        <h3 id="npm">npm: install in your application</h3>
         <p>
           LDForge packages provide ESM JavaScript and TypeScript declarations.
           Install them in your own application:

@@ -15,10 +15,6 @@ export function mountSiteChrome(): void {
     image.className = 'wordmark-symbol';
     wordmark.prepend(image);
   }
-  const cdnExample = document.createElement('a');
-  cdnExample.href = './wikidata-cats.html';
-  cdnExample.textContent = 'CDN example';
-  navigation.append(cdnExample);
   const repository = document.createElement('a');
   repository.href = 'https://github.com/mightymax/ldforge';
   repository.className = 'repository-link';
