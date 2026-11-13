@@ -54,19 +54,18 @@
           is required. Serve the file over HTTP(S).
         </p>
         <p>
-          Three version-pinned jsDelivr imports provide the HTTP executor,
-          editor and cards renderer. Load the editor stylesheet separately:
+          Three version-pinned esm.sh imports provide the HTTP executor, editor
+          and cards renderer. Load the editor stylesheet separately:
         </p>
-        <pre><code>import { createHttpExecutor } from 'https://cdn.jsdelivr.net/npm/@ldforge/core@0.1.1/+esm';
-import { createEditor } from 'https://cdn.jsdelivr.net/npm/@ldforge/editor@0.1.1/+esm';
-import { createCardsRenderer } from 'https://cdn.jsdelivr.net/npm/@ldforge/renderers@0.1.1/+esm';</code></pre>
+        <pre><code>import { createHttpExecutor } from 'https://esm.sh/@ldforge/core@0.1.1?standalone';
+import { createEditor } from 'https://esm.sh/@ldforge/editor@0.1.1?standalone';
+import { createCardsRenderer } from 'https://esm.sh/@ldforge/renderers@0.1.1?standalone';</code></pre>
         <pre><code>&lt;link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@ldforge/editor@0.1.1/dist/styles.css" /&gt;</code></pre>
         <p>
-          Use <code>+esm</code> for browser-ready modules, and keep all LDForge
-          URLs on the same version. Copy the example’s import map too: it keeps
-          CodeMirror and Lezer dependencies shared across CDN modules. The
-          example connects to
-          <code>https://query.wikidata.org/sparql</code> using GET and calls
+          Use <code>?standalone</code> to bundle the editor’s dependencies into
+          one module: no import map is needed. Keep all LDForge URLs on the same
+          version. CSS is loaded separately from jsDelivr. The example connects
+          to <code>https://query.wikidata.org/sparql</code> using GET and calls
           <code>editor.run()</code> once on load. Remove that call to wait for a
           click on Run query. Internet access is required.
         </p>

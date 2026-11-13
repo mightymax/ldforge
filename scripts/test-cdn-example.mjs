@@ -51,10 +51,7 @@ try {
     await page.locator('.ldforge-status').innerText(),
     /^12 results in /,
   );
-  assert.equal(
-    await page.getByText('Loading LDForge from jsDelivr…').count(),
-    0,
-  );
+  assert.equal(await page.getByText('Loading LDForge…').count(), 0);
   assert.deepEqual(errors, []);
   await mkdir(new URL('../.local/', import.meta.url), { recursive: true });
   await page.locator('footer').scrollIntoViewIfNeeded();

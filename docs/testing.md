@@ -29,8 +29,8 @@ Deployment tooling is optional for library contributors. With Helm and Docker in
 
 Run `npm run test:cdn` after installing Playwright Chromium. This starts a tiny
 local static server for `examples/wikidata-cats.html`, loads the actual published
-packages from jsDelivr, executes the live Wikidata query, and checks twelve titled
+packages from esm.sh, executes the live Wikidata query, and checks twelve titled
 cards, image loading, browser errors and mobile overflow. The desktop screenshot
 is saved to `.local/cdn-example.png`. Run it when updating CDN versions or the
-example's import map. It is intentionally separate from CI: availability of
-jsDelivr, Wikidata and Wikimedia Commons should not determine release tests.
+example's CDN configuration. It is intentionally separate from CI: availability of
+esm.sh, jsDelivr, Wikidata and Wikimedia Commons should not determine release tests.
