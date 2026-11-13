@@ -13,10 +13,10 @@
     "@codemirror/language": "^6.13.1",
     "@codemirror/state": "^6.7.6",
     "@codemirror/view": "^6.43.15",
-    "@ldforge/core": "^0.1.1",
-    "@ldforge/editor": "^0.1.1",
-    "@ldforge/renderers": "^0.1.1",
+    "@ldforge/core": "^0.1.2",
+    "@ldforge/editor": "^0.1.2",
+    "@ldforge/renderers": "^0.1.2",
     "@lezer/highlight": "^1.2.5",
-    "@ldforge/charts": "^0.1.1"
+    "@ldforge/charts": "^0.1.2"
   }
 }

@@ -1,6 +1,6 @@
 {
   "name": "@ldforge/renderers",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "LDForge renderers: composable SPARQL tooling",
   "type": "module",
   "license": "EUPL-1.2",
@@ -25,7 +25,7 @@
     "access": "public"
   },
   "dependencies": {
-    "@ldforge/core": "^0.1.1"
+    "@ldforge/core": "^0.1.2"
   },
   "repository": {
     "type": "git",
