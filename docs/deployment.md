@@ -212,3 +212,24 @@ Manual website builds do not run `npm version`, publish npm packages, or create 
 Promotion preserves operator fields such as analytics, hostname, TLS and pull secrets. It changes only image metadata and, when configured, the matching chart revision. It refuses accidental deployment of an older/divergent commit and never force-pushes GitOps. For an intentional rollback, dispatch the website workflow with the historical `source_ref` and `allow_rollback=true`. Argo CD must have automatic sync enabled on the actual site Application for automatic rollout; the public bootstrap template intentionally leaves that policy to its operator.
 
 If npm publication succeeds but website deployment fails, the npm release remains published. Correct the deployment failure and rerun the website workflow; do not bump npm solely to retry the website.
+
+## Social sharing previews
+
+Every public HTML entry point includes static Open Graph and large-image card
+metadata. Crawlers can read it without running the application. Titles,
+descriptions and canonical URLs belong to each page; API query-string routes
+share the API page preview. Metadata uses the production origin `https://ldforge.nl`;
+change these absolute URLs when hosting a fork on another domain.
+
+The shared PNG is `examples/assets/ldforge-social-v1.png` (1200 × 630), served at
+`/assets/ldforge-social-v1.png`. Its editable vector source is
+`apps/demo/assets/social-card.svg`. After editing, run
+`node scripts/render-social-image.mjs` with Playwright Chromium installed and
+commit the generated PNG. The site build copies the image unchanged. When
+replacing the published artwork, use a new versioned filename and update the
+HTML metadata: `/assets/` has immutable caching.
+
+After deployment, use [LinkedIn Post Inspector](https://www.linkedin.com/post-inspector/)
+to inspect the shared URL and refresh LinkedIn's cached preview. It is a separate
+check from our crawler test; a passing test does not mean LinkedIn has refreshed
+its cache. Never place previews behind authentication or client-side rendering.

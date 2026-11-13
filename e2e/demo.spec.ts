@@ -925,3 +925,56 @@ test('uses an accessible icon-only Run action and hides Cancel on mobile', async
   await expect(run.locator('.ldforge-button-label')).toBeVisible();
   await expect(cancel).toBeVisible();
 });
+
+test('serves complete social sharing metadata without JavaScript', async ({
+  browser,
+  request,
+}) => {
+  const context = await browser.newContext({ javaScriptEnabled: false });
+  const page = await context.newPage();
+  await page.route('https://cdn.jsdelivr.net/**', (route) =>
+    route.fulfill({ contentType: 'text/css', body: '' }),
+  );
+  try {
+    for (const path of [
+      '/',
+      '/guide.html',
+      '/api.html',
+      '/plugins.html',
+      '/wikidata-cats.html',
+    ]) {
+      await page.goto(`http://127.0.0.1:4173${path}`, {
+        waitUntil: 'domcontentloaded',
+      });
+      await expect(page.locator('meta[property="og:url"]')).toHaveAttribute(
+        'content',
+        `https://ldforge.nl${path}`,
+      );
+      await expect(page.locator('meta[property="og:type"]')).toHaveAttribute(
+        'content',
+        'website',
+      );
+      for (const property of ['og:title', 'og:description', 'og:image:alt'])
+        await expect(
+          page.locator(`meta[property="${property}"]`),
+        ).toHaveAttribute('content', /\S+/);
+      await expect(page.locator('meta[property="og:image"]')).toHaveAttribute(
+        'content',
+        'https://ldforge.nl/assets/ldforge-social-v1.png',
+      );
+      await expect(page.locator('meta[name="twitter:card"]')).toHaveAttribute(
+        'content',
+        'summary_large_image',
+      );
+    }
+    const image = await request.get('/assets/ldforge-social-v1.png');
+    expect(image.status()).toBe(200);
+    expect(image.headers()['content-type']).toContain('image/png');
+    const bytes = await image.body();
+    expect(bytes.readUInt32BE(16)).toBe(1200);
+    expect(bytes.readUInt32BE(20)).toBe(630);
+    expect(bytes.length).toBeLessThan(5 * 1024 * 1024);
+  } finally {
+    await context.close();
+  }
+});
