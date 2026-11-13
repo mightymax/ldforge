@@ -1,0 +1,26 @@
+# Copy to your private GitOps repository and replace all installation placeholders.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: ldforge-demo
+  namespace: argocd
+spec:
+  project: default
+  sources:
+    - repoURL: https://github.com/mightymax/ldforge.git
+      targetRevision: REPLACE_WITH_LDFORGE_COMMIT
+      path: deploy/helm/ldforge-demo
+      helm:
+        releaseName: ldforge-demo
+        valueFiles:
+          - $values/environments/ldforge-demo/values.yaml
+    - repoURL: https://git.example.org/your-org/private-gitops.git
+      targetRevision: main
+      ref: values
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: ldforge-demo
+  # Start with manual sync; opt into automated sync in your own GitOps policy.
+  syncPolicy:
+    syncOptions:
+      - CreateNamespace=true

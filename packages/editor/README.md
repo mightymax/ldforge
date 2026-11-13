@@ -39,6 +39,7 @@ other.addPrefix('ex', 'https://example.org/');
 The full object-based reference is included in the npm package and rendered by the demo site:
 
 - [Configuration and every control default](docs/api/configuration.md)
+- [Toolbar, reusable buttons and dropdown groups](docs/api/toolbar.md)
 - [ForgeEditor lifecycle and methods](docs/api/editor.md)
 - [TabCollection and serializable workspaces](docs/api/tabs.md)
 - [QueryTabHandle properties and functions](docs/api/tab.md)

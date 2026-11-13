@@ -1,4 +1,13 @@
+import type { Page } from '@playwright/test';
 import { expect, test } from '@playwright/test';
+
+async function chooseExample(page: Page, name: string): Promise<void> {
+  const group = /^(SELECT|CONSTRUCT|ASK) /.test(name)
+    ? 'Query Examples'
+    : 'Plugin Examples';
+  await page.getByRole('button', { name: group, exact: true }).click();
+  await page.getByRole('menuitem', { name, exact: true }).click();
+}
 
 test('runs fixture queries, switches result plugins and uses example button plugins', async ({
   page,
@@ -14,17 +23,13 @@ test('runs fixture queries, switches result plugins and uses example button plug
   await expect(page.locator('.ldforge-status')).toHaveText(
     /^3 results in \d+ ms$/,
   );
-  await page
-    .getByRole('combobox', { name: 'Result view' })
-    .selectOption('json');
+  await page.getByRole('tab', { name: 'JSON', exact: true }).click();
   await expect(page.locator('.ldforge-results pre')).toContainText('bindings');
-  await page.getByRole('button', { name: 'ASK example' }).click();
+  await chooseExample(page, 'ASK example');
   await page
     .getByRole('textbox', { name: 'SPARQL query' })
     .press('ControlOrMeta+Enter');
-  await page
-    .getByRole('combobox', { name: 'Result view' })
-    .selectOption('boolean');
+  await page.getByRole('tab', { name: 'Boolean', exact: true }).click();
   await expect(page.locator('.ldforge-results')).toHaveText('True');
   expect(errors).toEqual([]);
 });
@@ -514,4 +519,364 @@ test('inserts missing known prefixes during typing and persists the updated quer
   await page.reload();
   await expect(query).toContainText('PREFIX schema: <https://schema.org/>');
   await expect(query).toContainText('schema:description ?description');
+});
+
+test('uses accessible result tabs and downloads complete CSV independently of the active renderer', async ({
+  page,
+}) => {
+  await page.goto('/');
+  await expect(
+    page.getByRole('button', { name: 'Download CSV', exact: true }),
+  ).toBeHidden();
+  await expect(
+    page.getByRole('button', { name: 'Run query', exact: true }).locator('svg'),
+  ).toHaveCount(1);
+  await expect(
+    page.getByRole('button', { name: 'Cancel', exact: true }).locator('svg'),
+  ).toHaveCount(1);
+  await page.getByRole('button', { name: 'Run query', exact: true }).click();
+  const tabs = page.getByRole('tablist', { name: 'Result view', exact: true });
+  await expect(tabs.getByRole('tab')).toHaveCount(2);
+  await expect(
+    tabs.getByRole('tab', { name: 'Table', exact: true }).locator('svg'),
+  ).toHaveCount(1);
+  await tabs.getByRole('tab', { name: 'Table', exact: true }).focus();
+  await page.keyboard.press('ArrowRight');
+  await expect(
+    tabs.getByRole('tab', { name: 'JSON', exact: true }),
+  ).toBeFocused();
+  await expect(
+    tabs.getByRole('tab', { name: 'JSON', exact: true }),
+  ).toHaveAttribute('aria-selected', 'true');
+  const downloadEvent = page.waitForEvent('download');
+  await page.getByRole('button', { name: 'Download CSV', exact: true }).click();
+  const download = await downloadEvent;
+  expect(download.suggestedFilename()).toBe('results.csv');
+  const stream = await download.createReadStream();
+  if (!stream) throw new Error('Missing CSV download');
+  const chunks: Buffer[] = [];
+  for await (const chunk of stream) chunks.push(Buffer.from(chunk));
+  const csv = Buffer.concat(chunks).toString('utf8');
+  expect(csv).toContain('Amsterdam');
+  expect(csv).toContain('Rotterdam');
+  expect(csv.trim().split('\r\n')).toHaveLength(4);
+  await chooseExample(page, 'ASK example');
+  await page.getByRole('button', { name: 'Run query', exact: true }).click();
+  await expect(
+    tabs.getByRole('tab', { name: 'Table', exact: true }),
+  ).toHaveCount(0);
+  await expect(
+    tabs.getByRole('tab', { name: 'Boolean', exact: true }),
+  ).toBeVisible();
+});
+
+test('shows readable read-only TypeScript examples, plugin binding guides and shared site links', async ({
+  page,
+}) => {
+  await page.goto('/api.html');
+  const example = page
+    .locator('[aria-label="TypeScript code example"]')
+    .first();
+  await expect(example).toBeVisible();
+  await expect(example).toHaveAttribute('contenteditable', 'false');
+  const before = await example.innerText();
+  await example.focus();
+  await page.keyboard.type('THIS_MUST_NOT_EDIT');
+  expect(await example.innerText()).toBe(before);
+  const contrast = await example.evaluate((element) => {
+    const token = element.querySelector('span');
+    if (!token) throw new Error('No highlighted TypeScript tokens');
+    const rgb = getComputedStyle(token).color.match(/\d+/g)?.map(Number);
+    if (!rgb || rgb.length < 3) throw new Error('No token color');
+    const linear = rgb.map((channel) => {
+      const value = channel / 255;
+      return value <= 0.04045
+        ? value / 12.92
+        : ((value + 0.055) / 1.055) ** 2.4;
+    });
+    const luminance =
+      0.2126 * (linear[0] ?? 0) +
+      0.7152 * (linear[1] ?? 0) +
+      0.0722 * (linear[2] ?? 0);
+    return 1.05 / (luminance + 0.05); // The code editor uses a white background.
+  });
+  expect(contrast).toBeGreaterThanOrEqual(4.5);
+  await expect(
+    page.getByRole('link', { name: 'LDForge on GitHub' }),
+  ).toHaveAttribute('href', 'https://github.com/mightymax/ldforge');
+  const imprint = page.locator('.site-imprint');
+  await expect(imprint).toContainText('©');
+  await expect(
+    imprint.getByRole('link', { name: 'LDMax', exact: true }),
+  ).toHaveAttribute('href', 'https://ldmax.nl/');
+  await page
+    .getByRole('navigation', { name: 'Main navigation' })
+    .getByRole('link', { name: 'Plugins', exact: true })
+    .click();
+  await expect(
+    page.getByRole('heading', { name: 'Plugins', exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole('heading', { name: 'Table', exact: true }),
+  ).toBeVisible();
+  await expect(page.locator('#plugin-content')).toContainText(
+    'Binding contract:',
+  );
+  await page.setViewportSize({ width: 390, height: 844 });
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= window.innerWidth,
+    ),
+  ).toBe(true);
+  await page
+    .getByRole('navigation', { name: 'Main navigation' })
+    .getByRole('link', { name: 'Demo', exact: true })
+    .click();
+  await page.getByRole('button', { name: 'Run query', exact: true }).click();
+  await expect(
+    page.getByRole('link', { name: 'Documentation for Table', exact: true }),
+  ).toHaveAttribute('href', /plugins\.html#table$/);
+  await expect(page.locator('.ldforge-result-toolbar')).toBeVisible();
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= window.innerWidth,
+    ),
+  ).toBe(true);
+});
+
+test('renders Cards from query headers, scopes CSS and preserves manual view switching', async ({
+  page,
+}) => {
+  await page.goto('/');
+  await chooseExample(page, 'Cards example');
+  await page.getByRole('button', { name: 'Run query', exact: true }).click();
+  const tabs = page.getByRole('tablist', { name: 'Result view', exact: true });
+  await expect(
+    tabs.getByRole('tab', { name: 'Cards', exact: true }),
+  ).toHaveAttribute('aria-selected', 'true');
+  const cards = page.locator('.ldforge-card');
+  await expect(cards).toHaveCount(3);
+  await expect(cards.first()).toContainText('Linked data');
+  await expect(cards.first().locator('img')).toHaveAttribute('loading', 'lazy');
+  await expect(cards.first()).toHaveCSS('max-width', '320px');
+  await expect(
+    cards.first().getByRole('link', { name: 'Explore LDMax', exact: true }),
+  ).toHaveAttribute('href', 'https://ldmax.nl/');
+  await expect(
+    page.getByRole('link', { name: 'Documentation for Cards', exact: true }),
+  ).toHaveAttribute('href', /plugins\.html#cards$/);
+  await tabs.getByRole('tab', { name: 'Table', exact: true }).click();
+  await expect(page.getByRole('table')).toContainText('card_title');
+  await tabs.getByRole('tab', { name: 'Cards', exact: true }).click();
+  await expect(cards).toHaveCount(3);
+  const query = page.getByRole('textbox', {
+    name: 'SPARQL query',
+    exact: true,
+  });
+  await query.fill(
+    '# view=cards\n# css=max-width=100px; color: red;\nSELECT ?card_title WHERE { BIND("Test" AS ?card_title) }',
+  );
+  await page.getByRole('button', { name: 'Run query', exact: true }).click();
+  await expect(cards.first()).toHaveCSS('max-width', '100px');
+  await expect(page.locator('.ldforge-toolbar')).not.toHaveCSS(
+    'color',
+    'rgb(255, 0, 0)',
+  );
+  await page.setViewportSize({ width: 390, height: 844 });
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= window.innerWidth,
+    ),
+  ).toBe(true);
+  await page
+    .getByRole('navigation', { name: 'Main navigation' })
+    .getByRole('link', { name: 'Plugins', exact: true })
+    .click();
+  await expect(
+    page.getByRole('heading', { name: 'Cards', exact: true }),
+  ).toBeVisible();
+  await expect(page.locator('#plugin-content')).toContainText(
+    'card_button_url',
+  );
+});
+
+test('loads the external chart library only on activation and renders real charts without repeat downloads', async ({
+  page,
+}) => {
+  const { readFile } = await import('node:fs/promises');
+  const library = await readFile(
+    new URL('../node_modules/chart.js/dist/chart.umd.js', import.meta.url),
+    'utf8',
+  );
+  let requests = 0;
+  await page.route(
+    'https://cdn.jsdelivr.net/npm/chart.js@4.6.1/auto/+esm',
+    async (route) => {
+      requests++;
+      await route.fulfill({
+        contentType: 'text/javascript',
+        headers: { 'Access-Control-Allow-Origin': '*' },
+        body: `const module = { exports: {} }; const exports = module.exports;\n${library}\nexport const Chart = module.exports; export default Chart;`,
+      });
+    },
+  );
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Run query', exact: true }).click();
+  expect(requests).toBe(0);
+  await chooseExample(page, 'Charts example');
+  const query = page.getByRole('textbox', {
+    name: 'SPARQL query',
+    exact: true,
+  });
+  await query.fill(
+    '# view=table; chart=bar; chart-title=Example values\nSELECT ?chart_label ?chart_value WHERE { VALUES (?chart_label ?chart_value) { ("A" 1) } }',
+  );
+  await page.getByRole('button', { name: 'Run query', exact: true }).click();
+  await expect(page.getByRole('table')).toBeVisible();
+  expect(requests).toBe(0);
+  const tabs = page.getByRole('tablist', { name: 'Result view', exact: true });
+  await tabs.getByRole('tab', { name: 'Charts', exact: true }).click();
+  const chart = page.locator('.ldforge-chart');
+  await expect(chart).toHaveAttribute('aria-busy', 'false');
+  await expect(chart.locator('canvas')).toBeVisible();
+  await expect(
+    chart.getByRole('heading', { name: 'Example values', exact: true }),
+  ).toBeVisible();
+  expect(requests).toBe(1);
+  expect(
+    await chart.locator('canvas').evaluate((canvas: HTMLCanvasElement) => {
+      const pixels = canvas
+        .getContext('2d')
+        ?.getImageData(0, 0, canvas.width, canvas.height).data;
+      return pixels?.some((value, index) => index % 4 === 3 && value > 0);
+    }),
+  ).toBe(true);
+  await chart.getByText('Chart data', { exact: true }).click();
+  await expect(chart.getByRole('table')).toContainText('Amsterdam');
+  await tabs.getByRole('tab', { name: 'Table', exact: true }).click();
+  await tabs.getByRole('tab', { name: 'Charts', exact: true }).click();
+  await expect(chart).toHaveAttribute('aria-busy', 'false');
+  expect(requests).toBe(1);
+  await query.fill(
+    '# view=charts; chart=doughnut\nSELECT ?chart_label ?chart_value WHERE { VALUES (?chart_label ?chart_value) { ("A" 1) } }',
+  );
+  await page.getByRole('button', { name: 'Run query', exact: true }).click();
+  await expect(chart).toHaveAttribute('aria-busy', 'false');
+  await expect(chart.locator('canvas')).toBeVisible();
+  expect(requests).toBe(1);
+  await page.setViewportSize({ width: 390, height: 844 });
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= innerWidth,
+    ),
+  ).toBe(true);
+});
+
+test('executes CONSTRUCT over HTTP with RDF negotiation and displays parsed triples', async ({
+  page,
+}) => {
+  await page.route('https://construct.example/sparql', async (route) => {
+    expect(route.request().headers().accept).toContain('application/n-triples');
+    expect(route.request().postData()).toContain('construct');
+    await route.fulfill({
+      contentType: 'text/turtle',
+      headers: { 'Access-Control-Allow-Origin': '*' },
+      body: '@prefix ex: <https://example.org/> . ex:s ex:p "Hello"@en; ex:number 42 .',
+    });
+  });
+  await page.goto('/');
+  await page.getByRole('button', { name: 'IDE settings', exact: true }).click();
+  await page
+    .getByLabel('SPARQL endpoint', { exact: true })
+    .fill('https://construct.example/sparql');
+  await page.getByRole('button', { name: 'Apply endpoint' }).click();
+  await page
+    .getByRole('textbox', { name: 'SPARQL query', exact: true })
+    .fill('construct {?s ?p ?o} where {?s ?p ?o} limit 10');
+  await page.getByRole('button', { name: 'Run query', exact: true }).click();
+  await expect(page.getByRole('table')).toContainText('subject');
+  await expect(page.getByRole('table')).toContainText('Hello');
+  await expect(page.getByRole('table')).toContainText('42');
+  await expect(page.locator('.ldforge-status')).toHaveText(
+    /^2 triples in \d+ ms$/,
+  );
+  await page.getByRole('tab', { name: 'JSON', exact: true }).click();
+  await expect(page.locator('.ldforge-results pre')).toContainText(
+    '"kind": "graph"',
+  );
+});
+
+test('uses configured toolbar dropdowns with keyboard navigation, dismissal and mobile positioning', async ({
+  page,
+}) => {
+  await page.goto('/');
+  const trigger = page.getByRole('button', {
+    name: 'Query Examples',
+    exact: true,
+  });
+  await expect(trigger).toHaveAttribute('aria-haspopup', 'menu');
+  await expect(trigger).toHaveAttribute('aria-expanded', 'false');
+  await expect(
+    page.getByRole('button', { name: 'Run query', exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole('button', { name: 'SELECT example', exact: true }),
+  ).toHaveCount(0);
+  await trigger.focus();
+  await page.keyboard.press('ArrowDown');
+  const menu = page.getByRole('menu', { name: 'Query Examples', exact: true });
+  await expect(menu.getByRole('menuitem')).toHaveText([
+    'SELECT example',
+    'CONSTRUCT example',
+    'ASK example',
+  ]);
+  await expect(
+    menu.getByRole('menuitem', { name: 'SELECT example', exact: true }),
+  ).toBeFocused();
+  await page.keyboard.press('ArrowDown');
+  await expect(
+    menu.getByRole('menuitem', { name: 'CONSTRUCT example', exact: true }),
+  ).toBeFocused();
+  await page.keyboard.press('Enter');
+  await expect(trigger).toHaveAttribute('aria-expanded', 'false');
+  await expect(
+    page.getByRole('textbox', { name: 'SPARQL query', exact: true }),
+  ).toContainText('CONSTRUCT');
+  await page.getByRole('button', { name: 'Run query', exact: true }).click();
+  await expect(page.locator('.ldforge-status')).toHaveText(
+    /^3 triples in \d+ ms$/,
+  );
+  await trigger.click();
+  await page.keyboard.press('End');
+  await expect(
+    menu.getByRole('menuitem', { name: 'ASK example', exact: true }),
+  ).toBeFocused();
+  await page.keyboard.press('Escape');
+  await expect(trigger).toBeFocused();
+  await trigger.click();
+  await page.getByRole('heading', { level: 1 }).click();
+  await expect(trigger).toHaveAttribute('aria-expanded', 'false');
+  await page.setViewportSize({ width: 390, height: 844 });
+  await trigger.click();
+  const box = await menu.boundingBox();
+  expect(box?.x).toBeGreaterThanOrEqual(0);
+  expect((box?.x ?? 0) + (box?.width ?? 0)).toBeLessThanOrEqual(390);
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= innerWidth,
+    ),
+  ).toBe(true);
+  await page.keyboard.press('Escape');
+  await page.goto('/');
+  await expect(
+    page.getByRole('button', { name: 'Query Examples', exact: true }),
+  ).toBeVisible();
+  await page
+    .getByRole('button', { name: 'Plugin Examples', exact: true })
+    .click();
+  await expect(
+    page
+      .getByRole('menu', { name: 'Plugin Examples', exact: true })
+      .getByRole('menuitem'),
+  ).toHaveText(['Cards example', 'Charts example']);
 });

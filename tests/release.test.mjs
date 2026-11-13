@@ -271,7 +271,7 @@ test('packed artifacts retain package identities and reject tampered tarballs', 
   try {
     const destination = join(project.root, 'release-artifacts');
     const manifest = packRelease(project.root, destination);
-    assert.equal(manifest.packages.length, 4);
+    assert.equal(manifest.packages.length, packagePaths.length);
     assert.deepEqual(verifyArtifacts(project.root, destination), manifest);
     appendFileSync(join(destination, manifest.packages[0].file), 'tampered');
     assert.throws(

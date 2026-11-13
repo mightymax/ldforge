@@ -2,6 +2,9 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
+    <link rel="canonical" href="https://ldforge.nl/guide.html" />
+    <link rel="icon" type="image/svg+xml" href="./assets/favicon.svg" />
+    <meta name="theme-color" content="#075e55" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta
       name="description"
@@ -19,6 +22,7 @@
           <a href="./">Demo</a
           ><a href="./guide.html" aria-current="page">Integration guide</a
           ><a href="./api.html">API reference</a>
+          <a href="./plugins.html">Plugins</a>
         </nav>
       </header>
       <section class="intro">
@@ -282,10 +286,12 @@ const countRenderer: ResultRendererPlugin = {
           destruction.
         </p>
         <p>
-          The selector only offers supported views. Registration order
-          determines the initial view. JSON view displays LDForge's normalized
-          result model. For large results, limit your query or supply a
-          paginated or virtualized renderer.
+          The result tabs only offer supported views. Renderers can supply an
+          optional icon factory; CSV download exports the full result
+          independently of the selected tab. Registration order determines the
+          initial view. JSON view displays LDForge's normalized result model.
+          For large results, limit your query or supply a paginated or
+          virtualized renderer.
         </p>
       </section>
       <section id="lifecycle" class="guide-section">

@@ -10,3 +10,8 @@ mkdirSync(new URL('docs/', editor), { recursive: true });
 cpSync(new URL('../docs/api/', import.meta.url), new URL('docs/api/', editor), {
   recursive: true,
 });
+
+copyFileSync(
+  new URL('../docs/renderers.md', import.meta.url),
+  new URL('docs/renderers.md', editor),
+);

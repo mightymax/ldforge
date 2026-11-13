@@ -13,3 +13,6 @@ test-results/
 packages/editor/docs/
 
 release-artifacts/
+
+# Operator-specific deployment values and generated manifests.
+.local/

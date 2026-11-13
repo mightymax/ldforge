@@ -40,15 +40,14 @@ describe('editor integration', () => {
       ),
     );
     expect(host.querySelector('.ldforge-results')?.textContent).toBe('True');
-    const selector = host.querySelector<HTMLSelectElement>(
-      'select[aria-label="Result view"]',
-    );
-    if (!selector) throw new Error('Selector missing');
-    selector.value = 'json';
-    selector.dispatchEvent(new Event('change'));
+    host.querySelector<HTMLButtonElement>('[data-renderer-id="json"]')?.click();
     expect(host.querySelector('pre')?.textContent).toContain('"boolean"');
     await editor.run();
-    expect(selector.value).toBe('json');
+    expect(
+      host
+        .querySelector('[data-renderer-id="json"]')
+        ?.getAttribute('aria-selected'),
+    ).toBe('true');
   });
   it('allows custom buttons and displays rejected actions', async () => {
     const { host, editor } = mount({
@@ -122,15 +121,11 @@ describe('editor integration', () => {
       ],
     });
     await editor.run();
-    const selector = host.querySelector<HTMLSelectElement>(
-      'select[aria-label="Result view"]',
-    );
-    if (!selector) throw new Error('Selector missing');
-    selector.value = 'json';
-    selector.dispatchEvent(new Event('change'));
+    host.querySelector<HTMLButtonElement>('[data-renderer-id="json"]')?.click();
     expect(cleanup).toHaveBeenCalledTimes(1);
-    selector.value = 'custom';
-    selector.dispatchEvent(new Event('change'));
+    host
+      .querySelector<HTMLButtonElement>('[data-renderer-id="custom"]')
+      ?.click();
     editor.destroy();
     editor.destroy();
     expect(cleanup).toHaveBeenCalledTimes(2);
@@ -308,4 +303,205 @@ it('reuses one CodeMirror view when switching tabs and cancels pending queries',
   expect(onWorkspaceChange.mock.lastCall?.[0].tabs[1].query).toBe(
     'SELECT * {}',
   );
+});
+
+it('renders plugin icons, supports keyboard result tabs and retains accessible labels', async () => {
+  const { createSvgIcon } = await import('@ldforge/core');
+  const { host, editor } = mount({
+    executor,
+    query: 'ASK {}',
+    renderers: [
+      {
+        id: 'custom',
+        label: { en: 'Custom', nl: 'Eigen' },
+        icon: createSvgIcon(['M3 3h18v18H3z']),
+        supports: () => true,
+        render(container) {
+          container.textContent = 'Custom result';
+        },
+      },
+      createBooleanRenderer(),
+      createJsonRenderer(),
+    ],
+  });
+  expect(
+    host.querySelectorAll('.ldforge-core-actions button svg'),
+  ).toHaveLength(2);
+  expect(
+    host.querySelector('[aria-label="Download CSV"]')?.hasAttribute('hidden'),
+  ).toBe(true);
+  await editor.run();
+  const tab = host.querySelector<HTMLButtonElement>(
+    '[data-renderer-id="custom"]',
+  );
+  expect(tab?.querySelector('svg')?.getAttribute('aria-hidden')).toBe('true');
+  expect(tab?.textContent).toBe('Custom');
+  expect(
+    host.querySelector('.ldforge-results')?.getAttribute('aria-labelledby'),
+  ).toBe(tab?.id);
+  tab?.focus();
+  tab?.dispatchEvent(
+    new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }),
+  );
+  expect(
+    host
+      .querySelector('[data-renderer-id="boolean"]')
+      ?.getAttribute('aria-selected'),
+  ).toBe('true');
+  expect(document.activeElement?.textContent).toBe('Boolean');
+  document.activeElement?.dispatchEvent(
+    new KeyboardEvent('keydown', { key: 'End', bubbles: true }),
+  );
+  expect(document.activeElement?.textContent).toBe('JSON');
+  document.activeElement?.dispatchEvent(
+    new KeyboardEvent('keydown', { key: 'Home', bubbles: true }),
+  );
+  editor.setLocale('nl');
+  expect(host.querySelector('[data-renderer-id="custom"]')?.textContent).toBe(
+    'Eigen',
+  );
+  expect(
+    host.querySelector('[aria-label="CSV downloaden"]')?.hasAttribute('hidden'),
+  ).toBe(false);
+});
+
+it('hides CSV download when configured and clears result controls on a tab switch', async () => {
+  const hidden = mount({
+    executor,
+    query: 'ASK {}',
+    controls: { download: false },
+  });
+  await hidden.editor.run();
+  expect(
+    hidden.host
+      .querySelector('[aria-label="Download CSV"]')
+      ?.hasAttribute('hidden'),
+  ).toBe(true);
+  const { editor, host } = mount({
+    executor,
+    query: 'ASK {}',
+    renderers: [createBooleanRenderer()],
+  });
+  await editor.run();
+  expect(
+    host.querySelector('[aria-label="Download CSV"]')?.hasAttribute('hidden'),
+  ).toBe(false);
+  editor.getTabs().addTab({ query: 'ASK {}', name: 'Other' });
+  expect(
+    host.querySelector('[aria-label="Download CSV"]')?.hasAttribute('hidden'),
+  ).toBe(true);
+  expect(
+    host.querySelectorAll('.ldforge-result-tabs [role="tab"]'),
+  ).toHaveLength(0);
+});
+
+it('links the selected renderer documentation, rejects unsafe URLs and supports hiding the link', async () => {
+  const { host, editor } = mount({
+    executor,
+    query: 'ASK {}',
+    renderers: [
+      {
+        ...createBooleanRenderer(),
+        documentationUrl: 'https://example.org/plugins#boolean',
+      },
+      { ...createJsonRenderer(), documentationUrl: 'javascript:alert(1)' },
+    ],
+  });
+  await editor.run();
+  const link = host.querySelector<HTMLAnchorElement>('.ldforge-renderer-docs');
+  expect(link?.hidden).toBe(false);
+  expect(link?.href).toBe('https://example.org/plugins#boolean');
+  expect(link?.getAttribute('aria-label')).toBe('Documentation for Boolean');
+  expect(link?.rel).toContain('noopener');
+  host.querySelector<HTMLButtonElement>('[data-renderer-id="json"]')?.click();
+  expect(link?.hidden).toBe(true);
+  expect(link?.hasAttribute('href')).toBe(false);
+  const hidden = mount({
+    executor,
+    query: 'ASK {}',
+    controls: { rendererDocumentation: false },
+    renderers: [createBooleanRenderer()],
+  });
+  await hidden.editor.run();
+  expect(
+    hidden.host.querySelector<HTMLAnchorElement>('.ldforge-renderer-docs')
+      ?.hidden,
+  ).toBe(true);
+});
+
+it('selects a requested renderer once and gives plugins the executed query snapshot', async () => {
+  const render = vi.fn();
+  const query =
+    '# view=custom; custom-setting=enabled\n# css=max-width: 100px;\nASK {}';
+  let resolve: ((result: QueryResult) => void) | undefined;
+  const { host, editor } = mount({
+    query,
+    executor: {
+      execute: () =>
+        new Promise((done) => {
+          resolve = done;
+        }),
+    },
+    renderers: [
+      createJsonRenderer(),
+      {
+        id: 'custom',
+        label: 'Custom',
+        supports: () => true,
+        render,
+      },
+    ],
+  });
+  const pending = editor.run();
+  editor.setQuery('# view=json\nASK { ?s ?p ?o }');
+  resolve?.({ kind: 'boolean', value: true });
+  await pending;
+  expect(
+    host
+      .querySelector('[data-renderer-id="custom"]')
+      ?.getAttribute('aria-selected'),
+  ).toBe('true');
+  expect(render.mock.lastCall?.[2]).toMatchObject({
+    query,
+    directives: { view: 'custom', css: 'max-width: 100px;' },
+  });
+  host.querySelector<HTMLButtonElement>('[data-renderer-id="json"]')?.click();
+  expect(
+    host
+      .querySelector('[data-renderer-id="json"]')
+      ?.getAttribute('aria-selected'),
+  ).toBe('true');
+  editor.setLocale('nl');
+  expect(
+    host
+      .querySelector('[data-renderer-id="json"]')
+      ?.getAttribute('aria-selected'),
+  ).toBe('true');
+  editor.setQuery('# view=missing\nASK {}');
+  const next = editor.run();
+  resolve?.({ kind: 'boolean', value: true });
+  await next;
+  expect(
+    host
+      .querySelector('[data-renderer-id="json"]')
+      ?.getAttribute('aria-selected'),
+  ).toBe('true');
+});
+
+it('keeps query headers ahead of inserted prefixes and after formatting', async () => {
+  const { parseQueryViewDirectives } = await import('@ldforge/core');
+  const { editor } = mount({
+    executor,
+    query:
+      '# view=cards\n# css=max-width=100px;\nSELECT ?card_title WHERE { BIND("Demo" AS ?card_title) }',
+  });
+  editor.addPrefix('schema');
+  expect(editor.getQuery()).toMatch(
+    /^# view=cards\n# css=max-width=100px;\nPREFIX schema:/,
+  );
+  await editor.formatQuery();
+  expect(parseQueryViewDirectives(editor.getQuery())).toMatchObject({
+    view: 'cards',
+    css: 'max-width=100px;',
+  });
 });

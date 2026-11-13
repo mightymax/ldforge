@@ -22,6 +22,15 @@ export function prefixEdit(
   iri: string,
 ): { from: number; insert: string } {
   let at = state.sliceDoc(0, 1) === '\uFEFF' ? 1 : 0;
+  // Keep leading comments/directives ahead of the first PREFIX declaration.
+  const source = state.doc.toString();
+  while (at < source.length) {
+    const end = source.indexOf('\n', at);
+    const next = end < 0 ? source.length : end + 1;
+    const line = source.slice(at, next).trim();
+    if (line && !line.startsWith('#')) break;
+    at = next;
+  }
   parseTree(state).iterate({
     enter(node) {
       if (node.name === 'BaseDecl' || node.name === 'PrefixDecl')

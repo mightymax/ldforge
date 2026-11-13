@@ -104,35 +104,6 @@
   background: #e9efe4;
   font-weight: 600;
 }
-.api-code {
-  position: relative;
-}
-.api-code pre {
-  margin: 20px 0;
-  padding: 44px 20px 20px;
-  border-radius: 8px;
-  background: #163d33;
-  color: #e7f3e8;
-  overflow-x: auto;
-  font-size: 13px;
-  line-height: 1.7;
-}
-.api-code code {
-  overflow-wrap: normal;
-}
-.api-code button {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  color: #dbeadd;
-  background: #285245;
-  border: 1px solid #4c7062;
-  border-radius: 4px;
-  font: inherit;
-  font-size: 10px;
-  padding: 4px 8px;
-  cursor: pointer;
-}
 @media (max-width: 800px) {
   .api-layout {
     grid-template-columns: 1fr;

@@ -10,36 +10,39 @@ import { URL, fileURLToPath } from 'node:url';
 const directory = mkdtempSync(join(tmpdir(), 'ldforge-consumer-'));
 const npm = process.platform === 'win32' ? 'npm.cmd' : 'npm';
 try {
-  const archives = ['core', 'prefixes', 'editor', 'renderers'].map((name) => {
-    const [archive] = JSON.parse(
-      execFileSync(
-        npm,
-        [
-          'pack',
-          '-w',
-          `@ldforge/${name}`,
-          '--pack-destination',
-          directory,
-          '--json',
-        ],
-        { encoding: 'utf8' },
-      ),
-    );
-    const files = archive.files.map((file) => file.path);
-    for (const path of [
-      'LICENSE',
-      'src/index.ts',
-      'dist/index.js',
-      'dist/index.d.ts',
-    ])
-      assert(files.includes(path), `${name} is missing ${path}`);
-    if (name === 'editor') {
-      assert(files.includes('dist/styles.css'));
-      assert(files.includes('docs/api/configuration.md'));
-      assert(files.includes('docs/api/tab.md'));
-    }
-    return join(directory, archive.filename);
-  });
+  const archives = ['core', 'prefixes', 'editor', 'renderers', 'charts'].map(
+    (name) => {
+      const [archive] = JSON.parse(
+        execFileSync(
+          npm,
+          [
+            'pack',
+            '-w',
+            `@ldforge/${name}`,
+            '--pack-destination',
+            directory,
+            '--json',
+          ],
+          { encoding: 'utf8' },
+        ),
+      );
+      const files = archive.files.map((file) => file.path);
+      for (const path of [
+        'LICENSE',
+        'src/index.ts',
+        'dist/index.js',
+        'dist/index.d.ts',
+      ])
+        assert(files.includes(path), `${name} is missing ${path}`);
+      if (name === 'editor') {
+        assert(files.includes('dist/styles.css'));
+        assert(files.includes('docs/api/configuration.md'));
+        assert(files.includes('docs/api/tab.md'));
+        assert(files.includes('docs/api/toolbar.md'));
+      }
+      return join(directory, archive.filename);
+    },
+  );
   writeFileSync(
     join(directory, 'package.json'),
     JSON.stringify({ private: true, type: 'module' }),
@@ -54,13 +57,17 @@ try {
     `
     import assert from 'node:assert/strict';
     import { existsSync } from 'node:fs';
-    import { parseSparqlResults } from '@ldforge/core';
+    import { parseRdfGraph, parseSparqlResults } from '@ldforge/core';
+    import { createChartRenderer } from '@ldforge/charts';
     import { createEditor, formatSparql } from '@ldforge/editor';
     import { prefixes, searchPrefixes } from '@ldforge/prefixes';
     import { prefixes as compact } from '@ldforge/prefixes/compact';
     import { prefixes as extended, prefixEntries as extendedEntries } from '@ldforge/prefixes/extended';
-    import { createTableRenderer } from '@ldforge/renderers';
+    import { createTableRenderer, createCardsRenderer } from '@ldforge/renderers';
     assert.equal(typeof createEditor, 'function');
+    assert.equal(createChartRenderer().id, 'charts');
+    assert.equal((await parseRdfGraph('<https://example.org/s> <https://example.org/p> "value" .')).triples.length, 1);
+    assert.equal(createCardsRenderer().id, 'cards');
     assert((await formatSparql('select * where {?s ?p ?o}')).includes('SELECT'));
     assert.equal(compact, prefixes);
     assert.equal(extendedEntries.length, 3623);
@@ -81,7 +88,7 @@ try {
     `
     import { createEditor } from '@ldforge/editor';
     import { createHttpExecutor } from '@ldforge/core';
-    import { createTableRenderer } from '@ldforge/renderers';
+    import { createTableRenderer, createCardsRenderer } from '@ldforge/renderers';
     const editor = createEditor(document.createElement('div'), {
       executor: createHttpExecutor({ endpoint: 'https://example.org/sparql' }),
       renderers: [createTableRenderer()],
@@ -114,7 +121,7 @@ try {
     { cwd: directory, stdio: 'inherit' },
   );
   process.stdout.write(
-    'All four packages install, resolve and typecheck in an isolated consumer.\n',
+    'All five packages install, resolve and typecheck in an isolated consumer.\n',
   );
 } finally {
   rmSync(directory, { recursive: true, force: true });

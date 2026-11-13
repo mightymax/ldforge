@@ -1,3 +1,16 @@
+import { createToolbar } from './toolbar.js';
+import type { ToolbarApi, ToolbarOptions } from './toolbar-types.js';
+export { buttonGroupTypes } from './toolbar-types.js';
+export type {
+  ToolbarApi,
+  ToolbarOptions,
+  ToolbarButtonHandle,
+  ToolbarButtonGroupHandle,
+  ButtonGroupOptions,
+  ButtonGroupType,
+  ToolbarButtonInput,
+  ToolbarButtonUpdate,
+} from './toolbar-types.js';
 import { Compartment, EditorState, type Extension } from '@codemirror/state';
 import { EditorView, keymap, lineNumbers } from '@codemirror/view';
 import {
@@ -29,12 +42,16 @@ export type {
 import type { SparqlOptions } from './sparql/index.js';
 export * from './sparql/index.js';
 import {
+  parseQueryViewDirectives,
+  createSvgIcon,
   PluginRegistry,
   QueryController,
   localize,
   resolveLocale,
   translate,
 } from '@ldforge/core';
+import { appendIcon } from './icons.js';
+import { downloadResultsCsv } from './result-download.js';
 import { formatQueryStatus } from './query-status.js';
 import { QueryTabs, renderQueryTabs } from './query-tabs.js';
 import type { QueryWorkspace } from './query-tabs.js';
@@ -51,7 +68,10 @@ import type {
 } from '@ldforge/core';
 
 export type {
+  ResultRendererContext,
+  QueryViewDirectives,
   ButtonPlugin,
+  PluginIcon,
   EditorContext,
   ResultRendererPlugin,
   SettingsPlugin,
@@ -77,12 +97,15 @@ export interface EditorOptions {
   readonly onLocaleChange?: (preference: LocalePreference) => void;
   /** Omit to use Run and Cancel; provide an array to replace the toolbar. */
   readonly buttons?: readonly ButtonPlugin[];
+  /** Optional dropdown presentation and additional declarative button groups. */
+  readonly toolbar?: ToolbarOptions;
   readonly renderers?: readonly ResultRendererPlugin[];
   readonly settings?: readonly SettingsPlugin[];
   readonly extensions?: readonly Extension[];
   readonly onQueryChange?: (query: string) => void;
 }
 export interface ForgeEditor extends EditorContext {
+  getToolBar(): ToolbarApi;
   getWorkspace(): QueryWorkspace;
   /** Live indexable collection; handles remain stable across edits and renaming. */
   getTabs(): TabCollection;
@@ -95,6 +118,7 @@ export interface ForgeEditor extends EditorContext {
 export function createRunButton(): ButtonPlugin {
   return {
     id: 'run',
+    icon: createSvgIcon(['m8 4 12 8-12 8z']),
     group: 'query',
     label: { en: 'Run query', nl: 'Query uitvoeren' },
     title: {
@@ -108,6 +132,7 @@ export function createRunButton(): ButtonPlugin {
 export function createCancelButton(): ButtonPlugin {
   return {
     id: 'cancel',
+    icon: createSvgIcon(['M6 6h12v12H6z']),
     group: 'query',
     label: { en: 'Cancel', nl: 'Annuleren' },
     isDisabled: (context) => context.getState().status !== 'running',
@@ -175,14 +200,32 @@ export function createEditor(
   status.className = 'ldforge-status';
   status.setAttribute('role', 'status');
   status.setAttribute('aria-live', 'polite');
-  const rendererLabel = doc.createElement('label');
-  rendererLabel.textContent = 'Result view ';
-  const selector = doc.createElement('select');
-  selector.setAttribute('aria-label', 'Result view');
-  rendererLabel.append(selector);
-  rendererLabel.hidden = true;
+  const resultToolbar = doc.createElement('div');
+  resultToolbar.className = 'ldforge-result-toolbar';
+  const resultTabs = doc.createElement('div');
+  resultTabs.className = 'ldforge-result-tabs';
+  resultTabs.setAttribute('role', 'tablist');
+  resultTabs.hidden = true;
+  const download = doc.createElement('button');
+  download.type = 'button';
+  download.className = 'ldforge-result-download';
+  appendIcon(download, createSvgIcon(['M12 3v12m-5-5 5 5 5-5M4 16v5h16v-5']));
+  download.hidden = true;
+  const rendererDocs = doc.createElement('a');
+  rendererDocs.className = 'ldforge-renderer-docs';
+  rendererDocs.target = '_blank';
+  rendererDocs.rel = 'noopener noreferrer';
+  rendererDocs.hidden = true;
+  appendIcon(
+    rendererDocs,
+    createSvgIcon(['M4 3h7l1 2 1-2h7v16h-7l-1 2-1-2H4zM12 5v16']),
+  );
+  resultToolbar.append(resultTabs, status, rendererDocs, download);
   const output = doc.createElement('div');
   output.className = 'ldforge-results';
+  output.id = `${editorHost.id}-results`;
+  output.setAttribute('role', 'tabpanel');
+  output.tabIndex = 0;
   output.setAttribute('aria-label', 'Query results');
   const settingsPanel = doc.createElement('div');
   settingsPanel.className = 'ldforge-settings';
@@ -218,8 +261,7 @@ export function createEditor(
     settingsPanel,
     tabBar,
     editorHost,
-    status,
-    rendererLabel,
+    resultToolbar,
     output,
   );
   container.append(root);
@@ -227,11 +269,18 @@ export function createEditor(
   let cleanup: (() => void) | undefined;
   let selectedRenderer: string | undefined;
   let formatting = false;
+  let executedQuery = '';
+  let executedDirectives = parseQueryViewDirectives('');
+  let applyPreferredView = false;
 
   function assertAlive(): void {
     if (disposed) throw new Error('Editor has been destroyed.');
   }
   const context: ForgeEditor = {
+    getToolBar() {
+      assertAlive();
+      return toolbarView.api;
+    },
     getTabs: () => {
       assertAlive();
       return tabApi.collection;
@@ -260,11 +309,17 @@ export function createEditor(
       });
     },
     getState: () => controller.state,
-    run: () => controller.run(context.getQuery()),
+    run: () => {
+      executedQuery = context.getQuery();
+      executedDirectives = parseQueryViewDirectives(executedQuery);
+      applyPreferredView = true;
+      return controller.run(executedQuery);
+    },
     cancel: () => controller.cancel(),
     focus: () => view.focus(),
     destroy() {
       if (disposed) return;
+      toolbarView.destroy();
       disposed = true;
       unsubscribe();
       controller.destroy();
@@ -400,37 +455,34 @@ export function createEditor(
         }
       });
   });
-  const buttonGroups = new Map<string, HTMLElement>();
-  const buttonElements = buttons.list().map((plugin) => {
-    const groupId = plugin.group ?? 'actions';
-    const core = plugin.id === 'run' || plugin.id === 'cancel';
-    const groupKey = `${core ? 'core' : 'custom'}:${groupId}`;
-    let group = buttonGroups.get(groupKey);
-    if (!group) {
-      group = doc.createElement('div');
-      group.className = 'ldforge-button-group';
-      group.dataset.buttonGroup = groupId;
-      group.setAttribute('role', 'group');
-      (core ? coreActions : customActions).append(group);
-      buttonGroups.set(groupKey, group);
-    }
-    const button = doc.createElement('button');
-    button.type = 'button';
-    button.textContent = localize(plugin.label, locale);
-    if (plugin.title) button.title = localize(plugin.title, locale);
-    button.addEventListener('click', () => {
-      void Promise.resolve()
-        .then(() => plugin.execute(context))
-        .catch((error: unknown) => {
+  let toolbarView: ReturnType<typeof createToolbar>;
+  try {
+    toolbarView = createToolbar(
+      {
+        core: coreActions,
+        custom: customActions,
+        context,
+        getLocale: () => locale,
+        isVisible: (plugin) =>
+          (plugin.id !== 'run' || controls.run) &&
+          (plugin.id !== 'cancel' || controls.cancel),
+        assertAlive,
+        onError(error) {
           if (!disposed)
             status.textContent = translate(locale, 'actionFailed', {
               message: error instanceof Error ? error.message : String(error),
             });
-        });
-    });
-    group.append(button);
-    return { plugin, button };
-  });
+        },
+      },
+      buttons.list(),
+      options.toolbar,
+    );
+  } catch (error) {
+    controller.destroy();
+    view.destroy();
+    root.remove();
+    throw error;
+  }
 
   const prefixPicker = createPrefixPicker(
     view,
@@ -452,22 +504,7 @@ export function createEditor(
       formatting ||
       controller.state.status === 'running' ||
       !context.getQuery().trim();
-    for (const group of buttonGroups.values()) {
-      const id = group.dataset.buttonGroup;
-      group.setAttribute(
-        'aria-label',
-        id === 'query'
-          ? translate(locale, 'queryExecution')
-          : id === 'examples'
-            ? translate(locale, 'examples')
-            : (id ?? 'actions'),
-      );
-    }
-    for (const { plugin, button } of buttonElements) {
-      button.textContent = localize(plugin.label, locale);
-      if (plugin.title) button.title = localize(plugin.title, locale);
-      button.disabled = plugin.isDisabled?.(context) ?? false;
-    }
+    toolbarView.refresh();
   }
 
   function renderResult(): void {
@@ -476,30 +513,77 @@ export function createEditor(
     try {
       previousCleanup?.();
       output.replaceChildren();
-      selector.replaceChildren();
-      rendererLabel.hidden = true;
+      resultTabs.replaceChildren();
+      resultTabs.hidden = true;
+      rendererDocs.hidden = true;
+      rendererDocs.removeAttribute('href');
+      output.removeAttribute('aria-labelledby');
+      download.hidden =
+        !controls.download || controller.state.status !== 'success';
       const state = controller.state;
       if (state.status !== 'success') return;
       const available = renderers
         .list()
         .filter((renderer) => renderer.supports(state.result));
-      for (const renderer of available) {
-        const option = doc.createElement('option');
-        option.value = renderer.id;
-        option.textContent = localize(renderer.label, locale);
-        selector.append(option);
+      if (applyPreferredView) {
+        if (available.some((plugin) => plugin.id === executedDirectives.view))
+          selectedRenderer = executedDirectives.view;
+        applyPreferredView = false;
       }
       const renderer =
         available.find((plugin) => plugin.id === selectedRenderer) ??
         available[0];
-      rendererLabel.hidden = available.length === 0;
+      resultTabs.hidden = available.length === 0;
+      for (const [index, plugin] of available.entries()) {
+        const tab = doc.createElement('button');
+        tab.type = 'button';
+        tab.id = `${output.id}-tab-${index}`;
+        tab.dataset.rendererId = plugin.id;
+        tab.setAttribute('role', 'tab');
+        tab.setAttribute('aria-controls', output.id);
+        const selected = plugin === renderer;
+        tab.setAttribute('aria-selected', String(selected));
+        tab.tabIndex = selected ? 0 : -1;
+        tab.textContent = localize(plugin.label, locale);
+        appendIcon(tab, plugin.icon);
+        if (selected) output.setAttribute('aria-labelledby', tab.id);
+        tab.addEventListener('click', () => {
+          if (selectedRenderer === plugin.id) return;
+          selectedRenderer = plugin.id;
+          renderResult();
+          resultTabs
+            .querySelector<HTMLButtonElement>('[aria-selected="true"]')
+            ?.focus();
+        });
+        resultTabs.append(tab);
+      }
       if (!renderer) {
         output.textContent = translate(locale, 'noRenderer');
         return;
       }
-      selector.value = renderer.id;
       selectedRenderer = renderer.id;
-      cleanup = renderer.render(output, state.result, { locale }) ?? undefined;
+      if (controls.rendererDocumentation && renderer.documentationUrl) {
+        try {
+          const url = new URL(renderer.documentationUrl, doc.baseURI);
+          if (url.protocol === 'https:' || url.protocol === 'http:') {
+            rendererDocs.href = url.href;
+            const label = translate(locale, 'rendererDocumentation', {
+              renderer: localize(renderer.label, locale),
+            });
+            rendererDocs.setAttribute('aria-label', label);
+            rendererDocs.title = label;
+            rendererDocs.hidden = false;
+          }
+        } catch {
+          /* Invalid documentation URLs are not exposed as links. */
+        }
+      }
+      cleanup =
+        renderer.render(output, state.result, {
+          locale,
+          query: executedQuery,
+          directives: executedDirectives,
+        }) ?? undefined;
     } catch (error) {
       output.textContent = translate(locale, 'rendererFailed', {
         message: error instanceof Error ? error.message : String(error),
@@ -507,9 +591,36 @@ export function createEditor(
     }
   }
 
-  selector.addEventListener('change', () => {
-    selectedRenderer = selector.value;
-    renderResult();
+  resultTabs.addEventListener('keydown', (event) => {
+    if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
+    const tabs = [
+      ...resultTabs.querySelectorAll<HTMLButtonElement>('[role="tab"]'),
+    ];
+    const current = tabs.indexOf(doc.activeElement as HTMLButtonElement);
+    if (current < 0) return;
+    event.preventDefault();
+    const next =
+      event.key === 'Home'
+        ? 0
+        : event.key === 'End'
+          ? tabs.length - 1
+          : (current + (event.key === 'ArrowRight' ? 1 : -1) + tabs.length) %
+            tabs.length;
+    tabs[next]?.click();
+    resultTabs
+      .querySelector<HTMLButtonElement>('[aria-selected="true"]')
+      ?.focus();
+  });
+  download.addEventListener('click', () => {
+    const state = controller.state;
+    if (state.status !== 'success') return;
+    try {
+      downloadResultsCsv(doc, state.result);
+    } catch (error) {
+      status.textContent = translate(locale, 'downloadFailed', {
+        message: error instanceof Error ? error.message : String(error),
+      });
+    }
   });
   const unsubscribe = controller.subscribe((state) => {
     refreshButtons();
@@ -633,9 +744,9 @@ export function createEditor(
     root.setAttribute('aria-label', translate(locale, 'editor'));
     toolbar.setAttribute('aria-label', translate(locale, 'actions'));
     output.setAttribute('aria-label', translate(locale, 'results'));
-    selector.setAttribute('aria-label', translate(locale, 'resultView'));
-    if (rendererLabel.firstChild)
-      rendererLabel.firstChild.textContent = `${translate(locale, 'resultView')} `;
+    resultTabs.setAttribute('aria-label', translate(locale, 'resultView'));
+    download.setAttribute('aria-label', translate(locale, 'downloadCsv'));
+    download.title = translate(locale, 'downloadCsv');
     settingsPanel.setAttribute('aria-label', translate(locale, 'settings'));
     toggle.title = translate(locale, 'settings');
     toggle.setAttribute('aria-label', translate(locale, 'settings'));

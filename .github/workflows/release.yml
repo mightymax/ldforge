@@ -93,3 +93,16 @@ jobs:
             fi
           fi
           gh release upload "$RELEASE_TAG" release-artifacts/*.tgz --clobber
+
+  website:
+    name: Deploy website after npm publication
+    needs: publish
+    if: vars.WEBSITE_DEPLOY_ENABLED == 'true'
+    permissions:
+      contents: read
+      packages: write
+    uses: ./.github/workflows/website.yml
+    with:
+      source_ref: ${{ github.sha }}
+    secrets:
+      WEBSITE_GITOPS_SSH_KEY: ${{ secrets.WEBSITE_GITOPS_SSH_KEY }}

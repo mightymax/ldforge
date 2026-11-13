@@ -3,12 +3,14 @@ import { fileURLToPath } from 'node:url';
 
 // Resolve source in the workspace: no prebuild or watch process is needed for the demo.
 export default defineConfig({
+  base: './',
   build: {
     rollupOptions: {
       input: {
         demo: fileURLToPath(new URL('./index.html', import.meta.url)),
         guide: fileURLToPath(new URL('./guide.html', import.meta.url)),
         api: fileURLToPath(new URL('./api.html', import.meta.url)),
+        plugins: fileURLToPath(new URL('./plugins.html', import.meta.url)),
       },
     },
   },
@@ -26,7 +28,7 @@ export default defineConfig({
           new URL('../../packages/editor/src/styles.css', import.meta.url),
         ),
       },
-      ...['core', 'editor', 'renderers', 'prefixes'].map((name) => ({
+      ...['core', 'editor', 'renderers', 'prefixes', 'charts'].map((name) => ({
         find: `@ldforge/${name}`,
         replacement: fileURLToPath(
           new URL(`../../packages/${name}/src/index.ts`, import.meta.url),

@@ -1,0 +1,134 @@
+name: Deploy website
+
+on:
+  workflow_dispatch:
+    inputs:
+      source_ref:
+        description: Main branch commit or release tag to deploy
+        type: string
+        default: main
+      allow_rollback:
+        description: Allow an explicitly requested older source commit
+        type: boolean
+        default: false
+  workflow_call:
+    inputs:
+      source_ref:
+        required: true
+        type: string
+      allow_rollback:
+        type: boolean
+        default: false
+    secrets:
+      WEBSITE_GITOPS_SSH_KEY:
+        required: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: website-${{ github.repository }}
+  cancel-in-progress: false
+
+jobs:
+  image:
+    name: Build and publish static site
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 25
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      source_sha: ${{ steps.source.outputs.sha }}
+      image: ${{ steps.source.outputs.image }}
+      image_tag: ${{ steps.source.outputs.tag }}
+      digest: ${{ steps.build.outputs.digest }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ inputs.source_ref }}
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Validate source and deployment configuration
+        id: source
+        env:
+          GITOPS_REPOSITORY: ${{ vars.WEBSITE_GITOPS_REPOSITORY }}
+          GITOPS_VALUES_FILE: ${{ vars.WEBSITE_GITOPS_VALUES_FILE }}
+          GITOPS_KEY_PRESENT: ${{ secrets.WEBSITE_GITOPS_SSH_KEY != '' }}
+          CONFIGURED_IMAGE: ${{ vars.WEBSITE_IMAGE }}
+        run: |
+          test "$GITOPS_KEY_PRESENT" = true || { echo 'Missing WEBSITE_GITOPS_SSH_KEY'; exit 1; }
+          test -n "$GITOPS_REPOSITORY" || { echo 'Missing WEBSITE_GITOPS_REPOSITORY'; exit 1; }
+          test -n "$GITOPS_VALUES_FILE" || { echo 'Missing WEBSITE_GITOPS_VALUES_FILE'; exit 1; }
+          if [ "$GITHUB_EVENT_NAME" = workflow_dispatch ] && [ "$GITHUB_REF" != refs/heads/main ]; then
+            echo 'Run the website workflow from main; source_ref selects the version to deploy.'; exit 1
+          fi
+          git fetch origin main
+          git merge-base --is-ancestor HEAD origin/main || { echo 'Website source must be a commit from main.'; exit 1; }
+          SOURCE_SHA=$(git rev-parse HEAD)
+          IMAGE="${CONFIGURED_IMAGE:-ghcr.io/${GITHUB_REPOSITORY}-demo}"
+          IMAGE=$(printf '%s' "$IMAGE" | tr '[:upper:]' '[:lower:]')
+          [[ "$IMAGE" =~ ^ghcr\.io/[a-z0-9._-]+/[a-z0-9._/-]+$ ]] || { echo 'WEBSITE_IMAGE must be a GHCR repository without a tag.'; exit 1; }
+          {
+            echo "sha=$SOURCE_SHA"
+            echo "image=$IMAGE"
+            echo "tag=sha-${SOURCE_SHA}-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          } >> "$GITHUB_OUTPUT"
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+      - uses: docker/login-action@8aa5831fb8d48d8f76594c7ddde61ae58019f550 # v4.8.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ github.token }}
+      - name: Build ARM64 image and publish immutable digest
+        id: build
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: .
+          platforms: linux/arm64
+          push: true
+          tags: ${{ steps.source.outputs.image }}:${{ steps.source.outputs.tag }}
+          cache-from: type=gha,scope=website
+          cache-to: type=gha,mode=max,scope=website
+          github-token: ${{ github.token }}
+
+  gitops:
+    name: Promote image through private GitOps
+    needs: image
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ needs.image.outputs.source_sha }}
+          fetch-depth: 0
+          path: source
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '24'
+          package-manager-cache: false
+      - run: npm ci --ignore-scripts --no-audit --no-fund
+        working-directory: source
+      # Private checkout happens in a separate job, never in the Docker build context.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: ${{ vars.WEBSITE_GITOPS_REPOSITORY }}
+          ref: ${{ vars.WEBSITE_GITOPS_BRANCH || 'main' }}
+          ssh-key: ${{ secrets.WEBSITE_GITOPS_SSH_KEY }}
+          path: gitops
+          persist-credentials: true
+      - name: Commit and push deployment digest
+        env:
+          WEBSITE_GITOPS_VALUES_FILE: ${{ vars.WEBSITE_GITOPS_VALUES_FILE }}
+          WEBSITE_GITOPS_APPLICATION_FILE: ${{ vars.WEBSITE_GITOPS_APPLICATION_FILE }}
+          WEBSITE_GITOPS_BRANCH: ${{ vars.WEBSITE_GITOPS_BRANCH || 'main' }}
+          WEBSITE_IMAGE: ${{ needs.image.outputs.image }}
+          WEBSITE_IMAGE_TAG: ${{ needs.image.outputs.image_tag }}
+          WEBSITE_IMAGE_DIGEST: ${{ needs.image.outputs.digest }}
+          WEBSITE_SOURCE_SHA: ${{ needs.image.outputs.source_sha }}
+          WEBSITE_SOURCE_REPOSITORY: ${{ github.server_url }}/${{ github.repository }}
+          WEBSITE_ALLOW_ROLLBACK: ${{ inputs.allow_rollback }}
+        run: node source/scripts/update-website-gitops.mjs gitops source

@@ -1,6 +1,6 @@
 # Plugin authoring
 
-Plugins are ordinary TypeScript objects registered per editor instance. Identifiers must be non-empty and unique within their plugin category. Registration order determines toolbar and view-selector order. There is no global registry or automatic discovery.
+Plugins are ordinary TypeScript objects registered per editor instance. Identifiers must be non-empty and unique within their plugin category. Registration order determines toolbar and result-tab order. There is no global registry or automatic discovery. Toolbar actions and groups can also be managed at runtime using `editor.getToolBar()`; see the [Toolbar API](api/toolbar.md) for optional dropdowns and reusable action handles.
 
 ## Button plugins
 
@@ -34,7 +34,7 @@ const exampleButton: ButtonPlugin = {
 
 ## Result renderer plugins
 
-A result renderer has an identifier, a label, a support predicate, and a render function. The selector shows only renderers supporting the current result. The last selected view is retained when it also supports the next result; otherwise the first supported renderer is selected.
+A result renderer has an identifier, a label, a support predicate, and a render function. The result tabs show only renderers supporting the current result. An optional `icon: PluginIcon` factory adds decorative artwork beside the label; see [Plugin API](api/plugins.md#pluginicon-and-createsvgicon) for the contract and `createSvgIcon()` helper. The last selected view is retained when it also supports the next result; otherwise the first supported renderer is selected.
 
 ```ts
 import type { ResultRendererPlugin } from '@ldforge/core';
@@ -59,7 +59,7 @@ export const countRenderer: ResultRendererPlugin = {
 
 The editor clears the result container between renders and calls the previous cleanup function before switching views, changing query state, or destroying the editor. Rendering is synchronous; renderers with asynchronous work must manage their own cancellation in the cleanup function. Use `textContent` for RDF values. Plugins are trusted application code, not sandboxed extensions.
 
-`QueryResult` is a discriminated union: `bindings` has ordered variable names and binding rows; `boolean` has a boolean value. Unbound variables are absent from a binding row. RDF term type, datatype, and language are retained. JSON view shows this normalized model, not the endpoint's raw response.
+`QueryResult` is a discriminated union: `bindings` has ordered variable names and binding rows; `boolean` has a boolean value; `graph` has triples with subject/predicate/object terms. Unbound variables are absent from a binding row. RDF term type, datatype, and language are retained. JSON view shows this normalized model, not the endpoint's raw response.
 
 ## CodeMirror extensions
 
@@ -69,7 +69,7 @@ Supply CodeMirror 6 extensions through the `extensions` option to configure them
 
 Implement `QueryExecutor.execute({ query, signal })` to integrate an existing backend. Return a normalized `QueryResult`; reject on errors. Forward the abort signal to network calls. Even when an executor ignores cancellation, the controller prevents obsolete results from replacing the current state. A cancelled operation may still continue on the server.
 
-The HTTP executor defaults to direct POST with `application/sparql-query`. Set `method: 'GET'` to encode the query in the URL without a request body. Both methods request `application/sparql-results+json`; Accept and Content-Type are managed case-insensitively by the adapter. It supports SELECT and ASK only. Authentication policy, request limits, and endpoint configuration belong to the host application.
+The HTTP executor defaults to direct POST with `application/sparql-query`. Set `method: 'GET'` to encode the query in the URL without a request body. SELECT/ASK request `application/sparql-results+json`; CONSTRUCT/DESCRIBE request N-Triples or Turtle; Accept and Content-Type are managed case-insensitively by the adapter. RDF graph responses are parsed lazily with N3. Authentication policy, request limits, and endpoint configuration belong to the host application.
 
 ## Integrated settings plugins
 

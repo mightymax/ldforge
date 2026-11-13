@@ -1,5 +1,7 @@
 /** Visibility controls only: hiding a control never disables its public API. */
 export interface EditorControls {
+  readonly rendererDocumentation?: boolean;
+  readonly download?: boolean;
   readonly run?: boolean;
   readonly cancel?: boolean;
   readonly prefixes?: boolean;
@@ -15,6 +17,8 @@ export function resolveControls(
   input?: EditorControls | false,
 ): Required<EditorControls> {
   const defaults = {
+    rendererDocumentation: true,
+    download: true,
     run: true,
     cancel: true,
     prefixes: true,

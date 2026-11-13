@@ -32,16 +32,26 @@ export function formatQueryStatus(
           })
         : state.error.message;
     case 'success': {
+      const count =
+        state.result.kind === 'graph'
+          ? state.result.triples.length
+          : state.result.kind === 'bindings'
+            ? state.result.bindings.length
+            : 0;
       const summary =
         state.result.kind === 'boolean'
           ? translate(locale, state.result.value ? 'true' : 'false')
           : translate(
               locale,
-              state.result.bindings.length === 1 ? 'resultOne' : 'resultMany',
+              state.result.kind === 'graph'
+                ? count === 1
+                  ? 'tripleOne'
+                  : 'tripleMany'
+                : count === 1
+                  ? 'resultOne'
+                  : 'resultMany',
               {
-                count: new Intl.NumberFormat(locale).format(
-                  state.result.bindings.length,
-                ),
+                count: new Intl.NumberFormat(locale).format(count),
               },
             );
       return translate(locale, 'completed', {

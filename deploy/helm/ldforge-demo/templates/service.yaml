@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "ldforge-demo.name" . }}
+  labels:
+    {{- include "ldforge-demo.labels" . | nindent 4 }}
+spec:
+  type: ClusterIP
+  ports:
+    - port: {{ .Values.service.port }}
+      targetPort: http
+      name: http
+  selector:
+    app.kubernetes.io/name: ldforge-demo
+    app.kubernetes.io/instance: {{ .Release.Name | quote }}

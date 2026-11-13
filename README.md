@@ -6,6 +6,8 @@ LDForge separates query execution, editor actions, and result presentation. It u
 
 ## Try the demo
 
+**[Try the live demo at ldforge.nl](https://ldforge.nl/)** — editor, plugin examples and API documentation.
+
 Requires Node.js 22.12 or newer and npm. No backend, account, environment variables, or external endpoint is required.
 
 ```sh
@@ -15,7 +17,7 @@ npm run dev
 
 Open the local URL printed by Vite. Run the example SELECT query, switch between Table and JSON, or use the ASK example button. Fixture mode returns deterministic sample data; it does not evaluate SPARQL.
 
-Use the **gear button inside the IDE** to configure an endpoint, choose GET/POST, add headers, or change the language. Applied endpoints and request methods are saved in browser localStorage. Header values remain in memory for this page only and are isolated per endpoint. Browser CORS rules still apply. The demo restores the last applied endpoint and method after a refresh, without automatically running a query. Choose the local fixture to return to example data. SELECT and ASK results are supported.
+Use the **gear button inside the IDE** to configure an endpoint, choose GET/POST, add headers, or change the language. Applied endpoints and request methods are saved in browser localStorage. Header values remain in memory for this page only and are isolated per endpoint. Browser CORS rules still apply. The demo restores the last applied endpoint and method after a refresh, without automatically running a query. Choose the local fixture to return to example data. SELECT, ASK, CONSTRUCT and DESCRIBE results are supported.
 
 Create queries with **+**, switch tabs, and rename a tab by double-clicking its name or using its pencil button. Enter or leaving the name field saves it; Escape cancels. Query text, titles, and the active tab are saved to localStorage when editing or switching. There is one CodeMirror view and one active editor state: inactive tabs store plain text only. Switching cancels a running query and resets undo history and results.
 
@@ -28,10 +30,11 @@ The IDE follows the first supported browser language (English or Dutch), with En
 | `@ldforge/core`      | RDF result types, plugin contracts, registry, query lifecycle, and HTTP executor; no DOM runtime dependency |
 | `@ldforge/editor`    | CodeMirror editor, button plugins, keyboard shortcut, result plugin selection, lifecycle and styles         |
 | `@ldforge/prefixes`  | Curated common namespace catalog, ready-to-use map and search helper                                        |
-| `@ldforge/renderers` | Independent table, boolean, and normalized JSON renderers                                                   |
+| `@ldforge/renderers` | Independent table, cards, boolean, and normalized JSON renderers                                            |
+| `@ldforge/charts`    | Optional chart renderer; external Chart.js runtime loaded only on activation                                |
 | `apps/demo`          | Minimal Vite host with fixture/live execution and custom action plugins                                     |
 
-The editor depends only on core and CodeMirror. Default result renderers are supplied by the host, so another application can use its own rendering stack.
+The editor depends on core, CodeMirror and the prefix catalog. Default result renderers are supplied by the host, so another application can use its own rendering stack.
 
 ## Embed the editor
 
@@ -110,12 +113,32 @@ npm run test:e2e       # Real-browser demo tests
 npm run check          # All of the above checks (browser must be installed)
 ```
 
+Results use accessible icon tabs and provide a CSV download for SELECT, ASK and RDF graph results. Plugins can supply optional icon factories and `documentationUrl` links to their usage and binding guides; set `controls: { download: false }` to hide export.
+
+The Cards renderer maps `card_title`, `card_text`, `card_image`, `card_button` and `card_button_url` to a responsive card grid. Leading query comments such as `# view=cards` and `# css=max-width: 320px;` control the result view and individual card styling. See the [binding and header guide](docs/renderers.md).
+
+The demo includes a **Plugins** page describing each built-in renderer and its binding contract. Build with `npm run build` and serve `apps/demo/dist/` on any static host; relative assets and navigation support subdirectories.
+
 See the [configuration reference](docs/api/configuration.md), [editor API](docs/api/editor.md), [tab API](docs/api/tab.md), [npm publishing guide](docs/publishing.md), [plugin authoring](docs/plugins.md), [architecture](docs/architecture.md), [language and editor evaluation](docs/editor-language-support.md), [testing](docs/testing.md), and [contributing](CONTRIBUTING.md).
 
 ## Current scope
 
-This is a working foundation, not feature parity with LDMax. SELECT/ASK, cancellation, syntax highlighting, history, Lezer-based syntax diagnostics and contextual completion, custom buttons, settings plugins, EN/NL localization, virtual query tabs, execution timing, and interchangeable result renderers are included. CONSTRUCT/DESCRIBE execution, SPARQL Update execution, endpoint-backed vocabulary discovery, full semantic query validation, virtualization, and migration of LDMax-specific behavior are follow-up work. The table renderer targets small and medium result sets; the host should limit queries or register a paginated/virtualized renderer for large results.
+This is a working foundation, not feature parity with LDMax. SELECT/ASK and CONSTRUCT/DESCRIBE, cancellation, syntax highlighting, history, Lezer-based syntax diagnostics and contextual completion, custom buttons, settings plugins, EN/NL localization, virtual query tabs, execution timing, and interchangeable result renderers are included. SPARQL Update execution, endpoint-backed vocabulary discovery, full semantic query validation, virtualization, and migration of LDMax-specific behavior are follow-up work. The table renderer targets small and medium result sets; the host should limit queries or register a paginated/virtualized renderer for large results.
 
 ## License
 
 Licensed under the [European Union Public Licence 1.2](LICENSE), SPDX identifier `EUPL-1.2`. Full license text is included in each library package. See the [official EUPL versions](https://interoperable-europe.ec.europa.eu/collection/eupl/eupl-text-eupl-12). Third-party dependencies retain their own licenses.
+
+## Optional charts
+
+Install `@ldforge/charts` and register `createChartRenderer()` to enable charts using `chart_label`, `chart_value` and optional `chart_series` bindings. The default loader fetches a pinned external Chart.js ESM module only when the Charts tab opens, keeping Chart.js out of the application bundle. Set `loadLibrary: () => import('chart.js/auto')` to use a self-hosted lazy chunk instead (install Chart.js in the host). See the [chart binding and loading guide](docs/renderers.md#charts) for headers, validation and deployment options.
+
+## Toolbar groups and dropdowns
+
+Existing action groups remain adjacent buttons by default. Configure `toolbar.groups: [{ id: 'examples', type: 'dropdown', label: 'Example queries' }]` to collapse that custom group into a menu. Use `editor.getToolBar()` to add standalone actions, create reusable button handles or build/change groups at runtime. See the [Toolbar API](docs/api/toolbar.md) for every object, method and keyboard behavior. The demo website at [ldforge.nl](https://ldforge.nl/) opts into two runtime-created dropdowns: Query Examples and Plugin Examples. Library defaults remain unchanged.
+
+## Hosting and deployment
+
+The built demo is static HTML/CSS/JavaScript. Use the [deployment guide](docs/deployment.md) for container builds, Kubernetes/Helm, Argo CD and optional per-installation analytics. Public defaults contain no tracking ID; local operator values belong under the gitignored `.local/` directory or in a private GitOps repository.
+
+After one-time GitOps setup, `npm version patch` can also deploy the website after publishing npm. Deploy only the site with `gh workflow run website.yml --ref main -f source_ref=main`; no npm version or release tag is created. See [automated website releases](docs/deployment.md#automated-website-releases).

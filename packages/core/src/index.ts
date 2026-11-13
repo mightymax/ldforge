@@ -1,3 +1,14 @@
+import type { RdfTriple } from './graph.js';
+import { isGraphQuery, parseRdfGraph } from './graph.js';
+export { isGraphQuery, parseRdfGraph, graphToBindings } from './graph.js';
+export type { RdfTriple } from './graph.js';
+import type { QueryViewDirectives } from './query-directives.js';
+export { parseQueryViewDirectives } from './query-directives.js';
+export type { QueryViewDirectives } from './query-directives.js';
+import type { PluginIcon } from './icons.js';
+export { createSvgIcon } from './icons.js';
+export type { PluginIcon } from './icons.js';
+export { serializeResultsCsv } from './csv.js';
 import type { Locale, LocalePreference, LocalizedText } from './locale.js';
 export { resolveLocale, localize, translate } from './locale.js';
 export type { Locale, LocalePreference, LocalizedText } from './locale.js';
@@ -16,7 +27,8 @@ export type QueryResult =
       readonly variables: readonly string[];
       readonly bindings: readonly Binding[];
     }
-  | { readonly kind: 'boolean'; readonly value: boolean };
+  | { readonly kind: 'boolean'; readonly value: boolean }
+  | { readonly kind: 'graph'; readonly triples: readonly RdfTriple[] };
 
 export interface QueryRequest {
   readonly query: string;
@@ -51,19 +63,31 @@ export interface ButtonPlugin {
   readonly group?: string;
   readonly id: string;
   readonly label: LocalizedText;
+  /** Optional decorative icon factory; return a fresh node for each mount. */
+  readonly icon?: PluginIcon;
   readonly title?: LocalizedText;
   readonly isDisabled?: (context: EditorContext) => boolean;
   execute(context: EditorContext): void | Promise<void>;
 }
+export interface ResultRendererContext {
+  readonly locale: Locale;
+  /** Exact executed query, not the possibly edited text currently in the editor. */
+  readonly query?: string;
+  readonly directives?: QueryViewDirectives;
+}
 export interface ResultRendererPlugin {
+  /** Optional HTTP(S) or relative URL describing usage and binding requirements. */
+  readonly documentationUrl?: string;
   readonly id: string;
   readonly label: LocalizedText;
+  /** Optional decorative icon factory; return a fresh node for each mount. */
+  readonly icon?: PluginIcon;
   supports(result: QueryResult): boolean;
   /** Return a cleanup function when allocating listeners or other resources. */
   render(
     container: HTMLElement,
     result: QueryResult,
-    context?: { readonly locale: Locale },
+    context?: ResultRendererContext,
   ): void | (() => void);
 }
 
@@ -232,7 +256,7 @@ export interface HttpExecutorOptions {
   readonly fetch?: typeof globalThis.fetch;
 }
 
-/** Executes SELECT/ASK using SPARQL Protocol GET or direct POST. */
+/** Executes SELECT/ASK and CONSTRUCT/DESCRIBE using SPARQL Protocol GET or POST. */
 export function createHttpExecutor(
   options: HttpExecutorOptions,
 ): QueryExecutor {
@@ -252,9 +276,16 @@ export function createHttpExecutor(
     async execute({ query, signal }) {
       const url = new URL(endpoint);
       if (method === 'GET') url.searchParams.set('query', query);
+      const requestHeaders = new Headers(headers);
+      const graph = isGraphQuery(query);
+      if (graph)
+        requestHeaders.set(
+          'Accept',
+          'application/n-triples, text/turtle;q=0.9',
+        );
       const response = await fetcher(url.href, {
         method,
-        headers: new Headers(headers),
+        headers: requestHeaders,
         ...(method === 'POST' ? { body: query } : {}),
         signal,
       });
@@ -263,6 +294,12 @@ export function createHttpExecutor(
           'httpError',
           `SPARQL endpoint returned HTTP ${response.status}.`,
           response.status,
+        );
+      if (graph)
+        return parseRdfGraph(
+          await response.text(),
+          response.headers.get('Content-Type') ?? '',
+          response.url || endpoint.href,
         );
       return parseSparqlResults(await response.json());
     },

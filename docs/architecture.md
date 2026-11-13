@@ -24,7 +24,7 @@ Run is disabled while a request is active. The keyboard shortcut and public API 
 
 The repository uses npm workspaces and a single committed lockfile. Libraries compile with TypeScript to ESM, declaration files and source maps; build order follows dependencies. Public entry points are constrained with package `exports`. Packages include original source alongside declarations and source maps. An isolated consumer check installs real tarballs and verifies both runtime exports and TypeScript declarations. The demo resolves workspace source files through Vite aliases so `npm ci && npm run dev` works without prebuilding libraries.
 
-Strict compiler options include unchecked index access and exact optional properties. ESLint and Prettier enforce consistent conventions. Vitest tests source behavior; Playwright tests actual browser behavior. GitHub Actions runs the full check command only for release tags. Root npm version hooks synchronize all four package versions and push main plus the release tag atomically.
+Strict compiler options include unchecked index access and exact optional properties. ESLint and Prettier enforce consistent conventions. Vitest tests source behavior; Playwright tests actual browser behavior. GitHub Actions runs the full check command only for release tags. Root npm version hooks synchronize all five package versions and push main plus the release tag atomically.
 
 ## Migration from LDMax
 
@@ -79,3 +79,15 @@ Object-based Markdown reference pages under `docs/api/` are rendered directly in
 ## Prefix catalog variants
 
 The prefix package's root and /compact entry points load the 32-entry compact map. /extended loads the separately generated 3,623-entry snapshot. Both use shared search behavior over prefix and namespace only; entries have no labels. No extended data is imported through the compact graph. Developers select the editor map through sparql.prefixes. Conflicting conventional bindings are preserved per data set. The picker searches the complete map but renders at most 50 matches, and does not populate its list while initially hidden.
+
+## Query presentation metadata
+
+The editor captures query text and parses leading comment directives at execution time. Renderer context receives that snapshot, so later text edits cannot change an existing result's presentation. The requested view is applied once per execution, preserving subsequent manual selection. Cards is an independent result plugin with explicit binding names and locally scoped, allowlisted card styles. Prefix insertion keeps comment headers ahead of the prologue.
+
+## Optional chart runtime
+
+`@ldforge/charts` is a separate adapter depending only on core. It uses an external runtime ESM import by default, with a pinned Chart.js version and injectable URL/loader. No static runtime import links the chart library to any LDForge package. The synchronous renderer contract returns cleanup immediately; asynchronous initialization checks disposal before constructing a chart and destroys each instance on unmount. Validation and an accessible data table do not require the external runtime.
+
+## RDF graph results
+
+CONSTRUCT/DESCRIBE execution negotiates N-Triples or Turtle and imports the self-contained N3 browser parser on demand. A graph result retains RDF terms in a deduplicated triple array. Table and CSV share a subject/predicate/object projection; JSON retains the graph discriminator. SELECT/ASK negotiation and payloads stay unchanged.

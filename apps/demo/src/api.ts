@@ -1,7 +1,10 @@
+import { mountSiteChrome } from './site-chrome.js';
+import { mountCodeExamples } from './code-examples.js';
 import { marked, Renderer } from 'marked';
 import overview from '../../../docs/api/overview.md?raw';
 import configuration from '../../../docs/api/configuration.md?raw';
 import editor from '../../../docs/api/editor.md?raw';
+import toolbar from '../../../docs/api/toolbar.md?raw';
 import tabs from '../../../docs/api/tabs.md?raw';
 import tab from '../../../docs/api/tab.md?raw';
 import prefixes from '../../../docs/api/prefixes.md?raw';
@@ -14,6 +17,7 @@ const pages = {
   overview: { label: 'Getting started', markdown: overview },
   configuration: { label: 'Configuration', markdown: configuration },
   editor: { label: 'ForgeEditor', markdown: editor },
+  toolbar: { label: 'Toolbar & button groups', markdown: toolbar },
   tabs: { label: 'TabCollection', markdown: tabs },
   tab: { label: 'QueryTabHandle', markdown: tab },
   prefixes: { label: 'Prefixes & language tools', markdown: prefixes },
@@ -52,6 +56,10 @@ content.innerHTML = marked.parse(pages[page].markdown, {
   renderer,
 });
 for (const link of content.querySelectorAll<HTMLAnchorElement>('a[href]')) {
+  if (link.getAttribute('href') === '../../docs/renderers.md') {
+    link.href = './plugins.html';
+    continue;
+  }
   const match = link.getAttribute('href')?.match(/^([a-z-]+)\.md(#.*)?$/);
   if (match && match[1] && Object.hasOwn(pages, match[1]))
     link.href = `./api.html?page=${match[1]}${match[2] ?? ''}`;
@@ -62,27 +70,8 @@ for (const table of content.querySelectorAll('table')) {
   table.replaceWith(wrapper);
   wrapper.append(table);
 }
-for (const pre of content.querySelectorAll('pre')) {
-  const wrapper = document.createElement('div');
-  wrapper.className = 'api-code';
-  pre.replaceWith(wrapper);
-  wrapper.append(pre);
-  const copy = document.createElement('button');
-  copy.type = 'button';
-  copy.textContent = 'Copy';
-  copy.setAttribute('aria-label', 'Copy code example');
-  copy.addEventListener('click', () => {
-    void navigator.clipboard
-      .writeText(pre.textContent ?? '')
-      .then(() => {
-        copy.textContent = 'Copied';
-      })
-      .catch(() => {
-        copy.textContent = 'Select code to copy';
-      });
-  });
-  wrapper.append(copy);
-}
+const destroyExamples = mountCodeExamples(content);
+if (import.meta.hot) import.meta.hot.dispose(destroyExamples);
 document.title = `${pages[page].label} · LDForge API`;
 if (location.hash)
   requestAnimationFrame(() =>
@@ -90,3 +79,5 @@ if (location.hash)
       .getElementById(decodeURIComponent(location.hash.slice(1)))
       ?.scrollIntoView(),
   );
+
+mountSiteChrome();

@@ -10,7 +10,7 @@ export default defineConfig({
           new URL(`./packages/prefixes/src/${variant}.ts`, import.meta.url),
         ),
       ]),
-      ...['core', 'editor', 'renderers', 'prefixes'].map((name) => [
+      ...['core', 'editor', 'renderers', 'prefixes', 'charts'].map((name) => [
         `@ldforge/${name}`,
         fileURLToPath(
           new URL(`./packages/${name}/src/index.ts`, import.meta.url),

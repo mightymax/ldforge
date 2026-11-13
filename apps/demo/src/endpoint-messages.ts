@@ -22,9 +22,9 @@ const en = {
   choose: 'Choose a saved endpoint',
   fixtureChoice: 'Local fixture (no endpoint)',
   fixtureStatus:
-    'Fixture mode: SELECT returns three sample cities; ASK returns true. No network requests.',
+    'Fixture mode: SELECT returns three sample cities; queries with card bindings return three sample cards; chart bindings return three example values; CONSTRUCT/DESCRIBE return three example triples; ASK returns true. No network requests.',
   liveStatus:
-    'Live endpoint: {endpoint} ({method}). SELECT and ASK supported; endpoint must allow CORS.',
+    'Live endpoint: {endpoint} ({method}). SELECT, ASK, CONSTRUCT and DESCRIBE supported; endpoint must allow CORS.',
   storageUnavailable:
     'Browser storage is unavailable; saved endpoints will last for this session only.',
   missingName: 'Enter a name for each header.',
@@ -53,9 +53,9 @@ const nl: Record<keyof typeof en, string> = {
   choose: 'Kies een opgeslagen endpoint',
   fixtureChoice: 'Lokale voorbeelddata (geen endpoint)',
   fixtureStatus:
-    'Voorbeeldmodus: SELECT geeft drie voorbeeldsteden; ASK geeft waar. Er worden geen netwerkrequests gedaan.',
+    'Voorbeeldmodus: SELECT geeft drie voorbeeldsteden; queries met card-bindings geven drie voorbeeldkaarten; grafiekbindings geven drie voorbeeldwaarden; CONSTRUCT/DESCRIBE geven drie voorbeeldtriples; ASK geeft waar. Er worden geen netwerkrequests gedaan.',
   liveStatus:
-    'Actief endpoint: {endpoint} ({method}). SELECT en ASK worden ondersteund; het endpoint moet CORS toestaan.',
+    'Actief endpoint: {endpoint} ({method}). SELECT, ASK, CONSTRUCT en DESCRIBE worden ondersteund; het endpoint moet CORS toestaan.',
   storageUnavailable:
     'Browseropslag is niet beschikbaar; opgeslagen endpoints blijven alleen tijdens deze sessie beschikbaar.',
   missingName: 'Vul voor elke header een naam in.',

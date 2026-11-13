@@ -7,3 +7,7 @@ package-lock.json
 LICENSE
 
 packages/editor/docs
+
+.local
+# Helm templates contain Go template syntax rather than plain YAML.
+deploy/helm/ldforge-demo/templates

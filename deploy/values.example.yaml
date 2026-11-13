@@ -1,0 +1,15 @@
+# Copy to .local/deploy/values.yaml for local work, or to your private GitOps repo.
+image:
+  repository: registry.example.org/your-org/ldforge-demo
+  tag: replace-with-immutable-tag
+ingress:
+  enabled: true
+  className: '' # Use your cluster's default class, or set an explicit class.
+  host: demo.example.org
+  tls:
+    enabled: true
+    secretName: ldforge-demo-tls
+analytics:
+  enabled: false
+  scriptUrl: ''
+  websiteId: ''

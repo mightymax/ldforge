@@ -1,0 +1,14 @@
+.git
+.github
+.local
+node_modules
+**/node_modules
+**/dist
+coverage
+playwright-report
+test-results
+release-artifacts
+packages/editor/docs
+.env
+.env.*
+*.log

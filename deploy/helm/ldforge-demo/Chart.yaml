@@ -1,0 +1,8 @@
+apiVersion: v2
+name: ldforge-demo
+description: Static LDForge demo and documentation site
+version: 0.1.0
+type: application
+home: https://ldforge.nl
+sources:
+  - https://github.com/mightymax/ldforge

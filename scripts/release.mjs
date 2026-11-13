@@ -9,6 +9,7 @@ export const packagePaths = [
   'packages/core',
   'packages/prefixes',
   'packages/renderers',
+  'packages/charts',
   'packages/editor',
 ];
 const dependencyFields = [
@@ -303,7 +304,7 @@ export function verifyArtifacts(root, destination) {
     !Array.isArray(manifest.packages) ||
     manifest.packages.length !== libraries.length
   )
-    throw new Error('Expected exactly four release packages.');
+    throw new Error(`Expected exactly ${libraries.length} release packages.`);
   for (const [index, artifact] of manifest.packages.entries()) {
     if (
       artifact.name !== libraries[index].name ||
@@ -427,7 +428,7 @@ if (
       );
     else if (action === 'pack') {
       packRelease(rootDirectory);
-      process.stdout.write('Packed all four release artifacts.\n');
+      process.stdout.write('Packed all release artifacts.\n');
     } else if (action === 'publish') publishRelease(rootDirectory);
     else if (action === 'reject-workspace')
       throw new Error(

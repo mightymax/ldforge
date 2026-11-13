@@ -32,5 +32,8 @@
   "homepage": "https://github.com/mightymax/ldforge/tree/main/packages/core#readme",
   "bugs": {
     "url": "https://github.com/mightymax/ldforge/issues"
+  },
+  "dependencies": {
+    "n3": "^2.13.12"
   }
 }

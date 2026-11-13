@@ -8,7 +8,8 @@
       "@ldforge/editor": ["packages/editor/src/index.ts"],
       "@ldforge/renderers": ["packages/renderers/src/index.ts"],
       "@ldforge/prefixes": ["packages/prefixes/src/index.ts"],
-      "@ldforge/prefixes/*": ["packages/prefixes/src/*.ts"]
+      "@ldforge/prefixes/*": ["packages/prefixes/src/*.ts"],
+      "@ldforge/charts": ["packages/charts/src/index.ts"]
     },
     "types": ["node", "vite/client"]
   },

@@ -15,7 +15,7 @@
 | `headers`  | `Readonly<Record<string, string>>` | `{}`       | Extra headers such as Authorization. Accept and Content-Type are managed case-insensitively by the executor. |
 | `fetch`    | `typeof globalThis.fetch`          | Host fetch | Inject for custom transport/authentication or testing.                                                       |
 
-Both methods request SPARQL Results JSON and support SELECT/ASK only. GET preserves endpoint query parameters and replaces its query parameter. HTTP failures reject with `QueryExecutionError`, code `httpError`, and status. Invalid JSON/result shapes reject. `parseSparqlResults(data: unknown): QueryResult` validates and normalizes endpoint results independently.
+Both methods support SELECT/ASK using SPARQL Results JSON, and CONSTRUCT/DESCRIBE using RDF. Graph queries request `application/n-triples, text/turtle;q=0.9`. The query form is recognized after leading comments and BASE/PREFIX declarations. GET preserves endpoint query parameters and replaces its query parameter. HTTP failures reject with `QueryExecutionError`, code `httpError`, and status. Invalid JSON/result shapes reject. `parseSparqlResults(data: unknown): QueryResult` validates and normalizes endpoint results independently.
 
 ## QueryResult
 
@@ -28,12 +28,51 @@ type QueryResult =
       readonly variables: readonly string[];
       readonly bindings: readonly Binding[];
     }
-  | { readonly kind: 'boolean'; readonly value: boolean };
+  | { readonly kind: 'boolean'; readonly value: boolean }
+  | { readonly kind: 'graph'; readonly triples: readonly RdfTriple[] };
 ```
 
 `Binding` maps variable names without sigils to `BindingTerm`. Unbound variables are absent. A term has readonly `type` (uri, bnode, literal or typed-literal), `value: string`, optional `datatype: string`, and optional `'xml:lang': string`.
 
-`@ldforge/renderers` exports `createTableRenderer()`, `createBooleanRenderer()`, and `createJsonRenderer()`. JSON renders the normalized result model, not the endpoint's raw response. Table cells use text, and boolean/table captions follow editor locale.
+`@ldforge/renderers` exports `createTableRenderer()`, `createCardsRenderer(options?)`, `createBooleanRenderer()`, and `createJsonRenderer()`. JSON renders the normalized result model, not the endpoint's raw response. Table cells use text, and boolean/table captions follow editor locale.
+
+## RDF graph execution
+
+CONSTRUCT and DESCRIBE return `kind: 'graph'`, with a readonly `triples` array. `RdfTriple` has `subject`, `predicate` and `object` fields, each represented as a `BindingTerm`. Subjects are URI or blank-node terms, predicates are URIs, and objects can also be literals. Language tags and literal datatypes are retained. Duplicate triples are removed. Blank-node labels are local to the parsed response.
+
+```sparql
+CONSTRUCT { ?s ?p ?o }
+WHERE { ?s ?p ?o }
+LIMIT 10
+```
+
+The Table renderer displays `subject`, `predicate` and `object` columns; JSON exposes the normalized graph. Status reports the triple count and execution duration. CSV exports those three columns using the existing lexical-value rules. Cards and Charts do not interpret graph results as their named SELECT bindings.
+
+Core exports:
+
+- `isGraphQuery(query: string): boolean`: recognizes CONSTRUCT/DESCRIBE after leading comments, whitespace and BASE/PREFIX declarations.
+- `parseRdfGraph(source: string, mediaType?: string, baseIRI?: string): Promise<Extract<QueryResult, { kind: 'graph' }>>`: parses Turtle (default) or N-Triples, rejects invalid RDF and unsupported media types, and uses the optional base IRI to resolve relative IRIs.
+- `graphToBindings(result)`: projects a graph result to normalized SELECT-style bindings with `subject`, `predicate`, `object` columns without losing term metadata.
+
+The HTTP executor uses the RDF response's Content-Type to choose the parser. It accepts `text/turtle` (including common Turtle MIME aliases), `application/n-triples`, and `text/plain` as N-Triples. A missing MIME type is parsed as Turtle, which also accepts N-Triples syntax. RDF/XML and JSON-LD are not accepted; the endpoint should honor the advertised Turtle/N-Triples formats. Named-graph datasets and quoted triple terms are outside this graph result model.
+
+The N3 browser parser is dynamically imported only for RDF graph responses. Bundlers emit a separate lazy chunk; it is not part of initial SELECT/ASK loading. Unlike the optional chart CDN runtime, this parser dependency is installed with core and self-hosted by the application build. Parsing includes RDF validation and does not fetch linked IRIs.
+
+## CSV export
+
+The result toolbar provides an icon button labeled **Download CSV** (**CSV downloaden** in Dutch). It downloads `results.csv` locally, with UTF-8 content and media type `text/csv;charset=utf-8`. It appears only for a successful result, independently of whether a renderer supports it. Starting another query, cancelling, errors or changing query tabs clears the previous result and hides the download. Set `controls: { download: false }` to hide it.
+
+The export always includes the complete result, regardless of the selected renderer. Graph results use subject/predicate/object columns. SELECT uses the declared variable order as column headers, one row per binding, empty fields for unbound values, absolute URI values and `_:`-prefixed blank-node identifiers. Commas, double quotes and line breaks are escaped with CSV quoting; records use CRLF. Empty results still include their headers. ASK exports a `boolean` column with one `true` or `false` row; these machine values are not localized.
+
+CSV retains lexical values but does not encode datatype or language metadata. Values are exported unchanged, including spreadsheet formula-like text. Use the normalized JSON model when RDF term metadata is required.
+
+`serializeResultsCsv(result: QueryResult): string` is exported by `@ldforge/core` for host-owned downloads or server use. It performs no DOM or network operations:
+
+```ts
+import { serializeResultsCsv } from '@ldforge/core';
+const csv = serializeResultsCsv({ kind: 'boolean', value: true });
+// "boolean\r\ntrue\r\n"
+```
 
 ## QueryState
 

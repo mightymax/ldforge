@@ -1,0 +1,34 @@
+# Public defaults contain no installation-specific domains or analytics IDs.
+replicaCount: 1
+image:
+  repository: ghcr.io/example/ldforge-demo
+  tag: replace-with-immutable-tag
+  digest: ''
+  pullPolicy: IfNotPresent
+imagePullSecrets: []
+nodeSelector: {}
+# Recreate avoids mixed asset hashes from different image versions during rollout.
+# It introduces a brief outage; see docs/deployment.md for HA/asset retention.
+strategy:
+  type: Recreate
+service:
+  port: 80
+resources:
+  requests:
+    cpu: 25m
+    memory: 32Mi
+  limits:
+    cpu: 500m
+    memory: 128Mi
+ingress:
+  enabled: false
+  className: ''
+  annotations: {}
+  host: demo.example.org
+  tls:
+    enabled: false
+    secretName: ''
+analytics:
+  enabled: false
+  scriptUrl: ''
+  websiteId: ''

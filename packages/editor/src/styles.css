@@ -82,33 +82,119 @@
   background: #f5f8f7;
   border-right: 1px solid var(--ldforge-border);
 }
-.ldforge-status {
-  margin: 0;
-  padding: 12px 16px;
-  background: #f5f8f7;
+/* Compact result controls share one quiet bar, distinct from query tabs. */
+.ldforge-result-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 49px;
+  padding: 0 12px;
   border-block: 1px solid var(--ldforge-border);
+  background: #fafcfb;
 }
-.ldforge > label {
-  display: block;
-  padding: 12px 16px;
+.ldforge-result-tabs {
+  display: flex;
+  align-self: stretch;
+  gap: 4px;
+  overflow-x: auto;
+  min-width: 0;
 }
-.ldforge > label[hidden] {
+.ldforge-result-tabs > button {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  flex-shrink: 0;
+  padding: 11px 9px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: #65756f;
+  font-size: 12px;
+  white-space: nowrap;
+  box-shadow: inset 0 -2px transparent;
+}
+.ldforge-result-tabs > button[aria-selected='true'] {
+  color: var(--ldforge-accent);
+  box-shadow: inset 0 -2px var(--ldforge-accent);
+  font-weight: 600;
+}
+.ldforge-result-tabs > button:hover {
+  background: #edf4f1;
+}
+.ldforge-result-tabs > button:focus-visible {
+  outline-offset: -3px;
+}
+.ldforge-status {
+  margin: 0 0 0 auto;
+  overflow-wrap: anywhere;
+  padding: 10px 0;
+  min-width: 0;
+}
+.ldforge-renderer-docs,
+.ldforge-result-toolbar > .ldforge-result-download {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  padding: 7px;
+  border-color: transparent;
+  background: transparent;
+}
+.ldforge-renderer-docs:hover,
+.ldforge-result-download:hover {
+  background: #edf4f1;
+}
+.ldforge-icon {
+  width: 17px;
+  height: 17px;
+  flex-shrink: 0;
+  pointer-events: none;
+}
+.ldforge-core-actions button,
+.ldforge-custom-actions button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+}
+.ldforge-renderer-docs[hidden],
+.ldforge-result-tabs[hidden],
+.ldforge-result-download[hidden] {
   display: none;
+}
+@media (max-width: 540px) {
+  .ldforge-result-toolbar {
+    flex-wrap: wrap;
+    gap: 0 8px;
+  }
+  .ldforge-result-tabs {
+    flex: 1;
+  }
+  .ldforge-result-toolbar > .ldforge-status {
+    order: 3;
+    flex-basis: 100%;
+    padding: 5px 0 8px;
+  }
 }
 .ldforge-results {
   overflow: auto;
-  padding: 0 16px 16px;
+  padding: 12px 16px 16px;
   max-height: 480px;
 }
 .ldforge table {
-  border-collapse: collapse;
+  border-collapse: separate;
+  border-spacing: 0;
   width: 100%;
   text-align: left;
 }
 .ldforge caption {
-  text-align: left;
-  padding: 8px 0;
-  color: #526662;
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }
 .ldforge th,
 .ldforge td {
@@ -118,7 +204,44 @@
   overflow-wrap: anywhere;
 }
 .ldforge th {
+  position: sticky;
+  top: -12px;
+  background: #f2f6f4;
+  font-size: 12px;
+  font-weight: 600;
+  color: #526662;
+}
+.ldforge tbody tr:nth-child(even) {
+  background: #fafcfb;
+}
+.ldforge tbody tr:hover {
+  background: #f0f6f3;
+}
+.ldforge-results td {
+  font-size: 13px;
+}
+.ldforge-boolean {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: 8px 0 0;
+  padding: 8px 14px;
   background: #edf4f1;
+  border-radius: 8px;
+  font-weight: 600;
+  color: var(--ldforge-accent);
+}
+.ldforge-boolean[data-value='false'] {
+  background: #f2f4f3;
+  color: #65756f;
+}
+.ldforge-results pre {
+  margin: 0;
+  padding: 14px 16px;
+  border: 1px solid #e6ece9;
+  border-radius: 8px;
+  background: #fafcfb;
+  font-size: 12px;
 }
 .ldforge pre {
   white-space: pre-wrap;
@@ -378,5 +501,156 @@
 .ldforge-tabs[hidden],
 .ldforge-language[hidden],
 .ldforge-language-help[hidden] {
+  display: none;
+}
+
+.ldforge-renderer-docs {
+  color: #65756f;
+  border-radius: 6px;
+}
+
+.ldforge-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(240px, 100%), 1fr));
+  gap: 16px;
+  align-items: start;
+}
+.ldforge-card {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid var(--ldforge-border);
+  border-radius: 10px;
+  background: #fff;
+  color: #182e2b;
+  box-shadow: 0 2px 6px #183c3506;
+}
+.ldforge-card > img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  object-fit: cover;
+  background: #edf4f1;
+}
+.ldforge-card-body {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 16px;
+  overflow-wrap: anywhere;
+}
+.ldforge-card-body h3 {
+  margin: 0;
+  font-size: 16px;
+  line-height: 1.4;
+  font-weight: 650;
+}
+.ldforge-card-body p {
+  color: inherit;
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.65;
+  white-space: pre-line;
+}
+.ldforge-card-button {
+  display: inline-flex;
+  max-width: 100%;
+  margin-top: 4px;
+  padding: 6px 11px;
+  border: 1px solid var(--ldforge-border);
+  border-radius: 6px;
+  background: #f2f7f4;
+  color: var(--ldforge-accent);
+  font-size: 12px;
+  font-weight: 600;
+  text-decoration: none;
+}
+.ldforge-card-button:hover {
+  background: #e5f0ea;
+}
+
+.ldforge-chart > h3 {
+  margin: 0 0 16px;
+  font-size: 16px;
+  font-weight: 600;
+}
+.ldforge-chart > p {
+  font-size: 12px;
+  color: #526662;
+}
+.ldforge-chart details {
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid var(--ldforge-border);
+  font-size: 12px;
+}
+.ldforge-chart summary {
+  cursor: pointer;
+  color: var(--ldforge-accent);
+  margin-bottom: 12px;
+}
+
+.ldforge-toolbar-dropdown {
+  display: inline-flex;
+  max-width: 100%;
+}
+.ldforge-toolbar-dropdown > button,
+.ldforge-standalone-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12px;
+  white-space: nowrap;
+}
+.ldforge-toolbar-dropdown > button {
+  padding: 7px 12px;
+  border-radius: 8px;
+}
+.ldforge-dropdown-chevron {
+  width: 14px;
+  height: 14px;
+  margin-left: 4px;
+}
+.ldforge-toolbar-menu {
+  position: fixed;
+  inset: auto;
+  margin: 0;
+  padding: 5px;
+  z-index: 1000;
+  border: 1px solid var(--ldforge-border);
+  border-radius: 9px;
+  background: #fff;
+  color: #182e2b;
+  box-shadow: 0 8px 28px #183c3526;
+  overflow: auto;
+  overscroll-behavior: contain;
+  box-sizing: border-box;
+}
+.ldforge-toolbar-menu > button {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 9px 10px;
+  border: 0;
+  border-radius: 5px;
+  background: transparent;
+  text-align: left;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  font-size: 12px;
+}
+.ldforge-toolbar-menu > button:hover:not(:disabled),
+.ldforge-toolbar-menu > button:focus-visible {
+  background: #edf4f1;
+  outline-offset: -2px;
+}
+.ldforge-toolbar-menu[hidden],
+.ldforge-toolbar-dropdown[hidden],
+.ldforge-button-group[hidden],
+.ldforge button[hidden] {
   display: none;
 }

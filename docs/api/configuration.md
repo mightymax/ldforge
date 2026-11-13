@@ -1,6 +1,6 @@
 # Editor configuration
 
-`createEditor(container, options)` accepts an `HTMLElement` and an `EditorOptions` object. Configuration is read at mount time. Recreate the editor to change plugin sets or control visibility. Query text, tabs and language have runtime methods.
+`createEditor(container, options)` accepts an `HTMLElement` and an `EditorOptions` object. Configuration is read at mount time. Recreate the editor to change result/settings plugin sets or built-in control visibility. Toolbar actions and groups can also change through `editor.getToolBar()`. Query text, tabs and language have runtime methods.
 
 ## EditorOptions
 
@@ -13,6 +13,7 @@
 | `locale`            | `'auto' \| 'en' \| 'nl'`                 | `'auto'`             | Project default. Auto uses the first supported browser language, then English.                                                                                                       |
 | `userLocale`        | `'auto' \| 'en' \| 'nl'`                 | `'auto'`             | Restored user override. Auto follows the project setting.                                                                                                                            |
 | `sparql`            | `SparqlOptions`                          | Built-in catalogs    | Namespace and predicate completion configuration.                                                                                                                                    |
+| `toolbar`           | `ToolbarOptions`                         | `{}`                 | Optional custom group presentation and initial group actions. Existing groups stay adjacent buttons unless configured as dropdowns; see [Toolbar](toolbar.md).                       |
 | `buttons`           | `readonly ButtonPlugin[]`                | Run and Cancel       | Replaces the default action list. Include the built-in factories to retain those actions.                                                                                            |
 | `renderers`         | `readonly ResultRendererPlugin[]`        | `[]`                 | Ordered result views. No implicit renderer is installed.                                                                                                                             |
 | `settings`          | `readonly SettingsPlugin[]`              | `[]`                 | Host-owned panels under the gear button. Not mounted when `controls.settings` is false.                                                                                              |
@@ -28,18 +29,20 @@ Callbacks are synchronous host code. Keep them short and handle storage failures
 
 Every property is optional and defaults to `true`.
 
-| Property    | Shows or hides                                                                     |
-| ----------- | ---------------------------------------------------------------------------------- |
-| `run`       | The action with reserved ID `run`, including `createRunButton()`.                  |
-| `cancel`    | The action with reserved ID `cancel`, including `createCancelButton()`.            |
-| `prefixes`  | Prefix search icon and its entry point.                                            |
-| `format`    | Format-query icon.                                                                 |
-| `settings`  | Gear icon and settings plugin mounting. Hides access to the language selector too. |
-| `language`  | Built-in language field inside settings; other settings stay available.            |
-| `tabs`      | Entire tab strip. Multiple tabs remain available through the API.                  |
-| `addTab`    | Plus button in the tab strip.                                                      |
-| `renameTab` | Rename icon and double-click renaming.                                             |
-| `closeTab`  | Tab close buttons.                                                                 |
+| Property                | Shows or hides                                                                                              |
+| ----------------------- | ----------------------------------------------------------------------------------------------------------- |
+| `rendererDocumentation` | Book-icon link to the selected renderer’s usage guide, when its plugin provides a valid `documentationUrl`. |
+| `download`              | CSV download icon in the result toolbar; shown only for successful results.                                 |
+| `run`                   | The action with reserved ID `run`, including `createRunButton()`.                                           |
+| `cancel`                | The action with reserved ID `cancel`, including `createCancelButton()`.                                     |
+| `prefixes`              | Prefix search icon and its entry point.                                                                     |
+| `format`                | Format-query icon.                                                                                          |
+| `settings`              | Gear icon and settings plugin mounting. Hides access to the language selector too.                          |
+| `language`              | Built-in language field inside settings; other settings stay available.                                     |
+| `tabs`                  | Entire tab strip. Multiple tabs remain available through the API.                                           |
+| `addTab`                | Plus button in the tab strip.                                                                               |
+| `renameTab`             | Rename icon and double-click renaming.                                                                      |
+| `closeTab`              | Tab close buttons.                                                                                          |
 
 The core tools group is ordered **Prefixes → Format query → Settings**, with icons, localized accessible names and tooltips. Run/Cancel are separate from custom project actions. Custom plugin buttons use their `group` identifier; a project cannot accidentally merge its buttons into the core action group just by using the same group name.
 

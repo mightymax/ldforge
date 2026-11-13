@@ -1,12 +1,20 @@
-import { translate, resolveLocale } from '@ldforge/core';
+import {
+  translate,
+  resolveLocale,
+  createSvgIcon,
+  graphToBindings,
+} from '@ldforge/core';
 import type { ResultRendererPlugin } from '@ldforge/core';
 
 export function createTableRenderer(): ResultRendererPlugin {
   return {
     id: 'table',
+    documentationUrl: 'https://ldforge.nl/plugins.html#table',
+    icon: createSvgIcon(['M3 3h18v18H3zM3 9h18M9 9v12']),
     label: { en: 'Table', nl: 'Tabel' },
-    supports: (result) => result.kind === 'bindings',
+    supports: (result) => result.kind === 'bindings' || result.kind === 'graph',
     render(container, result, context) {
+      if (result.kind === 'graph') result = graphToBindings(result);
       if (result.kind !== 'bindings') return;
       const doc = container.ownerDocument;
       const table = doc.createElement('table');
@@ -47,11 +55,15 @@ export function createTableRenderer(): ResultRendererPlugin {
 export function createBooleanRenderer(): ResultRendererPlugin {
   return {
     id: 'boolean',
+    documentationUrl: 'https://ldforge.nl/plugins.html#boolean',
+    icon: createSvgIcon(['m5 12 4 4L19 6']),
     label: { en: 'Boolean', nl: 'Booleaans' },
     supports: (result) => result.kind === 'boolean',
     render(container, result, context) {
       if (result.kind !== 'boolean') return;
       const output = container.ownerDocument.createElement('p');
+      output.className = 'ldforge-boolean';
+      output.dataset.value = String(result.value);
       output.textContent = translate(
         context?.locale ?? resolveLocale(),
         result.value ? 'true' : 'false',
@@ -64,6 +76,8 @@ export function createBooleanRenderer(): ResultRendererPlugin {
 export function createJsonRenderer(): ResultRendererPlugin {
   return {
     id: 'json',
+    documentationUrl: 'https://ldforge.nl/plugins.html#json',
+    icon: createSvgIcon(['M8 3H6v7l-3 2 3 2v7h2M16 3h2v7l3 2-3 2v7h-2']),
     label: 'JSON',
     supports: () => true,
     render(container, result) {
@@ -73,3 +87,6 @@ export function createJsonRenderer(): ResultRendererPlugin {
     },
   };
 }
+
+export { createCardsRenderer } from './cards.js';
+export type { CardsRendererOptions } from './cards.js';

@@ -1,11 +1,11 @@
 # LDForge API
 
-Build an embeddable SPARQL IDE with explicit configuration, live query tabs and independent result renderers. This reference describes the public API shipped by the four `@ldforge/*` packages.
+Build an embeddable SPARQL IDE with explicit configuration, live query tabs and independent result renderers. This reference describes the public API shipped by the five `@ldforge/*` packages.
 
 ## Install
 
 ```sh
-npm install @ldforge/core @ldforge/editor @ldforge/renderers @ldforge/prefixes
+npm install @ldforge/core @ldforge/editor @ldforge/renderers @ldforge/prefixes @ldforge/charts
 ```
 
 Use an ESM browser application with CSS imports, such as Vite. No UI framework is required. Repository development and release instructions are separate from consumer installation.
@@ -17,9 +17,11 @@ Add `<div id="query-editor"></div>` to your page. The following is a complete Ty
 <!-- typecheck -->
 
 ```ts
-import { createHttpExecutor } from '@ldforge/core';
+import { createHttpExecutor, createSvgIcon } from '@ldforge/core';
+import { createChartRenderer } from '@ldforge/charts';
 import { createEditor } from '@ldforge/editor';
 import {
+  createCardsRenderer,
   createTableRenderer,
   createBooleanRenderer,
   createJsonRenderer,
@@ -36,10 +38,16 @@ const editor = createEditor(container, {
   }),
   query: 'select * where { ?s ?p ?o } limit 10',
   locale: 'auto',
-  controls: { prefixes: true, format: true, settings: true },
+  controls: { prefixes: true, format: true, settings: true, download: true },
   sparql: { prefixes },
   renderers: [
-    createTableRenderer(),
+    {
+      ...createTableRenderer(),
+      icon: createSvgIcon(['M3 3h18v18H3zM3 9h18M9 9v12']),
+      documentationUrl: 'https://your-project.example/plugins/table',
+    },
+    createCardsRenderer(),
+    createChartRenderer(),
     createBooleanRenderer(),
     createJsonRenderer(),
   ],
@@ -48,6 +56,22 @@ const editor = createEditor(container, {
     console.log(workspace.activeId);
   },
 });
+
+// Opt-in dropdowns and runtime toolbar actions:
+const menuBar = editor.getToolBar();
+const examples = menuBar.addButtonGroup({
+  id: 'project.examples',
+  type: 'dropdown',
+  label: 'Example queries',
+});
+const ask = menuBar.createButton({
+  id: 'project.ask',
+  label: 'ASK example',
+  execute(context) {
+    context.setQuery('ASK { ?s ?p ?o }');
+  },
+});
+examples.addButton(ask);
 
 const tabs = editor.getTabs();
 const first = tabs[0];
@@ -71,16 +95,17 @@ people?.activate();
 
 ## Object model
 
-| Object                        | Purpose                                                | Reference                             |
-| ----------------------------- | ------------------------------------------------------ | ------------------------------------- |
-| `EditorOptions`               | Initial configuration, controls, plugins and callbacks | [Configuration](configuration.md)     |
-| `ForgeEditor`                 | One mounted IDE with one CodeMirror view               | [Editor](editor.md)                   |
-| `TabCollection`               | Live, indexable collection of query-tab handles        | [Tabs](tabs.md)                       |
-| `QueryTabHandle`              | A stable tab identity with query and prefix methods    | [Query tab](tab.md)                   |
-| `QueryWorkspace`              | Serializable plain data for host persistence           | [Tabs](tabs.md#persistence)           |
-| `PrefixEntry` / namespace map | Common vocabulary namespace data                       | [Prefixes](prefixes.md)               |
-| Plugin contracts              | Additional actions, result views and settings          | [Plugins](plugins.md)                 |
-| Execution and results         | HTTP transport, cancellation and RDF result data       | [Transport and results](transport.md) |
+| Object                                | Purpose                                                | Reference                             |
+| ------------------------------------- | ------------------------------------------------------ | ------------------------------------- |
+| `EditorOptions`                       | Initial configuration, controls, plugins and callbacks | [Configuration](configuration.md)     |
+| `ForgeEditor`                         | One mounted IDE with one CodeMirror view               | [Editor](editor.md)                   |
+| `ToolbarApi` / button & group handles | Live actions, adjacent groups and dropdown menus       | [Toolbar](toolbar.md)                 |
+| `TabCollection`                       | Live, indexable collection of query-tab handles        | [Tabs](tabs.md)                       |
+| `QueryTabHandle`                      | A stable tab identity with query and prefix methods    | [Query tab](tab.md)                   |
+| `QueryWorkspace`                      | Serializable plain data for host persistence           | [Tabs](tabs.md#persistence)           |
+| `PrefixEntry` / namespace map         | Common vocabulary namespace data                       | [Prefixes](prefixes.md)               |
+| Plugin contracts                      | Additional actions, result views and settings          | [Plugins](plugins.md)                 |
+| Execution and results                 | HTTP transport, cancellation and RDF result data       | [Transport and results](transport.md) |
 
 ## Design rules
 
