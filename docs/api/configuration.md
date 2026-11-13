@@ -112,3 +112,11 @@ const buttons = [
   },
 ];
 ```
+
+## Responsive query actions
+
+At viewport widths of 540px or less, the built-in Run action shows only its icon
+with a 44px touch target, and Cancel is hidden. Run keeps its localized accessible
+name and tooltip. Above that breakpoint both labels and Cancel are shown as
+usual. A custom Run action without an icon retains its label. These styles apply
+to the IDE's core actions, not custom button groups or dropdown menu items.

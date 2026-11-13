@@ -65,6 +65,17 @@ try {
     fullPage: true,
   });
   await page.setViewportSize({ width: 390, height: 844 });
+  const run = page.getByRole('button', { name: 'Run query', exact: true });
+  assert.equal(await run.isVisible(), true);
+  assert.equal(await run.locator('.ldforge-button-label').isVisible(), false);
+  assert.equal(
+    await page.getByRole('button', { name: 'Cancel', exact: true }).isVisible(),
+    false,
+  );
+  await page.screenshot({
+    path: fileURLToPath(new URL('../.local/cdn-mobile.png', import.meta.url)),
+    fullPage: true,
+  });
   assert.ok(
     await page.evaluate(
       () => document.documentElement.scrollWidth <= window.innerWidth,

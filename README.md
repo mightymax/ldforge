@@ -27,13 +27,13 @@ The IDE follows the first supported browser language (English or Dutch), with En
 
 Try the **[live Wikidata cat grid](https://ldforge.nl/wikidata-cats.html)**, or copy
 [examples/wikidata-cats.html](examples/wikidata-cats.html) to your own static site.
-It loads the published `0.1.1` JavaScript packages from esm.sh with
+It loads the published `0.1.2` JavaScript packages from esm.sh with
 `?standalone` and the stylesheet from jsDelivr, executes a real Wikidata query
 over GET, and renders the results with `createCardsRenderer()`. No import map,
 npm install, Node server, API key, or framework is needed. Serve the file over
 HTTP(S), for example with `python3 -m http.server 8080 --directory examples`.
 
-Use `https://esm.sh/@ldforge/editor@0.1.1?standalone` for the browser-ready
+Use `https://esm.sh/@ldforge/editor@0.1.2?standalone` for the browser-ready
 editor: the CDN bundles its dependencies together, keeping CodeMirror on a single
 instance. The example pins all LDForge imports to the same version. Change those
 URLs together when upgrading and run `npm run test:cdn` to verify the real CDN

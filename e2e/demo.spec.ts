@@ -902,3 +902,26 @@ test('collapses PREFIX declarations in the gutter without changing the executabl
   await expect(query).toHaveText(original ?? '');
   expect(errors).toEqual([]);
 });
+
+test('uses an accessible icon-only Run action and hides Cancel on mobile', async ({
+  page,
+}) => {
+  await page.goto('/');
+  const run = page.getByRole('button', { name: 'Run query', exact: true });
+  const cancel = page.getByRole('button', { name: 'Cancel', exact: true });
+  await expect(run.locator('.ldforge-button-label')).toBeVisible();
+  await expect(cancel).toBeVisible();
+  await page.setViewportSize({ width: 390, height: 844 });
+  await expect(run).toBeVisible();
+  await expect(run.locator('.ldforge-button-label')).toBeHidden();
+  await expect(run.locator('svg')).toBeVisible();
+  await expect(cancel).toBeHidden();
+  const bounds = await run.boundingBox();
+  expect(bounds?.width).toBeGreaterThanOrEqual(44);
+  expect(bounds?.height).toBeGreaterThanOrEqual(44);
+  await run.click();
+  await expect(page.getByRole('table')).toContainText('Amsterdam');
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await expect(run.locator('.ldforge-button-label')).toBeVisible();
+  await expect(cancel).toBeVisible();
+});

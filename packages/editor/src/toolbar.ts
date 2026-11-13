@@ -201,6 +201,7 @@ export function createToolbar(
       throw new Error(`Duplicate or empty toolbar button: ${plugin.id}`);
     const element = doc.createElement('button');
     element.type = 'button';
+    element.dataset.toolbarButton = plugin.id;
     const record = {
       plugin: { ...plugin },
       element,
@@ -449,11 +450,20 @@ export function createToolbar(
     if (disposed) return;
     const locale = host.getLocale();
     for (const record of buttons.values()) {
-      record.element.textContent = localize(record.plugin.label, locale);
+      const label = localize(record.plugin.label, locale);
+      const text = doc.createElement('span');
+      text.className = 'ldforge-button-label';
+      text.textContent = label;
+      record.element.replaceChildren(text);
+      record.element.setAttribute('aria-label', label);
+      record.element.classList.toggle(
+        'ldforge-button-has-icon',
+        Boolean(record.plugin.icon),
+      );
       appendIcon(record.element, record.plugin.icon);
       record.element.title = record.plugin.title
         ? localize(record.plugin.title, locale)
-        : '';
+        : label;
       record.element.disabled =
         record.plugin.isDisabled?.(host.context) ?? false;
       record.element.hidden = !host.isVisible(record.plugin);

@@ -163,6 +163,17 @@
   display: none;
 }
 @media (max-width: 540px) {
+  .ldforge-core-actions [data-toolbar-button='run'].ldforge-button-has-icon {
+    width: 44px;
+    min-height: 44px;
+    padding: 10px;
+  }
+  .ldforge-core-actions
+    [data-toolbar-button='run'].ldforge-button-has-icon
+    .ldforge-button-label,
+  .ldforge-core-actions [data-toolbar-button='cancel'] {
+    display: none;
+  }
   .ldforge-result-toolbar {
     flex-wrap: wrap;
     gap: 0 8px;
