@@ -24,3 +24,13 @@ Chart tests validate numeric bindings, series/category ordering, duplicate aggre
 ## Deployment checks
 
 Deployment tooling is optional for library contributors. With Helm and Docker installed, run `npm run deploy:check`, `npm run deploy:image:build` and `npm run deploy:test`. These check Helm rendering and real Nginx containers, including non-root/read-only execution, correct asset caching/404 behavior and opt-in analytics. They do not publish an image or contact a Kubernetes cluster. The smoke test uses dummy tracking settings and removes its temporary containers. The ordinary `npm run check` remains usable without Helm or Docker.
+
+## Published CDN example (optional, requires internet)
+
+Run `npm run test:cdn` after installing Playwright Chromium. This starts a tiny
+local static server for `examples/wikidata-cats.html`, loads the actual published
+packages from jsDelivr, executes the live Wikidata query, and checks twelve titled
+cards, image loading, browser errors and mobile overflow. The desktop screenshot
+is saved to `.local/cdn-example.png`. Run it when updating CDN versions or the
+example's import map. It is intentionally separate from CI: availability of
+jsDelivr, Wikidata and Wikimedia Commons should not determine release tests.

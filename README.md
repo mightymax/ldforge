@@ -23,6 +23,27 @@ Create queries with **+**, switch tabs, and rename a tab by double-clicking its 
 
 The IDE follows the first supported browser language (English or Dutch), with English fallback. A project can set `locale`; a user choice under the gear button takes precedence and is remembered by the demo. Demo introduction and integration documentation remain in English. Query completion reports a compact count and elapsed execution time, such as `3 results in 124 ms` or `3 resultaten in 1,25 s`.
 
+## One HTML file, no build step
+
+Try the **[live Wikidata cat grid](https://ldforge.nl/wikidata-cats.html)**, or copy
+[examples/wikidata-cats.html](examples/wikidata-cats.html) to your own static site.
+It loads the published `0.1.1` packages and stylesheet from jsDelivr, executes a
+real Wikidata query over GET, and renders the results with `createCardsRenderer()`.
+No npm install, Node server, API key, or framework is needed. Serve the file over
+HTTP(S), for example with `python3 -m http.server 8080 --directory examples`.
+
+Use `https://cdn.jsdelivr.net/npm/@ldforge/editor@0.1.1/+esm` for browser ESM;
+the plain `dist/index.js` file contains bare imports and needs a bundler or import
+map. Load the CSS separately from
+`https://cdn.jsdelivr.net/npm/@ldforge/editor@0.1.1/dist/styles.css`.
+Keep the example’s import map: it makes jsDelivr’s transitive CodeMirror and
+Lezer imports share the same instances. Without it, mixed dependency versions
+can prevent the editor from starting.
+The example pins every LDForge import to the same published version. Change those
+URLs together when upgrading. CDN access and the public endpoint require an
+internet connection. `# view=cards` selects the renderer; `card_title`,
+`card_text`, `card_image`, `card_button` and `card_button_url` supply each card.
+
 ## Packages
 
 | Package              | Responsibility                                                                                              |

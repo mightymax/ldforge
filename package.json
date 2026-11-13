@@ -35,7 +35,8 @@
     "deploy:check": "node scripts/check-deployment.mjs",
     "deploy:image:build": "docker build --tag ldforge-demo:local .",
     "deploy:test": "node scripts/test-deployment.mjs",
-    "test:gitops": "node --test tests/gitops.test.mjs"
+    "test:gitops": "node --test tests/gitops.test.mjs",
+    "test:cdn": "node scripts/test-cdn-example.mjs"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

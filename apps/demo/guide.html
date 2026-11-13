@@ -40,6 +40,46 @@
         ><a href="#lifecycle">05 / Connect your host</a>
         <a href="#workspace">06 / Tabs and language</a>
       </nav>
+      <section class="guide-section" id="cdn">
+        <p class="eyebrow">NO BUILD STEP</p>
+        <h2>Start with a single HTML file</h2>
+        <p>
+          <a href="./wikidata-cats.html">Try the live Wikidata cat grid</a>,
+          then download its HTML or
+          <a
+            href="https://github.com/mightymax/ldforge/blob/main/examples/wikidata-cats.html"
+            >copy the source</a
+          >
+          into your own static site. No npm, framework, API key or Node server
+          is required. Serve the file over HTTP(S).
+        </p>
+        <p>
+          Three version-pinned jsDelivr imports provide the HTTP executor,
+          editor and cards renderer. Load the editor stylesheet separately:
+        </p>
+        <pre><code>import { createHttpExecutor } from 'https://cdn.jsdelivr.net/npm/@ldforge/core@0.1.1/+esm';
+import { createEditor } from 'https://cdn.jsdelivr.net/npm/@ldforge/editor@0.1.1/+esm';
+import { createCardsRenderer } from 'https://cdn.jsdelivr.net/npm/@ldforge/renderers@0.1.1/+esm';</code></pre>
+        <pre><code>&lt;link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@ldforge/editor@0.1.1/dist/styles.css" /&gt;</code></pre>
+        <p>
+          Use <code>+esm</code> for browser-ready modules, and keep all LDForge
+          URLs on the same version. Copy the example’s import map too: it keeps
+          CodeMirror and Lezer dependencies shared across CDN modules. The
+          example connects to
+          <code>https://query.wikidata.org/sparql</code> using GET and calls
+          <code>editor.run()</code> once on load. Remove that call to wait for a
+          click on Run query. Internet access is required.
+        </p>
+        <p>
+          The query selects twelve domestic cats with images. Its
+          <code># view=cards</code> header selects the card grid;
+          <code>card_title</code>, <code>card_text</code>,
+          <code>card_image</code>, <code>card_button</code> and
+          <code>card_button_url</code> map the result columns to each card.
+          Links to Wikidata let visitors find the original images and licenses.
+          The public endpoint may be busy; Run query retries the request.
+        </p>
+      </section>
       <section id="install" class="guide-section">
         <p class="eyebrow">01 / INSTALL</p>
         <h2>Install the npm packages</h2>

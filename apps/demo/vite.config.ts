@@ -4,6 +4,8 @@ import { fileURLToPath } from 'node:url';
 // Resolve source in the workspace: no prebuild or watch process is needed for the demo.
 export default defineConfig({
   base: './',
+  // Ship the standalone CDN examples verbatim, without bundling their imports.
+  publicDir: fileURLToPath(new URL('../../examples', import.meta.url)),
   build: {
     rollupOptions: {
       input: {
