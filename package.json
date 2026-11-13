@@ -1,0 +1,63 @@
+{
+  "name": "ldforge-workspace",
+  "private": true,
+  "type": "module",
+  "license": "EUPL-1.2",
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "dev": "npm run dev -w @ldforge/demo --",
+    "build": "npm run build -w @ldforge/core && npm run build -w @ldforge/prefixes && npm run build -w @ldforge/renderers && npm run build -w @ldforge/editor && npm run build -w @ldforge/demo",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "lint": "eslint . --max-warnings 0",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "test:e2e": "playwright test",
+    "check": "npm run typecheck && npm run lint && npm run format:check && npm run test:coverage && npm run test:release && npm run build && npm run test:docs && npm run test:packages && npm run test:e2e",
+    "test:packages": "node scripts/test-packages.mjs",
+    "test:docs": "node scripts/check-api-docs.mjs",
+    "preversion": "node scripts/release.mjs preversion",
+    "version": "node scripts/release.mjs sync",
+    "postversion": "node scripts/release.mjs push",
+    "release:push": "node scripts/release.mjs push",
+    "release:verify": "node scripts/release.mjs verify-tag",
+    "release:pack": "node scripts/release.mjs pack",
+    "release:publish": "node scripts/release.mjs publish",
+    "test:release": "node --test tests/release.test.mjs"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@playwright/test": "^1.65.0",
+    "@types/node": "^26.6.6",
+    "@vitest/coverage-v8": "^5.1.0",
+    "eslint": "^10.14.0",
+    "jsdom": "^31.0.1",
+    "marked": "^18.2.0",
+    "prettier": "^3.10.1",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.72.2",
+    "vite": "^8.3.8",
+    "vitest": "^5.1.0"
+  },
+  "overrides": {
+    "minimatch": "^11.0.1"
+  },
+  "version": "0.1.0",
+  "description": "Composable open-source SPARQL IDE and TypeScript libraries",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mightymax/ldforge.git"
+  },
+  "homepage": "https://github.com/mightymax/ldforge#readme",
+  "bugs": {
+    "url": "https://github.com/mightymax/ldforge/issues"
+  }
+}

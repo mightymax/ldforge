@@ -1,0 +1,39 @@
+{
+  "name": "@ldforge/renderers",
+  "version": "0.1.0",
+  "description": "LDForge renderers: composable SPARQL tooling",
+  "type": "module",
+  "license": "EUPL-1.2",
+  "files": [
+    "dist",
+    "src",
+    "README.md",
+    "LICENSE"
+  ],
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "preversion": "node ../../scripts/release.mjs reject-workspace"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "dependencies": {
+    "@ldforge/core": "^0.1.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mightymax/ldforge.git",
+    "directory": "packages/renderers"
+  },
+  "homepage": "https://github.com/mightymax/ldforge/tree/main/packages/renderers#readme",
+  "bugs": {
+    "url": "https://github.com/mightymax/ldforge/issues"
+  }
+}

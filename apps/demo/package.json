@@ -1,0 +1,16 @@
+{
+  "name": "@ldforge/demo",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 127.0.0.1",
+    "build": "vite build",
+    "preview": "vite preview --host 127.0.0.1",
+    "preversion": "node ../../scripts/release.mjs reject-workspace"
+  },
+  "dependencies": {
+    "@ldforge/core": "^0.1.0",
+    "@ldforge/editor": "^0.1.0",
+    "@ldforge/renderers": "^0.1.0"
+  }
+}

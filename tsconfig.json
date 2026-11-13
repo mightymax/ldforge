@@ -1,0 +1,22 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "baseUrl": ".",
+    "paths": {
+      "@ldforge/core": ["packages/core/src/index.ts"],
+      "@ldforge/editor": ["packages/editor/src/index.ts"],
+      "@ldforge/renderers": ["packages/renderers/src/index.ts"],
+      "@ldforge/prefixes": ["packages/prefixes/src/index.ts"],
+      "@ldforge/prefixes/*": ["packages/prefixes/src/*.ts"]
+    },
+    "types": ["node", "vite/client"]
+  },
+  "include": [
+    "packages/**/*.ts",
+    "apps/**/*.ts",
+    "tests/**/*.ts",
+    "e2e/**/*.ts",
+    "*.ts"
+  ]
+}

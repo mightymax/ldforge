@@ -1,0 +1,53 @@
+{
+  "name": "@ldforge/editor",
+  "version": "0.1.0",
+  "description": "LDForge editor: composable SPARQL tooling",
+  "type": "module",
+  "license": "EUPL-1.2",
+  "files": [
+    "dist",
+    "src",
+    "docs",
+    "README.md",
+    "LICENSE"
+  ],
+  "sideEffects": [
+    "**/*.css"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./styles.css": "./dist/styles.css"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json && node ../../scripts/build-editor-assets.mjs",
+    "preversion": "node ../../scripts/release.mjs reject-workspace"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "dependencies": {
+    "@codemirror/autocomplete": "^6.20.4",
+    "@codemirror/commands": "^6.11.1",
+    "@codemirror/language": "^6.13.1",
+    "@codemirror/lint": "^6.9.8",
+    "@codemirror/state": "^6.7.6",
+    "@codemirror/view": "^6.43.15",
+    "@ldforge/core": "^0.1.0",
+    "@ldforge/prefixes": "^0.1.0",
+    "@lezer/common": "^1.5.5",
+    "codemirror-lang-sparql": "^2.1.0",
+    "sparql-formatter": "^1.0.2"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mightymax/ldforge.git",
+    "directory": "packages/editor"
+  },
+  "homepage": "https://github.com/mightymax/ldforge/tree/main/packages/editor#readme",
+  "bugs": {
+    "url": "https://github.com/mightymax/ldforge/issues"
+  }
+}
