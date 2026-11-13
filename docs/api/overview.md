@@ -73,6 +73,11 @@ const ask = menuBar.createButton({
 });
 examples.addButton(ask);
 
+// Folding changes presentation only; the complete query stays intact.
+editor.setPrefixesCollapsed(true);
+console.log(editor.arePrefixesCollapsed());
+editor.setPrefixesCollapsed(false);
+
 const tabs = editor.getTabs();
 const first = tabs[0];
 if (first) {

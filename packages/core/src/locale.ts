@@ -22,6 +22,13 @@ export function localize(text: LocalizedText, locale: Locale): string {
 }
 
 const en = {
+  foldLine: 'Fold line',
+  unfoldLine: 'Unfold line',
+  foldedCode: 'Folded code',
+  unfold: 'Unfold',
+  foldedLines: 'Folded lines',
+  unfoldedLines: 'Unfolded lines',
+  toLine: 'to',
   prefixCountLimited:
     'Showing {shown} of {count} namespaces. Refine your search.',
   formatQuery: 'Format query',
@@ -90,6 +97,13 @@ const en = {
   termLanguage: 'Language: {language}',
 };
 const nl: Record<keyof typeof en, string> = {
+  foldLine: 'Regel inklappen',
+  unfoldLine: 'Regel uitklappen',
+  foldedCode: 'Ingeklapte code',
+  unfold: 'Uitklappen',
+  foldedLines: 'Ingeklapte regels',
+  unfoldedLines: 'Uitgeklapte regels',
+  toLine: 'tot',
   prefixCountLimited:
     '{shown} van {count} namespaces getoond. Verfijn je zoekopdracht.',
   formatQuery: 'Query formatteren',

@@ -34,6 +34,17 @@ other.addPrefix('ex', 'https://example.org/');
 // editor.destroy() on host unmount.
 ```
 
+## Collapsible prefixes
+
+Click the gutter arrow beside PREFIX declarations to collapse or expand them.
+Set `prefixesCollapsed: true` to start collapsed, or call
+`editor.setPrefixesCollapsed(true)`, `editor.setPrefixesCollapsed(false)`,
+`editor.togglePrefixes()` and `editor.arePrefixesCollapsed()` at runtime.
+`controls.prefixFolding: false` hides gutter arrows while retaining the API.
+Folding only changes presentation: execution and saved query text stay complete.
+See [ForgeEditor](docs/api/editor.md#collapsible-prefix-declarations) for tab and
+persistence behavior.
+
 ## API reference
 
 The full object-based reference is included in the npm package and rendered by the demo site:

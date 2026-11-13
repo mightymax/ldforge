@@ -6,6 +6,7 @@
 
 | Property            | Type                                     | Default              | Behavior                                                                                                                                                                             |
 | ------------------- | ---------------------------------------- | -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `prefixesCollapsed` | `boolean`                                | `false`              | Initially folds PREFIX declarations on each tab. Fold state is view-only; see [ForgeEditor](editor.md#collapsible-prefix-declarations) for the runtime API.                          |
 | `executor`          | `QueryExecutor`                          | Required             | Runs queries and receives an abort signal.                                                                                                                                           |
 | `query`             | `string`                                 | `''`                 | Initial first-tab text when no valid workspace is restored.                                                                                                                          |
 | `workspace`         | `QueryWorkspace`                         | One tab              | Restored tabs and active ID. Takes precedence over `query`. Invalid runtime data falls back to the initial query. Validate persisted JSON with `parseQueryWorkspace`.                |
@@ -29,20 +30,21 @@ Callbacks are synchronous host code. Keep them short and handle storage failures
 
 Every property is optional and defaults to `true`.
 
-| Property                | Shows or hides                                                                                              |
-| ----------------------- | ----------------------------------------------------------------------------------------------------------- |
-| `rendererDocumentation` | Book-icon link to the selected renderer’s usage guide, when its plugin provides a valid `documentationUrl`. |
-| `download`              | CSV download icon in the result toolbar; shown only for successful results.                                 |
-| `run`                   | The action with reserved ID `run`, including `createRunButton()`.                                           |
-| `cancel`                | The action with reserved ID `cancel`, including `createCancelButton()`.                                     |
-| `prefixes`              | Prefix search icon and its entry point.                                                                     |
-| `format`                | Format-query icon.                                                                                          |
-| `settings`              | Gear icon and settings plugin mounting. Hides access to the language selector too.                          |
-| `language`              | Built-in language field inside settings; other settings stay available.                                     |
-| `tabs`                  | Entire tab strip. Multiple tabs remain available through the API.                                           |
-| `addTab`                | Plus button in the tab strip.                                                                               |
-| `renameTab`             | Rename icon and double-click renaming.                                                                      |
-| `closeTab`              | Tab close buttons.                                                                                          |
+| Property                | Shows or hides                                                                                                              |
+| ----------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| `rendererDocumentation` | Book-icon link to the selected renderer’s usage guide, when its plugin provides a valid `documentationUrl`.                 |
+| `download`              | CSV download icon in the result toolbar; shown only for successful results.                                                 |
+| `run`                   | The action with reserved ID `run`, including `createRunButton()`.                                                           |
+| `cancel`                | The action with reserved ID `cancel`, including `createCancelButton()`.                                                     |
+| `prefixFolding`         | Gutter arrows to fold and unfold PREFIX declarations. Hiding these leaves the folding API and keyboard shortcuts available. |
+| `prefixes`              | Prefix search icon and its entry point.                                                                                     |
+| `format`                | Format-query icon.                                                                                                          |
+| `settings`              | Gear icon and settings plugin mounting. Hides access to the language selector too.                                          |
+| `language`              | Built-in language field inside settings; other settings stay available.                                                     |
+| `tabs`                  | Entire tab strip. Multiple tabs remain available through the API.                                                           |
+| `addTab`                | Plus button in the tab strip.                                                                                               |
+| `renameTab`             | Rename icon and double-click renaming.                                                                                      |
+| `closeTab`              | Tab close buttons.                                                                                                          |
 
 The core tools group is ordered **Prefixes → Format query → Settings**, with icons, localized accessible names and tooltips. Run/Cancel are separate from custom project actions. Custom plugin buttons use their `group` identifier; a project cannot accidentally merge its buttons into the core action group just by using the same group name.
 

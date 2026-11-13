@@ -1,3 +1,10 @@
+import {
+  prefixFolding,
+  prefixFoldRanges,
+  prefixesCollapsed,
+  setPrefixesCollapsed,
+} from './prefix-folding.js';
+import { foldEffect, unfoldEffect, foldKeymap } from '@codemirror/language';
 import { createToolbar } from './toolbar.js';
 import type { ToolbarApi, ToolbarOptions } from './toolbar-types.js';
 export { buttonGroupTypes } from './toolbar-types.js';
@@ -82,6 +89,8 @@ export type {
 export interface EditorOptions {
   readonly executor: QueryExecutor;
   readonly query?: string;
+  /** Initially collapse PREFIX declarations on each tab. Defaults to false. */
+  readonly prefixesCollapsed?: boolean;
   /** Built-in UI visibility; all flags default to true. False hides all built-in controls. */
   readonly controls?: EditorControls | false;
   /** Unknown shorthand prefix notifications; defaults to console.warn. */
@@ -105,6 +114,12 @@ export interface EditorOptions {
   readonly onQueryChange?: (query: string) => void;
 }
 export interface ForgeEditor extends EditorContext {
+  /** Whether every PREFIX group in the active query is folded. False if none. */
+  arePrefixesCollapsed(): boolean;
+  /** Changes presentation only; never edits the query. */
+  setPrefixesCollapsed(collapsed: boolean): void;
+  /** Returns the resulting collapsed state. False when no PREFIX exists. */
+  togglePrefixes(): boolean;
   getToolBar(): ToolbarApi;
   getWorkspace(): QueryWorkspace;
   /** Live indexable collection; handles remain stable across edits and renaming. */
@@ -276,7 +291,21 @@ export function createEditor(
   function assertAlive(): void {
     if (disposed) throw new Error('Editor has been destroyed.');
   }
+  const prefixCollapseByTab = new Map<string, boolean>();
   const context: ForgeEditor = {
+    arePrefixesCollapsed() {
+      assertAlive();
+      return prefixesCollapsed(view.state);
+    },
+    setPrefixesCollapsed(collapsed) {
+      assertAlive();
+      prefixCollapseByTab.set(queryTabs.snapshot().activeId, collapsed);
+      setPrefixesCollapsed(view, collapsed);
+    },
+    togglePrefixes() {
+      context.setPrefixesCollapsed(!context.arePrefixesCollapsed());
+      return context.arePrefixesCollapsed();
+    },
     getToolBar() {
       assertAlive();
       return toolbarView.api;
@@ -336,20 +365,34 @@ export function createEditor(
     },
   };
 
+  function editorLocale(): Extension {
+    return [
+      EditorView.contentAttributes.of({
+        'aria-label': translate(locale, 'query'),
+      }),
+      EditorState.phrases.of({
+        'Fold line': translate(locale, 'foldLine'),
+        'Unfold line': translate(locale, 'unfoldLine'),
+        'folded code': translate(locale, 'foldedCode'),
+        unfold: translate(locale, 'unfold'),
+        'Folded lines': translate(locale, 'foldedLines'),
+        'Unfolded lines': translate(locale, 'unfoldedLines'),
+        to: translate(locale, 'toLine'),
+      }),
+    ];
+  }
+
   function createState(query: string): EditorState {
-    return EditorState.create({
+    let state = EditorState.create({
       doc: query,
       extensions: [
         lineNumbers(),
+        prefixFolding(controls.prefixFolding),
         history(),
         sparqlSupport(options.sparql, () => locale),
         syntaxHighlighting(defaultHighlightStyle),
         EditorView.lineWrapping,
-        localeCompartment.of(
-          EditorView.contentAttributes.of({
-            'aria-label': translate(locale, 'query'),
-          }),
-        ),
+        localeCompartment.of(editorLocale()),
         keymap.of([
           {
             key: 'Mod-Enter',
@@ -358,10 +401,22 @@ export function createEditor(
               return true;
             },
           },
+          ...foldKeymap,
           ...defaultKeymap,
           ...historyKeymap,
         ]),
         EditorView.updateListener.of((update) => {
+          if (
+            update.transactions.some((transaction) =>
+              transaction.effects.some(
+                (effect) => effect.is(foldEffect) || effect.is(unfoldEffect),
+              ),
+            )
+          )
+            prefixCollapseByTab.set(
+              queryTabs.snapshot().activeId,
+              prefixesCollapsed(update.state),
+            );
           if (update.docChanged) {
             queryTabs.update(update.state.doc.toString());
             options.onQueryChange?.(update.state.doc.toString());
@@ -372,6 +427,15 @@ export function createEditor(
         ...(options.extensions ?? []),
       ],
     });
+    if (
+      prefixCollapseByTab.get(queryTabs.snapshot().activeId) ??
+      options.prefixesCollapsed ??
+      false
+    )
+      state = state.update({
+        effects: prefixFoldRanges(state).map((range) => foldEffect.of(range)),
+      }).state;
+    return state;
   }
   const view = new EditorView({
     parent: editorHost,
@@ -756,11 +820,7 @@ export function createEditor(
     languageSelect.value = userLocale;
     status.textContent = formatQueryStatus(controller.state, locale);
     view.dispatch({
-      effects: localeCompartment.reconfigure(
-        EditorView.contentAttributes.of({
-          'aria-label': translate(locale, 'query'),
-        }),
-      ),
+      effects: localeCompartment.reconfigure(editorLocale()),
     });
     refreshButtons();
     renderResult();

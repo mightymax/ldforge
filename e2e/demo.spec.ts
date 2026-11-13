@@ -880,3 +880,25 @@ test('uses configured toolbar dropdowns with keyboard navigation, dismissal and 
       .getByRole('menuitem'),
   ).toHaveText(['Cards example', 'Charts example']);
 });
+
+test('collapses PREFIX declarations in the gutter without changing the executable query', async ({
+  page,
+}) => {
+  const errors: string[] = [];
+  page.on('pageerror', (error) => errors.push(error.message));
+  await page.goto('/');
+  const query = page.getByRole('textbox', {
+    name: 'SPARQL query',
+    exact: true,
+  });
+  const original = await query.textContent();
+  await page.getByTitle('Fold line', { exact: true }).first().click();
+  await expect(page.locator('.cm-foldPlaceholder')).toHaveText('…');
+  await page.getByRole('button', { name: 'Run query', exact: true }).click();
+  await expect(page.getByRole('table')).toContainText('Amsterdam');
+  // Folding never replaces the full prefix declarations in the query document.
+  await page.getByTitle('Unfold', { exact: true }).click();
+  await expect(page.locator('.cm-foldPlaceholder')).toHaveCount(0);
+  await expect(query).toHaveText(original ?? '');
+  expect(errors).toEqual([]);
+});

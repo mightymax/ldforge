@@ -5,6 +5,7 @@ export interface EditorControls {
   readonly run?: boolean;
   readonly cancel?: boolean;
   readonly prefixes?: boolean;
+  readonly prefixFolding?: boolean;
   readonly format?: boolean;
   readonly settings?: boolean;
   readonly language?: boolean;
@@ -22,6 +23,7 @@ export function resolveControls(
     run: true,
     cancel: true,
     prefixes: true,
+    prefixFolding: true,
     format: true,
     settings: true,
     language: true,
