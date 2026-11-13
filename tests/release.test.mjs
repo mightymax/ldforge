@@ -19,6 +19,7 @@ import {
   verifyVersions,
   verifyTag,
   publicationPlan,
+  verifyPublishedIntegrity,
   packRelease,
   verifyArtifacts,
 } from '../scripts/release.mjs';
@@ -281,4 +282,28 @@ test('packed artifacts retain package identities and reject tampered tarballs', 
   } finally {
     project.dispose();
   }
+});
+
+test('registry verification waits for visibility without republishing or weakening integrity checks', async () => {
+  const values = [undefined, undefined, 'sha512-expected'];
+  let lookups = 0;
+  const waits = [];
+  await verifyPublishedIntegrity(() => values[lookups++], 'sha512-expected', {
+    sleep: async (ms) => {
+      waits.push(ms);
+    },
+  });
+  assert.equal(lookups, 3);
+  assert.deepEqual(waits, [1000, 2000]);
+  await assert.rejects(
+    verifyPublishedIntegrity(() => 'sha512-different', 'sha512-expected'),
+    /different registry integrity/,
+  );
+  await assert.rejects(
+    verifyPublishedIntegrity(() => undefined, 'sha512-expected', {
+      attempts: 2,
+      sleep: async () => {},
+    }),
+    /not yet visible/,
+  );
 });

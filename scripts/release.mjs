@@ -1,3 +1,4 @@
+import { setTimeout as delay } from 'node:timers/promises';
 import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
@@ -30,12 +31,13 @@ function writeJson(path, value) {
   writeFileSync(path, `${JSON.stringify(value, null, 2)}\n`);
 }
 function command(root, executable, args, options = {}) {
-  return execFileSync(executable, args, {
+  const output = execFileSync(executable, args, {
     cwd: root,
     encoding: 'utf8',
     stdio: ['ignore', 'pipe', 'pipe'],
     ...options,
-  }).trim();
+  });
+  return output?.trim() ?? '';
 }
 function git(root, ...args) {
   return command(root, 'git', args);
@@ -340,6 +342,7 @@ export function publicationPlan(manifest, existing) {
 function registryIntegrity(root, name, version) {
   const args = [
     'view',
+    '--prefer-online',
     `${name}@${version}`,
     'dist.integrity',
     '--json',
@@ -364,7 +367,26 @@ function registryIntegrity(root, name, version) {
     );
   }
 }
-export function publishRelease(
+/** npm can accept an upload before the version is visible to registry reads. */
+export async function verifyPublishedIntegrity(lookup, expected, options = {}) {
+  const attempts = options.attempts ?? 41;
+  const sleep = options.sleep ?? delay;
+  for (let attempt = 0; attempt < attempts; attempt++) {
+    const actual = await lookup();
+    if (actual === expected) return;
+    if (actual !== undefined)
+      throw new Error(
+        'Published version has different registry integrity; refusing to continue.',
+      );
+    if (attempt === attempts - 1) break;
+    options.onPending?.(attempt + 1);
+    await sleep(Math.min(1_000 * 2 ** attempt, 15_000));
+  }
+  throw new Error(
+    'Upload was accepted but the version is not yet visible in the registry. Retry verification later; do not create another version or overwrite the existing release.',
+  );
+}
+export async function publishRelease(
   root,
   destination = join(root, 'release-artifacts'),
 ) {
@@ -385,8 +407,7 @@ export function publishRelease(
       );
       continue;
     }
-    npm(
-      root,
+    const args = [
       'publish',
       join(destination, artifact.file),
       '--access',
@@ -395,14 +416,23 @@ export function publishRelease(
       tag,
       '--registry',
       registry,
+    ];
+    // Do not hide successful npm output: it can contain pending-publication diagnostics.
+    if (process.env.npm_execpath)
+      command(root, process.execPath, [process.env.npm_execpath, ...args], {
+        stdio: 'inherit',
+      });
+    else command(root, 'npm', args, { stdio: 'inherit' });
+    await verifyPublishedIntegrity(
+      () => registryIntegrity(root, artifact.name, manifest.version),
+      artifact.integrity,
+      {
+        onPending: (attempt) =>
+          process.stdout.write(
+            `Waiting for ${artifact.name}@${manifest.version} to become visible (${attempt}/40)…\n`,
+          ),
+      },
     );
-    if (
-      registryIntegrity(root, artifact.name, manifest.version) !==
-      artifact.integrity
-    )
-      throw new Error(
-        `Registry integrity verification failed after publishing ${artifact.name}.`,
-      );
     process.stdout.write(
       `Published ${artifact.name}@${manifest.version} (${tag}).\n`,
     );
@@ -429,7 +459,7 @@ if (
     else if (action === 'pack') {
       packRelease(rootDirectory);
       process.stdout.write('Packed all release artifacts.\n');
-    } else if (action === 'publish') publishRelease(rootDirectory);
+    } else if (action === 'publish') await publishRelease(rootDirectory);
     else if (action === 'reject-workspace')
       throw new Error(
         'Version all packages together: run npm version patch/minor/major from the repository root on a clean main.',

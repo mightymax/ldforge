@@ -81,3 +81,25 @@ npm pack --workspace @ldforge/charts --dry-run
 ```
 
 Review JavaScript, declarations, source maps, source, README, LICENSE, editor CSS and API documentation. `npm run test:packages` installs actual tarballs in an isolated consumer and checks their public entry points. Release tests use temporary Git repositories and never push this repository or publish to npm.
+
+### Recovering a delayed or partially published release
+
+npm may accept a new package before its version becomes visible to registry
+reads. The publisher prints npm's upload output and waits up to approximately ten
+minutes per package for the exact expected integrity to appear. A different
+integrity always stops publication immediately. A retry skips versions whose
+integrity already matches; it never overwrites published packages.
+
+Normally, retry the failed publication job in the original **Release** run. If
+that tag contains older publication tooling, use **Retry tested npm release**
+from `main`, supplying the existing tag and the original Release run ID. This
+workflow verifies that the original release checks succeeded and that the
+artifacts belong to the exact tagged commit, then publishes those same tarballs
+using the current tooling. It does not rebuild packages or move the tag. On
+success it creates the GitHub release and deploys the website, like a normal
+release. Artifacts must still be within their 14-day retention period.
+
+The recovery workflow can use the temporary `NPM_TOKEN` bootstrap secret. If
+using only Trusted Publishing, authorize `retry-release.yml` in the npm package's
+Trusted Publisher settings before running recovery; authorization for
+`release.yml` does not authorize a different workflow filename.
