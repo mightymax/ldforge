@@ -56,13 +56,31 @@ const chartResult: QueryResult = {
 };
 
 const cardImage = new URL(cardImageUrl, document.baseURI).href;
+// Same standalone query as examples/wikidata-cats.html.
 const cardsQuery = `# view=cards
-# css=max-width: 320px; border-radius: 14px;
-SELECT ?card_title ?card_text ?card_image ?card_button ?card_button_url WHERE {
-  VALUES (?card_title ?card_text ?card_image ?card_button ?card_button_url) {
-    ("Linked data" "Explore connected knowledge with LDMax." <${cardImage}> "Explore LDMax" <https://ldmax.nl/>)
-    ("Make it yours" "Add your own actions and result renderers." <${cardImage}> "Plugin guide" <https://github.com/mightymax/ldforge/blob/main/docs/renderers.md>)
-    ("Open source" "Build with composable TypeScript packages." <${cardImage}> "View source" <https://github.com/mightymax/ldforge>)
+PREFIX wd: <http://www.wikidata.org/entity/>
+PREFIX wdt: <http://www.wikidata.org/prop/direct/>
+PREFIX wikibase: <http://wikiba.se/ontology#>
+PREFIX bd: <http://www.bigdata.com/rdf#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX schema: <http://schema.org/>
+
+SELECT ?card_title ?card_text
+       ?card_image ("Meet this cat" AS ?card_button) (?cat AS ?card_button_url)
+WHERE {
+  # Limit the work before looking up labels. Q146 = domestic cat, P18 = image.
+  {
+    SELECT ?cat ?sitelinks (SAMPLE(?image) AS ?photo) WHERE {
+      ?cat wdt:P31 wd:Q146; wdt:P18 ?image; wikibase:sitelinks ?sitelinks.
+    }
+    GROUP BY ?cat ?sitelinks
+    ORDER BY DESC(?sitelinks)
+    LIMIT 12
+  }
+  BIND(IRI(CONCAT(REPLACE(STR(?photo), "^http:", "https:"), "?width=600")) AS ?card_image)
+  SERVICE wikibase:label {
+    bd:serviceParam wikibase:language "en".
+    ?cat rdfs:label ?card_title; schema:description ?card_text.
   }
 }`;
 const cardsResult: QueryResult = {
@@ -218,6 +236,7 @@ pluginExamples.addButton({
   id: 'example-cards',
   label: { en: 'Cards example', nl: 'Kaartenvoorbeeld' },
   execute(context) {
+    connection.setEndpoint('https://query.wikidata.org/sparql', 'GET');
     context.setQuery(cardsQuery);
   },
 });

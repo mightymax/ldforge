@@ -647,7 +647,56 @@ test('shows readable read-only TypeScript examples, plugin binding guides and sh
 test('renders Cards from query headers, scopes CSS and preserves manual view switching', async ({
   page,
 }) => {
+  await page.route('https://query.wikidata.org/sparql?*', async (route) => {
+    expect(route.request().method()).toBe('GET');
+    expect(route.request().headers().authorization).toBeUndefined();
+    const query = new URL(route.request().url()).searchParams.get('query');
+    expect(query).toContain('card_title');
+    await route.fulfill({
+      contentType: 'application/sparql-results+json',
+      body: JSON.stringify({
+        head: {
+          vars: [
+            'card_title',
+            'card_text',
+            'card_image',
+            'card_button',
+            'card_button_url',
+          ],
+        },
+        results: {
+          bindings: ['Larry', 'Maru', 'Grumpy Cat'].map((name) => ({
+            card_title: { type: 'literal', value: name },
+            card_text: { type: 'literal', value: 'A famous cat from Wikidata' },
+            card_image: {
+              type: 'uri',
+              value: 'http://127.0.0.1:4173/assets/logo-mark.svg',
+            },
+            card_button: { type: 'literal', value: 'Meet this cat' },
+            card_button_url: {
+              type: 'uri',
+              value: 'http://www.wikidata.org/entity/Q146',
+            },
+          })),
+        },
+      }),
+    });
+  });
   await page.goto('/');
+  // Selecting the public example clears private headers and updates the actual settings.
+  await page.getByRole('button', { name: 'IDE settings', exact: true }).click();
+  await page
+    .getByLabel('SPARQL endpoint', { exact: true })
+    .fill('https://private.example/sparql');
+  await page.getByRole('button', { name: 'Add header', exact: true }).click();
+  await page.getByLabel('Header name', { exact: true }).fill('Authorization');
+  await page
+    .getByLabel('Header value', { exact: true })
+    .fill('Bearer private-token');
+  await page
+    .getByRole('button', { name: 'Apply endpoint', exact: true })
+    .click();
+  await page.getByRole('button', { name: 'IDE settings', exact: true }).click();
   await chooseExample(page, 'Cards example');
   await page.getByRole('button', { name: 'Run query', exact: true }).click();
   const tabs = page.getByRole('tablist', { name: 'Result view', exact: true });
@@ -656,12 +705,14 @@ test('renders Cards from query headers, scopes CSS and preserves manual view swi
   ).toHaveAttribute('aria-selected', 'true');
   const cards = page.locator('.ldforge-card');
   await expect(cards).toHaveCount(3);
-  await expect(cards.first()).toContainText('Linked data');
+  await expect(cards.first()).toContainText('Larry');
   await expect(cards.first().locator('img')).toHaveAttribute('loading', 'lazy');
-  await expect(cards.first()).toHaveCSS('max-width', '320px');
   await expect(
-    cards.first().getByRole('link', { name: 'Explore LDMax', exact: true }),
-  ).toHaveAttribute('href', 'https://ldmax.nl/');
+    page.getByRole('textbox', { name: 'SPARQL query', exact: true }),
+  ).toContainText('wd:Q146');
+  await expect(
+    cards.first().getByRole('link', { name: 'Meet this cat', exact: true }),
+  ).toHaveAttribute('href', 'http://www.wikidata.org/entity/Q146');
   await expect(
     page.getByRole('link', { name: 'Documentation for Cards', exact: true }),
   ).toHaveAttribute('href', /plugins\.html#cards$/);
@@ -669,6 +720,15 @@ test('renders Cards from query headers, scopes CSS and preserves manual view swi
   await expect(page.getByRole('table')).toContainText('card_title');
   await tabs.getByRole('tab', { name: 'Cards', exact: true }).click();
   await expect(cards).toHaveCount(3);
+  await page.getByRole('button', { name: 'IDE settings', exact: true }).click();
+  await expect(page.getByLabel('SPARQL endpoint', { exact: true })).toHaveValue(
+    'https://query.wikidata.org/sparql',
+  );
+  await expect(page.getByLabel('Request method', { exact: true })).toHaveValue(
+    'GET',
+  );
+  await expect(page.getByLabel('Header value', { exact: true })).toHaveCount(0);
+  await page.getByRole('button', { name: 'IDE settings', exact: true }).click();
   const query = page.getByRole('textbox', {
     name: 'SPARQL query',
     exact: true,

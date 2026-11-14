@@ -17,6 +17,12 @@ npm run dev
 
 Open the local URL printed by Vite. Run the example SELECT query, switch between Table and JSON, or use the ASK example button. Fixture mode returns deterministic sample data; it does not evaluate SPARQL.
 
+Under **Plugin Examples → Cards example**, load the Wikidata cats query and press
+Run query to show twelve cat cards. Choosing this example selects Wikidata over
+GET, without reusing another connection's headers. That endpoint remains selected
+until you change it in settings; choose **Local fixture (no endpoint)** to return
+to offline examples.
+
 Use the **gear button inside the IDE** to configure an endpoint, choose GET/POST, add headers, or change the language. Applied endpoints and request methods are saved in browser localStorage. Header values remain in memory for this page only and are isolated per endpoint. Browser CORS rules still apply. The demo restores the last applied endpoint and method after a refresh, without automatically running a query. Choose the local fixture to return to example data. SELECT, ASK, CONSTRUCT and DESCRIBE results are supported.
 
 Create queries with **+**, switch tabs, and rename a tab by double-clicking its name or using its pencil button. Enter or leaving the name field saves it; Escape cancels. Query text, titles, and the active tab are saved to localStorage when editing or switching. There is one CodeMirror view and one active editor state: inactive tabs store plain text only. Switching cancels a running query and resets undo history and results.

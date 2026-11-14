@@ -120,7 +120,7 @@ Image and button URLs accept HTTP(S) or relative URLs resolved against the host 
 
 ### Complete Cards query
 
-This query works without a dataset because it uses VALUES. Replace the image and destination URLs with your own. The demo's **Cards example** uses local sample images and a deterministic fixture, so it also works without an endpoint.
+This query works without a dataset because it uses VALUES. Replace the image and destination URLs with your own. The demo's **Plugin Examples → Cards example** instead loads the [Wikidata cat grid](https://ldforge.nl/wikidata-cats.html) query and selects `https://query.wikidata.org/sparql` over GET. Press Run query to fetch twelve cats with pictures, descriptions and links. This live example requires internet access; selecting it updates the endpoint settings and remembered endpoint, and does not reuse authentication headers from another connection. Choose **Local fixture (no endpoint)** in settings to return to offline sample data.
 
 ```sparql
 # view=cards

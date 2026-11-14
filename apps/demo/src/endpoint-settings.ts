@@ -12,10 +12,19 @@ import type { EndpointMessage } from './endpoint-messages.js';
 export function createEndpointSettings(fixtureExecutor: QueryExecutor): {
   executor: QueryExecutor;
   plugin: SettingsPlugin;
+  /** Demo-owned example actions can configure the same visible endpoint panel. */
+  setEndpoint(endpoint: string, method?: 'GET' | 'POST'): void;
 } {
   let executor = fixtureExecutor;
   let updateLabels = () => {};
+  let configureEndpoint:
+    ((endpoint: string, method: 'GET' | 'POST') => void) | undefined;
   return {
+    setEndpoint(endpoint, method = 'GET') {
+      if (!configureEndpoint)
+        throw new Error('Endpoint settings are not mounted.');
+      configureEndpoint(endpoint, method);
+    },
     executor: { execute: (request) => executor.execute(request) },
     plugin: {
       id: 'demo.endpoints',
@@ -189,6 +198,14 @@ export function createEndpointSettings(fixtureExecutor: QueryExecutor): {
           }
         }
 
+        configureEndpoint = (endpoint, method) => {
+          input.value = endpoint;
+          methodInput.value = method;
+          // Public examples must never inherit another connection's credentials.
+          headerRows.replaceChildren();
+          applyEndpoint(endpoint);
+        };
+
         function refreshStatus(): void {
           message.textContent =
             errorMessage ??
@@ -230,6 +247,7 @@ export function createEndpointSettings(fixtureExecutor: QueryExecutor): {
           applyEndpoint(restoredEndpoint);
         }
         return () => {
+          configureEndpoint = undefined;
           updateLabels = () => {};
           container.replaceChildren();
         };
