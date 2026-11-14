@@ -1,6 +1,6 @@
 {
   "name": "@ldforge/editor",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "LDForge editor: composable SPARQL tooling",
   "type": "module",
   "license": "EUPL-1.2",
@@ -35,8 +35,8 @@
     "@codemirror/lint": "^6.9.8",
     "@codemirror/state": "^6.7.6",
     "@codemirror/view": "^6.43.15",
-    "@ldforge/core": "^0.1.4",
-    "@ldforge/prefixes": "^0.1.4",
+    "@ldforge/core": "^0.1.5",
+    "@ldforge/prefixes": "^0.1.5",
     "@lezer/common": "^1.5.5",
     "codemirror-lang-sparql": "^2.1.0",
     "sparql-formatter": "^1.0.2"
