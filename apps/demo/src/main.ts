@@ -4,6 +4,7 @@ import { createPivotRenderer } from '@ldforge/pivot';
 import { createNetworkRenderer } from '@ldforge/network';
 import { createTimelineRenderer } from '@ldforge/timeline';
 import {
+  publishersTableQuery,
   artistsNetworkQuery,
   paintersTimelineQuery,
   paintingsPivotQuery,
@@ -22,6 +23,7 @@ import type { QueryExecutor, QueryResult } from '@ldforge/core';
 import {
   createCardsRenderer,
   createTableRenderer,
+  createResourceLoader,
   createBooleanRenderer,
   createJsonRenderer,
 } from '@ldforge/renderers';
@@ -322,7 +324,9 @@ const editor = createEditor(mount, {
   onLocaleChange: saveUserLocale,
   buttons: [createRunButton()],
   renderers: [
-    createTableRenderer(),
+    createTableRenderer({
+      loadResource: createResourceLoader(connection.executor),
+    }),
     createCardsRenderer(),
     createChartRenderer(),
     createGeoRenderer(),
@@ -386,15 +390,30 @@ queryExamples.addButton({
   },
 });
 queryExamples.addButton({
+  id: 'example-table-publishers',
+  label: { en: 'Dataset publishers (table)', nl: 'Datasetuitgevers (tabel)' },
+  execute() {
+    connection.setEndpoint(
+      'https://datasetregister.netwerkdigitaalerfgoed.nl/sparql',
+      'GET',
+    );
+    editor.setQuery(publishersTableQuery);
+    editor.setPrefixesCollapsed(true);
+  },
+});
+queryExamples.addButton({
   id: 'example-cards',
-  label: { en: 'Gallery', nl: 'Kattenplaatjes' },
+  label: { en: 'Gallery', nl: 'Kattenplaatjes (gallery)' },
   execute() {
     loadExampleQuery(cardsQuery, 'https://query.wikidata.org/sparql');
   },
 });
 queryExamples.addButton({
   id: 'example-geo',
-  label: { en: 'Castles in North Holland', nl: 'Kastelen in Noord-Holland' },
+  label: {
+    en: 'Castles in the Netherlands (Geo)',
+    nl: 'Kastelen in Nederland (Geo)',
+  },
   execute() {
     loadExampleQuery(
       `# view=geo; geo-title=Kastelen in Noord-Holland
@@ -430,7 +449,7 @@ LIMIT 250`,
 });
 queryExamples.addButton({
   id: 'example-palace',
-  label: { en: 'Paleis het Loo (3D)', nl: 'Paleis het Loo (3D)' },
+  label: { en: 'Paleis het Loo (Geo 3D)', nl: 'Paleis het Loo (Geo 3D)' },
   execute() {
     loadExampleQuery(
       `# view=geo; mode=3d; geo-title=Paleis het Loo
@@ -503,7 +522,7 @@ queryExamples.addButton({
     loadExampleQuery(paintingsPivotQuery, 'https://query.wikidata.org/sparql');
   },
 });
-queryExamples.addSeparator('example-cards');
+queryExamples.addSeparator('example-table-publishers');
 
 if (import.meta.hot) import.meta.hot.dispose(() => editor.destroy());
 

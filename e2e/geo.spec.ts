@@ -110,7 +110,7 @@ test('lazy geo modes render real points, polygons, clusters and a heatmap', asyn
   await page.getByRole('button', { name: 'Examples', exact: true }).click();
   await page
     .getByRole('menuitem', {
-      name: 'Castles in North Holland',
+      name: 'Castles in the Netherlands (Geo)',
       exact: true,
     })
     .click();
@@ -282,7 +282,7 @@ test('renders geometryHeight as real 3D buildings and switches back to the 2D ma
   expect(threeDLoads).toBe(0);
   await page.getByRole('button', { name: 'Examples', exact: true }).click();
   await page
-    .getByRole('menuitem', { name: 'Paleis het Loo (3D)', exact: true })
+    .getByRole('menuitem', { name: 'Paleis het Loo (Geo 3D)', exact: true })
     .click();
   await page.getByRole('button', { name: 'Run query', exact: true }).click();
   const section = page.locator('.ldforge-geo');

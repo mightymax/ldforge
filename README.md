@@ -152,7 +152,7 @@ See the [configuration reference](docs/api/configuration.md), [editor API](docs/
 
 ## Current scope
 
-This is a working foundation, not feature parity with LDMax. SELECT/ASK and CONSTRUCT/DESCRIBE, cancellation, syntax highlighting, history, Lezer-based syntax diagnostics and contextual completion, custom buttons, settings plugins, EN/NL localization, virtual query tabs, execution timing, and interchangeable result renderers are included. SPARQL Update execution, endpoint-backed vocabulary discovery, full semantic query validation, virtualization, and migration of LDMax-specific behavior are follow-up work. The table renderer targets small and medium result sets; the host should limit queries or register a paginated/virtualized renderer for large results.
+This is a working foundation, not feature parity with LDMax. SELECT/ASK and CONSTRUCT/DESCRIBE, cancellation, syntax highlighting, history, Lezer-based syntax diagnostics and contextual completion, custom buttons, settings plugins, EN/NL localization, virtual query tabs, execution timing, and interchangeable result renderers are included. SPARQL Update execution, endpoint-backed vocabulary discovery, full semantic query validation, and migration of LDMax-specific behavior are follow-up work. The table renderer supports sorting, filters, virtual scrolling for large results, and a resource inspector. Results remain in memory; hosts should still limit very large queries.
 
 ## License
 

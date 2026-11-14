@@ -1,0 +1,53 @@
+name: New plugin
+description: Propose a result renderer or another LDForge plugin.
+title: '[Plugin]: '
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem and use cases
+      description: Who needs this plugin, and what should it help them do?
+    validations:
+      required: true
+  - type: dropdown
+    id: category
+    attributes:
+      label: Plugin category
+      options:
+        - Result renderer
+        - Toolbar action
+        - Settings
+        - Editor extension
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: contract
+    attributes:
+      label: Input and binding contract
+      description: Describe supported result kinds, required/optional variables, RDF term types, and missing values.
+    validations:
+      required: true
+  - type: textarea
+    id: example
+    attributes:
+      label: Example query and data
+      description: Include a complete SPARQL query and small sample result. Use public endpoints only; omit credentials.
+      render: sparql
+  - type: textarea
+    id: behavior
+    attributes:
+      label: Expected behavior and acceptance criteria
+      description: Include interactions, empty/error states, accessibility, EN/NL labels, and large-result behavior.
+    validations:
+      required: true
+  - type: textarea
+    id: integration
+    attributes:
+      label: Integration and dependencies
+      description: Suggest package/factory names, wizard fields, query headers, dependencies, lazy loading, cleanup, and documentation/examples.
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives and references
+      description: Could an existing plugin be extended? Add mockups or links if helpful.

@@ -1,3 +1,29 @@
+export const publishersTableQuery = `# view=table
+# sparql-endpoint=https://datasetregister.netwerkdigitaalerfgoed.nl/sparql
+PREFIX dcat: <http://www.w3.org/ns/dcat#>
+PREFIX dct: <http://purl.org/dc/terms/>
+PREFIX foaf: <http://xmlns.com/foaf/0.1/>
+PREFIX schema: <https://schema.org/>
+
+select ?publisher
+       (sample(?pn) as ?publisherName)
+       (sample(?dataset) as ?exampleDataset)
+       (sample(?t) as ?exampleTitle)
+       (count(distinct ?dataset) as ?datasetCount)
+where {
+  ?dataset a dcat:Dataset ;
+    schema:subjectOf ?registration ;
+    dct:title ?t ;
+    dct:publisher ?publisher .
+
+  ?registration schema:additionalType <https://data.netwerkdigitaalerfgoed.nl/registry/valid> .
+
+  ?publisher foaf:name ?pn .
+}
+group by ?publisher
+order by desc(?datasetCount)
+limit 100`;
+
 export const artistsNetworkQuery = `# view=network; network-title=Nederlandse schilders, leermeesters en kunststromingen
 PREFIX wd: <http://www.wikidata.org/entity/>
 PREFIX wdt: <http://www.wikidata.org/prop/direct/>

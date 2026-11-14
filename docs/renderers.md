@@ -46,7 +46,7 @@ Positive polygon heights default to **3D**, unless `mode`/`geo-mode` or the host
 loaded from a pinned external module with matching CSS only when needed. Normal,
 Grouped and Heatmap continue to use Leaflet without downloading MapLibre.
 
-The demo's **Paleis het Loo (3D)** example uses the OSM endpoint below:
+The demo's **Paleis het Loo (Geo 3D)** example uses the OSM endpoint below:
 
 ```sparql
 # view=geo; mode=3d; geo-title=Paleis het Loo
@@ -75,7 +75,7 @@ Normal. Text geometry/height data stays available. Self-host using
 
 ### Castles in North Holland example
 
-Endpoint: `https://query.wikidata.org/sparql` (GET). The demo's **Kastelen in Noord-Holland**
+Endpoint: `https://query.wikidata.org/sparql` (GET). The demo's **Kastelen in Nederland (Geo)**
 returns up to 250 castles in North Holland with coordinates and a Wikidata image. It uses
 mandatory patterns without OPTIONAL, including a Dutch Wikipedia sitelink. Only castles
 with a Dutch article appear. Popup labels link to that Wikipedia article; descriptions
@@ -119,7 +119,7 @@ another language or Wikimedia project. This is a sitelink, not a `wdt:P…`
 statement on the castle. See the [Wikibase RDF sitelink format](https://www.mediawiki.org/wiki/Wikibase/Indexing/RDF_Dump_Format#Sitelinks).
 
 Wikidata's `wdt:P625` returns WGS84 WKT points directly, so no geometry conversion
-is needed. The separate **Paleis het Loo (3D)** example above keeps using OSM.
+is needed. The separate **Paleis het Loo (Geo 3D)** example above keeps using OSM.
 
 This deterministic query demonstrates all three basic types on any SPARQL 1.1 endpoint:
 
@@ -636,16 +636,39 @@ A custom renderer can read `context?.directives?.['my-setting']`. Document each 
 
 **Package:** `@ldforge/renderers` · **Factory:** `createTableRenderer(options?)` · **ID:** `table`
 
-Displays SELECT bindings or CONSTRUCT/DESCRIBE triples as a table. Graph results use subject/predicate/object columns. Column order follows the SELECT variable order, rows follow the endpoint's result order, and unbound values produce empty cells. RDF values are rendered as text, including URL-like values. Datatype and language information appear in cell tooltips. The table caption and result count follow the editor language.
+Displays SELECT bindings or CONSTRUCT/DESCRIBE triples as a table. Graph results use subject/predicate/object columns. Column order follows the SELECT variable order, rows follow the endpoint's result order, and unbound values produce empty cells. RDF values are rendered safely as text. URI terms retain plain text with a small circular information button that opens the resource inspector. Datatype and language information appear in cell tooltips. The table caption and result count follow the editor language.
 
 **Binding contract:** supports `kind: 'bindings'` and `kind: 'graph'`. No special variable names are required: `?resource`, `?label`, `?price` or any other SELECT variables become columns. SELECT aliases determine the displayed column names.
 
+The first plugin example in the demo’s Examples menu (after the four standard queries), **Dataset publishers (table)**,
+uses the NDE Dataset Register endpoint to list publishers and their dataset counts:
+
 ```sparql
-SELECT ?resource ?label WHERE {
-  ?resource <http://www.w3.org/2000/01/rdf-schema#label> ?label .
-  FILTER (lang(?label) = "en")
+# view=table
+# sparql-endpoint=https://datasetregister.netwerkdigitaalerfgoed.nl/sparql
+PREFIX dcat: <http://www.w3.org/ns/dcat#>
+PREFIX dct: <http://purl.org/dc/terms/>
+PREFIX foaf: <http://xmlns.com/foaf/0.1/>
+PREFIX schema: <https://schema.org/>
+
+select ?publisher
+       (sample(?pn) as ?publisherName)
+       (sample(?dataset) as ?exampleDataset)
+       (sample(?t) as ?exampleTitle)
+       (count(distinct ?dataset) as ?datasetCount)
+where {
+  ?dataset a dcat:Dataset ;
+    schema:subjectOf ?registration ;
+    dct:title ?t ;
+    dct:publisher ?publisher .
+
+  ?registration schema:additionalType <https://data.netwerkdigitaalerfgoed.nl/registry/valid> .
+
+  ?publisher foaf:name ?pn .
 }
-LIMIT 20
+group by ?publisher
+order by desc(?datasetCount)
+limit 100
 ```
 
 ```ts
@@ -653,6 +676,49 @@ import { createTableRenderer } from '@ldforge/renderers';
 const renderers = [createTableRenderer()];
 // Pass renderers to createEditor().
 ```
+
+### Sorting, filters and large results
+
+Click a column heading to sort ascending, then descending. Sorting uses a locale-aware
+numeric text comparison (not RDF datatype arithmetic); the original result is never
+mutated. Search all columns or combine case-insensitive per-column substring filters.
+The caption reports the filtered and original counts. These operations use only the
+loaded result; they do not fetch additional endpoint pages or alter CSV downloads.
+
+Above 500 rows, the table uses a scroll viewport with a bounded number of rendered
+rows and spacer rows. Rows have a fixed height; long values are truncated visually.
+Small results retain wrapping. Configure `virtualizeThreshold` and `viewportHeight`
+(default 480 pixels) in `TableRendererOptions`. Every loaded row remains searchable
+and sortable, but only visible rows are present in the accessibility tree. For a full
+text value, open a URI in the inspector or use JSON/CSV. All bindings stay in memory;
+endpoint-side LIMIT remains useful for very large queries.
+
+### Resource inspector
+
+The information buttons beside URIs open an inline panel with outgoing properties and incoming references.
+Click related URIs to continue exploring; Close or Escape returns focus to the
+original table button. Graph results use matching local triples first. SELECT
+results require a host loader for additional properties; without one the panel
+shows the URI and an empty-data message. HTTP(S) resources also have an explicit
+external link. Resource IRIs are never automatically fetched as web pages.
+
+```ts
+import { createTableRenderer, createResourceLoader } from '@ldforge/renderers';
+createTableRenderer({ loadResource: createResourceLoader(executor) });
+```
+
+`createResourceLoader(executor)` uses the host's query executor with a cancellable
+CONSTRUCT query for outgoing and incoming triples, limited to 200 triples. It rejects
+IRIs containing SPARQL delimiters. The host retains endpoint/authentication policy.
+The demo connects this loader to its active connection. In fixture mode the returned
+graph is demonstration data, not an actual endpoint lookup.
+
+For other views, `createResourceInspector(container, { locale, graph?, loadResource? })`
+returns `{ element, open(term), close(), destroy() }`. Append `element` to the host,
+call `open` with a URI term, and call `destroy` during cleanup. A custom
+`ResourceLoader` receives `(iri, signal)` and returns a `Promise<QueryResult>` with
+a graph. Errors appear in the panel; closing, navigating and cleanup abort stale
+requests and prevent late responses from changing the panel.
 
 ### Column widths
 

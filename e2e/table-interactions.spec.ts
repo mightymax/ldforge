@@ -1,0 +1,110 @@
+import { expect, test } from '@playwright/test';
+
+test('virtual table reaches the final row and filters and sorts all loaded rows', async ({
+  page,
+}) => {
+  await page.goto('/');
+  await page.evaluate(async (modulePath) => {
+    const { createTableRenderer } = await import(/* @vite-ignore */ modulePath);
+    const host = document.createElement('div');
+    host.id = 'large-table';
+    host.className = 'ldforge';
+    document.body.replaceChildren(host);
+    createTableRenderer().render(host, {
+      kind: 'bindings',
+      variables: ['value'],
+      bindings: Array.from({ length: 10000 }, (_, i) => ({
+        value: { type: 'literal', value: String(i) },
+      })),
+    });
+  }, `/@fs${process.cwd()}/packages/renderers/src/index.ts`);
+  const viewport = page.locator('.ldforge-table-viewport');
+  await expect(page.locator('tbody tr')).toHaveCount(27);
+  await viewport.evaluate((element) => {
+    element.scrollTop = element.scrollHeight;
+  });
+  await expect(
+    page.getByRole('cell', { name: '9999', exact: true }),
+  ).toBeVisible();
+  const overflow = await viewport.evaluate(
+    (element) =>
+      element.scrollHeight - element.scrollTop - element.clientHeight,
+  );
+  expect(overflow).toBeLessThan(40);
+  await page.getByRole('button', { name: 'value', exact: true }).click();
+  await page.getByRole('button', { name: 'value', exact: true }).click();
+  await expect(page.locator('tbody tr').first()).toHaveText('9999');
+  await page
+    .getByRole('searchbox', { name: 'Filter value', exact: true })
+    .fill('1234');
+  await expect(
+    page.getByRole('cell', { name: '1234', exact: true }),
+  ).toBeVisible();
+  await expect(page.locator('caption')).toHaveText('1 / 10000 results');
+});
+
+test('table URI opens local inspector with keyboard close', async ({
+  page,
+}) => {
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Examples', exact: true }).click();
+  await page
+    .getByRole('menuitem', { name: 'DESCRIBE example', exact: true })
+    .click();
+  await page.getByRole('button', { name: 'Run query', exact: true }).click();
+  const resource = page.locator('tbody button').first();
+  await resource.click();
+  const inspector = page.getByRole('region', { name: 'Resource inspector' });
+  await expect(inspector).toBeVisible();
+  await expect(inspector.locator('dl')).toBeVisible();
+  await inspector.press('Escape');
+  await expect(inspector).toBeHidden();
+  await expect(resource).toBeFocused();
+});
+
+test('inspector loads properties through the selected endpoint and follows resources', async ({
+  page,
+}) => {
+  const queries: string[] = [];
+  await page.route('https://inspector.example/sparql?**', async (route) => {
+    const query =
+      new URL(route.request().url()).searchParams.get('query') ?? '';
+    queries.push(query);
+    if (query.startsWith('CONSTRUCT')) {
+      await route.fulfill({
+        contentType: 'application/n-triples',
+        body: '<urn:a> <urn:related> <urn:b> .\n<urn:b> <urn:label> "Related resource"@en .',
+      });
+    } else {
+      await route.fulfill({
+        contentType: 'application/sparql-results+json',
+        body: JSON.stringify({
+          head: { vars: ['resource'] },
+          results: {
+            bindings: [{ resource: { type: 'uri', value: 'urn:a' } }],
+          },
+        }),
+      });
+    }
+  });
+  await page.goto('/');
+  await page
+    .getByRole('textbox', { name: 'SPARQL query', exact: true })
+    .fill(
+      '# view=table\n# sparql-endpoint=https://inspector.example/sparql\nSELECT ?resource WHERE { ?resource ?p ?o } LIMIT 1',
+    );
+  await page.getByRole('button', { name: 'Run query', exact: true }).click();
+  await page
+    .getByRole('button', { name: 'Information about urn:a', exact: true })
+    .click();
+  const inspector = page.getByRole('region', { name: 'Resource inspector' });
+  await expect(
+    inspector.getByRole('button', { name: 'urn:b', exact: true }),
+  ).toBeVisible();
+  await inspector.getByRole('button', { name: 'urn:b', exact: true }).click();
+  await expect(inspector.getByRole('heading')).toHaveText('urn:b');
+  await expect(inspector).toContainText('Related resource');
+  expect(queries).toHaveLength(3);
+  expect(queries[1]).toContain('CONSTRUCT { <urn:a>');
+  expect(queries[2]).toContain('CONSTRUCT { <urn:b>');
+});

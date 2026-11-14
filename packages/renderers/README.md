@@ -29,3 +29,9 @@ or add `# view=table; columns=40%,40%,20%` to the query. The spelling `colums` a
 works. Use one positive percentage per column, totaling 100; query values override
 host defaults. Invalid query widths show a warning and fall back to equal widths.
 The Plugin wizard exposes the option for registered table renderers.
+
+The table includes column sorting, global and per-column filters, and virtual scrolling
+above 500 rows. URI buttons open a reusable resource inspector. Pass
+`loadResource: createResourceLoader(executor)` for endpoint-backed properties; graph
+results can use their own triples. See the [table guide](../../docs/renderers.md#table)
+for options, lifecycle, accessibility and limitations.

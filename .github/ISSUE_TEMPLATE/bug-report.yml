@@ -1,0 +1,49 @@
+name: Bug report
+description: Report a reproducible problem in LDForge.
+title: '[Bug]: '
+body:
+  - type: textarea
+    id: summary
+    attributes:
+      label: What went wrong?
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to reproduce
+      description: Include the plugin/view, settings, and a minimal query or sample result. Omit credentials and private data.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+      description: Include screenshots or relevant console/network errors when available.
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: LDForge version or commit
+      placeholder: Package version, commit SHA, or demo URL
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Browser and operating system
+      placeholder: Browser name/version and OS
+    validations:
+      required: true
+  - type: textarea
+    id: endpoint
+    attributes:
+      label: Endpoint and request details
+      description: If relevant, provide a public endpoint, GET/POST, result size, and whether local fixtures reproduce the bug. Never include tokens or authorization headers.

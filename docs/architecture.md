@@ -38,7 +38,7 @@ No existing LDMax code or dependencies have been copied into this foundation. A 
 
 ## Deliberate initial limits
 
-Only SPARQL Results JSON is parsed; RDF graph responses and updates need separate contracts. Results are kept in memory and tables are not virtualized. The demo keeps up to 20 recently applied endpoints in browser localStorage, with an in-memory fallback when storage is unavailable. Persistence belongs to the demo host; the library does not store endpoints. The demo also persists query text, tab titles, the active tab, and a user language preference. Authentication headers stay in memory only. There is no automatic retry or telemetry. Plugin registration is static per editor mount; instantiate a new editor to change the plugin set. The exported generic registry can be used independently by other host UIs.
+SPARQL Results JSON and RDF graph responses are supported; SPARQL Update remains outside the current contract. Results are kept in memory; the table virtualizes rendering above 500 rows and filters/sorts the loaded data locally. The resource inspector uses local graph triples or a host-supplied cancellable loader. The demo keeps up to 20 recently applied endpoints in browser localStorage, with an in-memory fallback when storage is unavailable. Persistence belongs to the demo host; the library does not store endpoints. The demo also persists query text, tab titles, the active tab, and a user language preference. Authentication headers stay in memory only. There is no automatic retry or telemetry. Plugin registration is static per editor mount; instantiate a new editor to change the plugin set. The exported generic registry can be used independently by other host UIs.
 
 ## Dependency maintenance
 

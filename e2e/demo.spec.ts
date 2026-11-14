@@ -941,15 +941,18 @@ test('uses configured toolbar dropdowns with keyboard navigation, dismissal and 
   const menu = page.getByRole('menu', { name: 'Examples', exact: true });
   await expect(menu).toHaveCSS('width', '300px');
   await expect(menu.getByRole('separator')).toHaveCount(1);
-  await expect(menu.locator('[role=separator] + button')).toHaveText('Gallery');
+  await expect(menu.locator('[role=separator] + button')).toHaveText(
+    'Dataset publishers (table)',
+  );
   await expect(menu.getByRole('menuitem')).toHaveText([
     'SELECT example',
     'CONSTRUCT example',
     'ASK example',
     'DESCRIBE example',
+    'Dataset publishers (table)',
     'Gallery',
-    'Castles in North Holland',
-    'Paleis het Loo (3D)',
+    'Castles in the Netherlands (Geo)',
+    'Paleis het Loo (Geo 3D)',
     'Top 10 largest cities (bar chart)',
     'Art movements in Dutch collections (pie chart)',
     'Dutch painters and their connections (network)',
@@ -957,7 +960,10 @@ test('uses configured toolbar dropdowns with keyboard navigation, dismissal and 
     'Art movements by collection (pivot)',
   ]);
   await expect(
-    menu.getByRole('menuitem', { name: 'SELECT example', exact: true }),
+    menu.getByRole('menuitem', {
+      name: 'SELECT example',
+      exact: true,
+    }),
   ).toBeFocused();
   await page.keyboard.press('ArrowDown');
   await expect(
@@ -1010,9 +1016,10 @@ test('uses configured toolbar dropdowns with keyboard navigation, dismissal and 
     'CONSTRUCT example',
     'ASK example',
     'DESCRIBE example',
+    'Dataset publishers (table)',
     'Gallery',
-    'Castles in North Holland',
-    'Paleis het Loo (3D)',
+    'Castles in the Netherlands (Geo)',
+    'Paleis het Loo (Geo 3D)',
     'Top 10 largest cities (bar chart)',
     'Art movements in Dutch collections (pie chart)',
     'Dutch painters and their connections (network)',
