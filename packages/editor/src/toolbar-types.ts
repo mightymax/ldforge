@@ -23,6 +23,8 @@ export interface ButtonGroupOptions {
   readonly type?: ButtonGroupType;
   readonly label?: LocalizedText;
   readonly icon?: PluginIcon;
+  /** Preferred dropdown width in pixels, clamped to the viewport. */
+  readonly dropdownWidth?: number;
   readonly buttons?: readonly ToolbarButtonInput[];
 }
 export interface ToolbarOptions {
@@ -35,6 +37,8 @@ export interface ToolbarButtonGroupHandle {
   readonly label: LocalizedText;
   readonly isDeleted: boolean;
   addButton(button: ToolbarButtonInput): ToolbarButtonHandle;
+  /** Insert a non-focusable divider before an existing button in this group. */
+  addSeparator(beforeButtonId: string): void;
   getButtons(): readonly ToolbarButtonHandle[];
   setType(type: ButtonGroupType): void;
   setLabel(label: LocalizedText): void;

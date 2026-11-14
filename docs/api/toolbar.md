@@ -140,3 +140,27 @@ Dropdowns use native button/menu semantics and the browser's top layer when Popo
 - Only one toolbar menu is open per editor. Locale changes update labels in place. Destroying the editor closes its menu and removes document/window listeners.
 
 Custom toolbar configuration is host-owned, rather than part of the serializable query workspace. Reapply it when creating an editor; do not store handles in localStorage. `EditorContext` remains the query-focused context supplied to plugins; hosts use the `ForgeEditor` handle to access the toolbar.
+
+## Dropdown width and separators
+
+Set `dropdownWidth` on `ButtonGroupOptions` to a positive finite pixel width.
+The default is at least 200 px or the trigger width. Configured widths are
+clamped to the viewport with an 8 px margin on either side.
+
+```ts
+const examples = editor.getToolBar().addButtonGroup({
+  id: 'examples',
+  type: 'dropdown',
+  label: 'Examples',
+  dropdownWidth: 300,
+  buttons: [selectButton, askButton, galleryButton],
+});
+examples.addSeparator(galleryButton.id);
+```
+
+`addSeparator(beforeButtonId)` inserts a horizontal divider before an existing
+button in that group. Unknown button IDs throw; repeated calls for the same
+button do not duplicate the divider. Dividers are shown only in dropdown mode,
+are skipped by keyboard navigation, and do not appear in `getButtons()`. A divider
+is removed when its following button is moved or deleted. It is hidden when that
+button is hidden or there are no preceding visible buttons.

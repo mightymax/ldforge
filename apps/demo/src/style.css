@@ -387,3 +387,13 @@ header nav .repository-link {
   flex-shrink: 0;
   margin-right: 9px;
 }
+
+.active-endpoint {
+  margin: 8px 2px 0;
+  color: #537460;
+  font-size: 11px;
+  line-height: 1.5;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

@@ -9,11 +9,26 @@ export type Geometry =
 export interface GeoFeature {
   type: 'Feature';
   geometry: Geometry;
-  properties: { label: string; count?: number; expansionZoom?: number };
+  properties: {
+    label: string;
+    height?: number;
+    image?: string;
+    description?: string;
+    link?: string;
+    count?: number;
+    expansionZoom?: number;
+  };
 }
 export class GeoDataError extends Error {
-  constructor(readonly row: number) {
-    super(`Invalid WGS84 WKT geometry at row ${row}.`);
+  constructor(
+    readonly row: number,
+    readonly field: 'geometry' | 'geometryHeight' = 'geometry',
+  ) {
+    super(
+      field === 'geometryHeight'
+        ? `Invalid geometryHeight at row ${row}.`
+        : `Invalid WGS84 WKT geometry at row ${row}.`,
+    );
   }
 }
 
@@ -125,12 +140,35 @@ export function buildGeoFeatures(result: QueryResult): GeoFeature[] {
       const term = row.geometry;
       if (!term || !['literal', 'typed-literal'].includes(term.type))
         throw new Error('Missing geometry.');
+      const heightTerm = row.geometryHeight;
+      let height: number | undefined;
+      if (heightTerm) {
+        if (
+          !['literal', 'typed-literal'].includes(heightTerm.type) ||
+          !/^[+]?(?:\d+\.?\d*|\.\d+)(?:[eE][+-]?\d+)?$/.test(
+            heightTerm.value.trim(),
+          )
+        )
+          throw new GeoDataError(index + 1, 'geometryHeight');
+        height = Number(heightTerm.value);
+        if (!Number.isFinite(height) || height < 0)
+          throw new GeoDataError(index + 1, 'geometryHeight');
+      }
       return {
         type: 'Feature',
         geometry: parseWkt(term.value),
-        properties: { label: row.geometryLabel?.value ?? `#${index + 1}` },
+        properties: {
+          label: row.geometryLabel?.value ?? `#${index + 1}`,
+          ...(height === undefined ? {} : { height }),
+          ...(row.geoImage?.value ? { image: row.geoImage.value } : {}),
+          ...(row.geoDescription?.value
+            ? { description: row.geoDescription.value }
+            : {}),
+          ...(row.geoLink?.value ? { link: row.geoLink.value } : {}),
+        },
       };
-    } catch {
+    } catch (error) {
+      if (error instanceof GeoDataError) throw error;
       throw new GeoDataError(index + 1);
     }
   });

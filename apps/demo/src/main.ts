@@ -31,14 +31,77 @@ WHERE {
 }
 LIMIT 10`;
 
-const chartQuery = `# view=charts; chart=bar; chart-title=Example city populations
+const chartQuery = `# view=charts; chart=bar; chart-title=Top 10 grootste steden van Nederland
+PREFIX wd: <http://www.wikidata.org/entity/>
+PREFIX wdt: <http://www.wikidata.org/prop/direct/>
+PREFIX wikibase: <http://wikiba.se/ontology#>
+PREFIX bd: <http://www.bigdata.com/rdf#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+
 SELECT ?chart_label ?chart_value WHERE {
-  VALUES (?chart_label ?chart_value) {
-    ("Amsterdam" 934526)
-    ("Rotterdam" 671125)
-    ("Utrecht" 374374)
+  {
+    SELECT ?city (MAX(?population) AS ?chart_value) WHERE {
+      ?city wdt:P31/wdt:P279* wd:Q515 ;
+            wdt:P17 wd:Q55 ;
+            wdt:P1082 ?population .
+    }
+    GROUP BY ?city
+    ORDER BY DESC(?chart_value)
+    LIMIT 10
   }
-}`;
+
+  OPTIONAL {
+    ?city wdt:P131+ ?province .
+    ?province wdt:P31 wd:Q134390 ;
+              wdt:P300 ?provinceCode .
+    FILTER(STRSTARTS(?provinceCode, "NL-"))
+  }
+
+  SERVICE wikibase:label {
+    bd:serviceParam wikibase:language "nl,en" .
+    ?city rdfs:label ?cityLabel .
+  }
+
+  BIND(
+    CONCAT(
+      STR(?cityLabel),
+      IF(
+        BOUND(?provinceCode),
+        CONCAT(" (", STRAFTER(?provinceCode, "NL-"), ")"),
+        ""
+      )
+    ) AS ?chart_label
+  )
+}
+ORDER BY DESC(?chart_value)`;
+const artMovementsQuery = `# view=charts; chart=pie; chart-title=Kunststromingen in Nederlandse collecties
+PREFIX wd: <http://www.wikidata.org/entity/>
+PREFIX wdt: <http://www.wikidata.org/prop/direct/>
+PREFIX wikibase: <http://wikiba.se/ontology#>
+PREFIX bd: <http://www.bigdata.com/rdf#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+
+
+SELECT ?chart_label ?chart_value WHERE {
+  {
+    SELECT ?movement (COUNT(?painting) AS ?chart_value) WHERE {
+      ?painting wdt:P31 wd:Q3305213 ;
+                wdt:P135 ?movement ;
+                wdt:P195 ?collection .
+
+      ?collection wdt:P17 wd:Q55 .
+    }
+    GROUP BY ?movement
+    ORDER BY DESC(?chart_value)
+    LIMIT 12
+  }
+
+  SERVICE wikibase:label {
+    bd:serviceParam wikibase:language "nl,en" .
+    ?movement rdfs:label ?chart_label .
+  }
+}
+ORDER BY DESC(?chart_value)`;
 const chartResult: QueryResult = {
   kind: 'bindings',
   variables: ['chart_label', 'chart_value'],
@@ -172,10 +235,18 @@ app.innerHTML = `
   <section class="intro"><p class="eyebrow">COMPOSABLE LINKED DATA TOOLS</p><h1>A home for your<br><span>next SPARQL query.</span></h1><p>An embeddable editor. Your actions. Your result views.<br>Built to fit the application you are building.</p></section>
 
   <div id="editor"></div>
+  <p id="active-endpoint" class="active-endpoint" role="status"></p>
   <footer><span>01 / Write a query</span><span>02 / Run or press ⌘ / Ctrl + Enter</span><span>03 / Choose a result view</span></footer>
   <aside><h2>Small pieces. Clear boundaries.</h2><div class="modules"><article><code>@ldforge/core</code><p>Query lifecycle, HTTP transport and typed plugin contracts.</p></article><article><code>@ldforge/editor</code><p>CodeMirror, accessible controls and your own button plugins.</p></article><article><code>@ldforge/prefixes</code><p>A searchable catalog of common namespaces, ready to import.</p></article><article><code>@ldforge/renderers</code><p>Independent table, cards, boolean and JSON result plugins.</p></article><article><code>@ldforge/charts</code><p>Chart views with an external library loaded only when opened.</p></article></div></aside>`;
 
-const connection = createEndpointSettings(fixtureExecutor);
+const endpointIndicator =
+  document.querySelector<HTMLElement>('#active-endpoint');
+const connection = createEndpointSettings(fixtureExecutor, (label) => {
+  if (endpointIndicator) {
+    endpointIndicator.textContent = label;
+    endpointIndicator.title = label;
+  }
+});
 const mount = document.querySelector<HTMLElement>('#editor');
 if (!mount) throw new Error('Editor mount point is missing.');
 const restoredWorkspace = readQueryWorkspace();
@@ -211,8 +282,9 @@ function loadExampleQuery(query: string): void {
 const menuBar = editor.getToolBar();
 const queryExamples = menuBar.addButtonGroup({
   id: 'examples',
+  dropdownWidth: 300,
   type: buttonGroupTypes.dropdown,
-  label: { en: 'Query Examples', nl: 'Queryvoorbeelden' },
+  label: { en: 'Examples', nl: 'Voorbeelden' },
 });
 queryExamples.addButton({
   id: 'example-select',
@@ -235,57 +307,91 @@ queryExamples.addButton({
     loadExampleQuery('ASK { ?subject ?predicate ?object }');
   },
 });
-const pluginExamples = menuBar.addButtonGroup({
-  id: 'views',
-  type: buttonGroupTypes.dropdown,
-  label: { en: 'Plugin Examples', nl: 'Pluginvoorbeelden' },
-});
-pluginExamples.addButton({
+queryExamples.addButton({
   id: 'example-cards',
-  label: { en: 'Cards example', nl: 'Kaartenvoorbeeld' },
+  label: { en: 'Gallery', nl: 'Kattenplaatjes' },
   execute() {
     connection.setEndpoint('https://query.wikidata.org/sparql', 'GET');
     loadExampleQuery(cardsQuery);
   },
 });
-pluginExamples.addButton({
+queryExamples.addButton({
   id: 'example-geo',
-  label: {
-    en: 'Map example (athletics tracks)',
-    nl: 'Kaartvoorbeeld (atletiekbanen)',
+  label: { en: 'Castles in North Holland', nl: 'Kastelen in Noord-Holland' },
+  execute() {
+    connection.setEndpoint('https://query.wikidata.org/sparql', 'GET');
+    loadExampleQuery(`# view=geo; geo-title=Kastelen in Noord-Holland
+PREFIX wd: <http://www.wikidata.org/entity/>
+PREFIX wdt: <http://www.wikidata.org/prop/direct/>
+PREFIX wikibase: <http://wikiba.se/ontology#>
+PREFIX bd: <http://www.bigdata.com/rdf#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX schema: <http://schema.org/>
+
+SELECT ?place ?geometryLabel ?geoDescription ?geoImage ?geometry (?place AS ?geoLink) WHERE {
+  ?place wdt:P31 wd:Q23413 ;
+         wdt:P17 wd:Q55 ;
+         wdt:P131+ wd:Q701 ;
+         wdt:P625 ?geometry ;
+         wdt:P18 ?image .
+
+  SERVICE wikibase:label {
+    bd:serviceParam wikibase:language "nl,en" .
+    ?place rdfs:label ?geometryLabel ;
+           schema:description ?geoDescription .
+  }
+
+  BIND(IRI(CONCAT(REPLACE(STR(?image), "^http:", "https:"), "?width=480")) AS ?geoImage)
+}
+LIMIT 250`);
   },
+});
+queryExamples.addButton({
+  id: 'example-palace',
+  label: { en: 'Paleis het Loo (3D)', nl: 'Paleis het Loo (3D)' },
   execute() {
     connection.setEndpoint(
       'https://api.triplydb.com/datasets/osm/osm/services/osm/sparql',
       'GET',
     );
-    loadExampleQuery(`# view=geo; mode=heatmap; geo-title=Atletiekbanen in Nederland
-PREFIX geo: <http://www.opengis.net/ont/geosparql#>
+    loadExampleQuery(`# view=geo; mode=3d; geo-title=Paleis het Loo
 PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+PREFIX geo: <http://www.opengis.net/ont/geosparql#>
 PREFIX osmt: <https://data.osm.pldn.nl/wiki/Key:>
-PREFIX track: <https://data.osm.pldn.nl/wiki/Tag:leisure=track>
-PREFIX athletics: <https://data.osm.pldn.nl/wiki/Tag:sport=athletics>
-
-SELECT ?place ?geometryLabel ?geometry WHERE {
-  ?place osmt:leisure track: ;
-         geo:hasGeometry/geo:asWKT ?geometry .
-
-  OPTIONAL {
-    ?place skos:prefLabel ?name .
-  }
-
-  BIND(COALESCE(?name, "Atletiekbaan") AS ?geometryLabel)
-}
-`);
+SELECT * WHERE {
+  ?gebouw osmt:building ?building .
+  ?gebouw skos:prefLabel ?geometryLabel .
+  ?gebouw geo:hasGeometry/geo:asWKT ?geometry .
+  BIND(10 AS ?geometryHeight)
+  FILTER(?geometryLabel = "Paleis het Loo")
+}`);
   },
 });
-pluginExamples.addButton({
+queryExamples.addButton({
   id: 'example-charts',
-  label: { en: 'Charts example', nl: 'Grafiekvoorbeeld' },
+  label: {
+    en: 'Top 10 largest cities (bar chart)',
+    nl: 'Top 10 grootste steden (staafdiagram)',
+  },
   execute() {
+    connection.setEndpoint('https://query.wikidata.org/sparql', 'GET');
     loadExampleQuery(chartQuery);
   },
 });
+
+queryExamples.addButton({
+  id: 'example-art-movements',
+  label: {
+    en: 'Art movements in Dutch collections (pie chart)',
+    nl: 'Kunststromingen in Nederlandse collecties (taartdiagram)',
+  },
+  execute() {
+    connection.setEndpoint('https://query.wikidata.org/sparql', 'GET');
+    loadExampleQuery(artMovementsQuery);
+  },
+});
+
+queryExamples.addSeparator('example-cards');
 
 if (import.meta.hot) import.meta.hot.dispose(() => editor.destroy());
 

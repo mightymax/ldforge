@@ -9,7 +9,10 @@ import type { EndpointSettings } from './endpoint-history.js';
 import { endpointText } from './endpoint-messages.js';
 import type { EndpointMessage } from './endpoint-messages.js';
 
-export function createEndpointSettings(fixtureExecutor: QueryExecutor): {
+export function createEndpointSettings(
+  fixtureExecutor: QueryExecutor,
+  onEndpointChange?: (label: string) => void,
+): {
   executor: QueryExecutor;
   plugin: SettingsPlugin;
   /** Demo-owned example actions can configure the same visible endpoint panel. */
@@ -207,6 +210,11 @@ export function createEndpointSettings(fixtureExecutor: QueryExecutor): {
         };
 
         function refreshStatus(): void {
+          onEndpointChange?.(
+            activeEndpoint
+              ? `Endpoint: ${activeEndpoint}`
+              : text('fixtureChoice'),
+          );
           message.textContent =
             errorMessage ??
             (activeEndpoint

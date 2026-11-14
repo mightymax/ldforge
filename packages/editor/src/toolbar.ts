@@ -26,6 +26,7 @@ interface GroupRecord {
   menu: HTMLElement;
   trigger: HTMLButtonElement;
   items: ButtonRecord[];
+  separators: Set<string>;
   handle: ToolbarButtonGroupHandle;
   deleted: boolean;
 }
@@ -106,7 +107,10 @@ export function createToolbar(
       return;
     }
     const menu = opened.menu;
-    const width = Math.min(Math.max(rect.width, 200), win.innerWidth - 16);
+    const width = Math.min(
+      opened.options.dropdownWidth ?? Math.max(rect.width, 200),
+      win.innerWidth - 16,
+    );
     menu.style.width = `${width}px`;
     menu.style.left = `${Math.max(8, Math.min(rect.left, win.innerWidth - width - 8))}px`;
     const roomBelow = win.innerHeight - rect.bottom - 8;
@@ -266,8 +270,12 @@ export function createToolbar(
     return handle;
   }
   function detach(record: ButtonRecord) {
-    if (record.group)
-      record.group.items = record.group.items.filter((item) => item !== record);
+    if (record.group) {
+      const group = record.group;
+      group.items = group.items.filter((item) => item !== record);
+      group.separators.delete(record.plugin.id);
+      renderGroup(group);
+    }
     delete record.group;
     record.attached = false;
     record.element.remove();
@@ -325,6 +333,13 @@ export function createToolbar(
     if (group.type === 'dropdown') {
       group.element.append(group.trigger, group.menu);
       for (const item of group.items) {
+        if (group.separators.has(item.plugin.id)) {
+          const separator = doc.createElement('div');
+          separator.className = 'ldforge-toolbar-separator';
+          separator.setAttribute('role', 'separator');
+          separator.setAttribute('aria-orientation', 'horizontal');
+          group.menu.append(separator);
+        }
         item.element.setAttribute('role', 'menuitem');
         item.element.tabIndex = -1;
         group.menu.append(item.element);
@@ -343,6 +358,11 @@ export function createToolbar(
     if (!options.id.trim() || groups.has(options.id))
       throw new Error(`Duplicate or empty toolbar group: ${options.id}`);
     validateType(options.type ?? 'buttons');
+    if (
+      options.dropdownWidth !== undefined &&
+      (!Number.isFinite(options.dropdownWidth) || options.dropdownWidth <= 0)
+    )
+      throw new Error('Dropdown width must be a positive finite number.');
     const pendingIds = new Set<string>();
     for (const input of options.buttons ?? []) {
       if (coreId(input.id))
@@ -379,6 +399,7 @@ export function createToolbar(
       trigger,
       menu,
       items: [],
+      separators: new Set(),
       deleted: false,
     };
     function assertGroup() {
@@ -402,6 +423,14 @@ export function createToolbar(
         addButton(input) {
           assertGroup();
           return attach(input, group);
+        },
+        addSeparator(beforeButtonId) {
+          assertGroup();
+          if (!group.items.some((item) => item.plugin.id === beforeButtonId))
+            throw new Error(`Unknown button in group: ${beforeButtonId}`);
+          group.separators.add(beforeButtonId);
+          renderGroup(group);
+          refresh();
         },
         getButtons() {
           assertGroup();
@@ -480,6 +509,14 @@ export function createToolbar(
       if (chevron) {
         chevron.classList.add('ldforge-dropdown-chevron');
         group.trigger.append(chevron);
+      }
+      let visibleBefore = false;
+      for (const item of group.items) {
+        const separator = item.element.previousElementSibling;
+        if (separator?.getAttribute('role') === 'separator')
+          (separator as HTMLElement).hidden =
+            !visibleBefore || item.element.hidden;
+        if (!item.element.hidden) visibleBefore = true;
       }
       group.trigger.disabled = enabled(group).length === 0;
       group.element.hidden = !group.items.some((item) => !item.element.hidden);

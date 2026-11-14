@@ -665,3 +665,12 @@
 .ldforge button[hidden] {
   display: none;
 }
+
+.ldforge-toolbar-separator {
+  height: 1px;
+  margin: 5px 4px;
+  background: var(--ldforge-border);
+}
+.ldforge-toolbar-separator[hidden] {
+  display: none;
+}

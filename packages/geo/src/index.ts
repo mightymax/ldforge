@@ -1,3 +1,10 @@
+import { createGeoPopup } from './popup.js';
+import { createThreeDMap, hasExtrusions } from './three-dimensional.js';
+export type {
+  ThreeDLibrary,
+  ThreeDMapHandle,
+  ThreeDMapEvent,
+} from './three-dimensional.js';
 import { createSvgIcon } from '@ldforge/core';
 import type { ResultRendererPlugin } from '@ldforge/core';
 import { prepareMode } from './modes.js';
@@ -53,6 +60,7 @@ export interface GeoLibrary {
         feature: GeoFeature,
         layer: {
           bindPopup(content: HTMLElement): unknown;
+          getPopup?(): { update(): void } | undefined;
           bindTooltip(
             content: HTMLElement,
             options: { permanent: boolean; direction: string },
@@ -64,7 +72,14 @@ export interface GeoLibrary {
     },
   ): GeoLayerHandle;
 }
+export const DEFAULT_THREE_D_LIBRARY_URL =
+  'https://cdn.jsdelivr.net/npm/maplibre-gl@6.18.0/dist/maplibre-gl.mjs';
+export const DEFAULT_THREE_D_STYLESHEET_URL =
+  'https://cdn.jsdelivr.net/npm/maplibre-gl@6.18.0/dist/maplibre-gl.css';
 export interface GeoRendererOptions {
+  readonly threeDLibraryUrl?: string;
+  readonly loadThreeDLibrary?: () => Promise<unknown>;
+  readonly threeDStylesheetUrl?: string | false;
   readonly libraryUrl?: string;
   readonly loadLibrary?: () => Promise<unknown>;
   readonly clusterLibraryUrl?: string;
@@ -87,6 +102,9 @@ const messages = {
     retry: 'Retry loading map',
     empty: 'No geometry to display.',
     invalid: 'Invalid WGS84 WKT geometry at row',
+    invalidHeight:
+      'Invalid geometryHeight (expected a nonnegative height in meters) at row',
+    '3d': '3D',
     data: 'Map data',
     mode: 'Map display',
     normal: 'Normal',
@@ -100,6 +118,9 @@ const messages = {
     retry: 'Kaart opnieuw laden',
     empty: 'Geen geometrie om te tonen.',
     invalid: 'Ongeldige WGS84 WKT-geometrie op rij',
+    invalidHeight:
+      'Ongeldige geometryHeight (verwacht een niet-negatieve hoogte in meters) op rij',
+    '3d': '3D',
     data: 'Kaartgegevens',
     mode: 'Kaartweergave',
     normal: 'Normaal',
@@ -216,7 +237,7 @@ export function createGeoRenderer(
         alert.setAttribute('role', 'alert');
         alert.textContent =
           error instanceof GeoDataError
-            ? `${text.invalid} ${error.row}.`
+            ? `${error.field === 'geometryHeight' ? text.invalidHeight : text.invalid} ${error.row}.`
             : text.failed;
         container.replaceChildren(alert);
         return;
@@ -239,10 +260,13 @@ export function createGeoRenderer(
         context?.directives?.mode ??
         context?.directives?.['geo-mode'] ??
         options.mode ??
-        'normal';
-      let selectedMode: GeoMode = ['normal', 'grouped', 'heatmap'].includes(
-        initialMode,
-      )
+        (hasExtrusions(features) ? '3d' : 'normal');
+      let selectedMode: GeoMode = [
+        'normal',
+        'grouped',
+        'heatmap',
+        '3d',
+      ].includes(initialMode)
         ? (initialMode as GeoMode)
         : 'normal';
       const buttons = new Map<GeoMode, HTMLButtonElement>();
@@ -250,7 +274,7 @@ export function createGeoRenderer(
         for (const [mode, button] of buttons)
           button.setAttribute('aria-pressed', String(mode === selectedMode));
       }
-      for (const mode of ['normal', 'grouped', 'heatmap'] as const) {
+      for (const mode of ['normal', 'grouped', 'heatmap', '3d'] as const) {
         const button = doc.createElement('button');
         button.type = 'button';
         button.textContent = text[mode];
@@ -281,6 +305,12 @@ export function createGeoRenderer(
       const frame = doc.createElement('div');
       frame.style.height = '420px';
       frame.style.isolation = 'isolate';
+      const threeDFrame = doc.createElement('div');
+      threeDFrame.className = 'ldforge-geo-3d';
+      threeDFrame.style.height = '420px';
+      threeDFrame.hidden = true;
+      threeDFrame.setAttribute('role', 'region');
+      threeDFrame.setAttribute('aria-label', `${heading.textContent} 3D`);
       frame.setAttribute('role', 'region');
       frame.setAttribute('aria-label', heading.textContent);
       const status = doc.createElement('p');
@@ -295,11 +325,11 @@ export function createGeoRenderer(
       list.style.overflowWrap = 'anywhere';
       for (const feature of features) {
         const item = doc.createElement('li');
-        item.textContent = `${feature.properties.label}: ${feature.geometry.type} ${JSON.stringify(feature.geometry.coordinates)}`;
+        item.textContent = `${feature.properties.label}: ${feature.geometry.type} ${JSON.stringify(feature.geometry.coordinates)}${feature.properties.height === undefined ? '' : ` (${feature.properties.height} m)`}`;
         list.append(item);
       }
       details.append(summary, list);
-      section.append(style, header, frame, status, retry, details);
+      section.append(style, header, frame, threeDFrame, status, retry, details);
       container.replaceChildren(section);
       let disposed = false;
       let map: GeoMapHandle | undefined;
@@ -331,7 +361,12 @@ export function createGeoRenderer(
                       feature.properties.expansionZoom ?? 19,
                     ),
                   );
-                } else layer.bindPopup(label);
+                } else
+                  layer.bindPopup(
+                    createGeoPopup(doc, feature.properties, () =>
+                      layer.getPopup?.()?.update(),
+                    ),
+                  );
               },
             },
           )
@@ -343,6 +378,58 @@ export function createGeoRenderer(
         retry.hidden = true;
         section.setAttribute('aria-busy', 'true');
         try {
+          if (selectedMode === '3d') {
+            const [module] = await Promise.all([
+              options.loadThreeDLibrary
+                ? options.loadThreeDLibrary()
+                : externalModule(
+                    httpUrl(
+                      options.threeDLibraryUrl ?? DEFAULT_THREE_D_LIBRARY_URL,
+                      doc.baseURI,
+                    ),
+                  ),
+              options.threeDStylesheetUrl === false
+                ? Promise.resolve()
+                : stylesheet(
+                    doc,
+                    httpUrl(
+                      options.threeDStylesheetUrl ??
+                        DEFAULT_THREE_D_STYLESHEET_URL,
+                      doc.baseURI,
+                    ),
+                  ),
+            ]);
+            if (disposed || version !== generation) return;
+            clearMode?.();
+            clearMode = undefined;
+            frame.hidden = true;
+            threeDFrame.hidden = false;
+            try {
+              const threeD = createThreeDMap(
+                threeDFrame,
+                features,
+                module,
+                options,
+              );
+              clearMode = () => {
+                threeD.destroy();
+                threeDFrame.hidden = true;
+                frame.hidden = false;
+                map?.invalidateSize();
+              };
+              await threeD.ready;
+            } catch (error) {
+              if (!disposed && version === generation) {
+                clearMode?.();
+                clearMode = undefined;
+                threeDFrame.hidden = true;
+                frame.hidden = false;
+              }
+              throw error;
+            }
+            if (!disposed && version === generation) status.textContent = '';
+            return;
+          }
           const render = await prepareMode(
             selectedMode,
             features,

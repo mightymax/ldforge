@@ -2,9 +2,7 @@ import type { Page } from '@playwright/test';
 import { expect, test } from '@playwright/test';
 
 async function chooseExample(page: Page, name: string): Promise<void> {
-  const group = /^(SELECT|CONSTRUCT|ASK) /.test(name)
-    ? 'Query Examples'
-    : 'Plugin Examples';
+  const group = 'Examples';
   await page.getByRole('button', { name: group, exact: true }).click();
   await page.getByRole('menuitem', { name, exact: true }).click();
 }
@@ -701,7 +699,10 @@ test('renders Cards from query headers, scopes CSS and preserves manual view swi
     .getByRole('button', { name: 'Apply endpoint', exact: true })
     .click();
   await page.getByRole('button', { name: 'IDE settings', exact: true }).click();
-  await chooseExample(page, 'Cards example');
+  await chooseExample(page, 'Gallery');
+  await expect(page.locator('#active-endpoint')).toHaveText(
+    'Endpoint: https://query.wikidata.org/sparql',
+  );
   await page.getByRole('button', { name: 'Run query', exact: true }).click();
   const tabs = page.getByRole('tablist', { name: 'Result view', exact: true });
   await expect(
@@ -784,10 +785,38 @@ test('loads the external chart library only on activation and renders real chart
       });
     },
   );
+  await page.route('https://query.wikidata.org/sparql?*', async (route) => {
+    expect(route.request().method()).toBe('GET');
+    await route.fulfill({
+      contentType: 'application/sparql-results+json',
+      body: JSON.stringify({
+        head: { vars: ['chart_label', 'chart_value'] },
+        results: {
+          bindings: [
+            {
+              chart_label: { type: 'literal', value: 'Amsterdam' },
+              chart_value: {
+                type: 'literal',
+                value: '934526',
+                datatype: 'http://www.w3.org/2001/XMLSchema#integer',
+              },
+            },
+          ],
+        },
+      }),
+    });
+  });
   await page.goto('/');
   await page.getByRole('button', { name: 'Run query', exact: true }).click();
   expect(requests).toBe(0);
-  await chooseExample(page, 'Charts example');
+  await chooseExample(page, 'Top 10 largest cities (bar chart)');
+  await expect(page.locator('#active-endpoint')).toHaveText(
+    'Endpoint: https://query.wikidata.org/sparql',
+  );
+  await expect(
+    page.getByRole('textbox', { name: 'SPARQL query', exact: true }),
+  ).toContainText('Top 10 grootste steden van Nederland');
+
   const query = page.getByRole('textbox', {
     name: 'SPARQL query',
     exact: true,
@@ -827,6 +856,21 @@ test('loads the external chart library only on activation and renders real chart
   await page.getByRole('button', { name: 'Run query', exact: true }).click();
   await expect(chart).toHaveAttribute('aria-busy', 'false');
   await expect(chart.locator('canvas')).toBeVisible();
+  expect(requests).toBe(1);
+  await chooseExample(page, 'Art movements in Dutch collections (pie chart)');
+  await expect(query).toContainText('chart=pie');
+  await expect(query).toContainText('COUNT(?painting)');
+  await expect(page.locator('#active-endpoint')).toHaveText(
+    'Endpoint: https://query.wikidata.org/sparql',
+  );
+  await page.getByRole('button', { name: 'Run query', exact: true }).click();
+  await expect(
+    chart.getByRole('heading', {
+      name: 'Kunststromingen in Nederlandse collecties',
+      exact: true,
+    }),
+  ).toBeVisible();
+  await expect(chart).toHaveAttribute('aria-busy', 'false');
   expect(requests).toBe(1);
   await page.setViewportSize({ width: 390, height: 844 });
   expect(
@@ -875,7 +919,7 @@ test('uses configured toolbar dropdowns with keyboard navigation, dismissal and 
 }) => {
   await page.goto('/');
   const trigger = page.getByRole('button', {
-    name: 'Query Examples',
+    name: 'Examples',
     exact: true,
   });
   await expect(trigger).toHaveAttribute('aria-haspopup', 'menu');
@@ -888,11 +932,19 @@ test('uses configured toolbar dropdowns with keyboard navigation, dismissal and 
   ).toHaveCount(0);
   await trigger.focus();
   await page.keyboard.press('ArrowDown');
-  const menu = page.getByRole('menu', { name: 'Query Examples', exact: true });
+  const menu = page.getByRole('menu', { name: 'Examples', exact: true });
+  await expect(menu).toHaveCSS('width', '300px');
+  await expect(menu.getByRole('separator')).toHaveCount(1);
+  await expect(menu.locator('[role=separator] + button')).toHaveText('Gallery');
   await expect(menu.getByRole('menuitem')).toHaveText([
     'SELECT example',
     'CONSTRUCT example',
     'ASK example',
+    'Gallery',
+    'Castles in North Holland',
+    'Paleis het Loo (3D)',
+    'Top 10 largest cities (bar chart)',
+    'Art movements in Dutch collections (pie chart)',
   ]);
   await expect(
     menu.getByRole('menuitem', { name: 'SELECT example', exact: true }),
@@ -913,7 +965,10 @@ test('uses configured toolbar dropdowns with keyboard navigation, dismissal and 
   await trigger.click();
   await page.keyboard.press('End');
   await expect(
-    menu.getByRole('menuitem', { name: 'ASK example', exact: true }),
+    menu.getByRole('menuitem', {
+      name: 'Art movements in Dutch collections (pie chart)',
+      exact: true,
+    }),
   ).toBeFocused();
   await page.keyboard.press('Escape');
   await expect(trigger).toBeFocused();
@@ -933,19 +988,22 @@ test('uses configured toolbar dropdowns with keyboard navigation, dismissal and 
   await page.keyboard.press('Escape');
   await page.goto('/');
   await expect(
-    page.getByRole('button', { name: 'Query Examples', exact: true }),
+    page.getByRole('button', { name: 'Examples', exact: true }),
   ).toBeVisible();
-  await page
-    .getByRole('button', { name: 'Plugin Examples', exact: true })
-    .click();
+  await page.getByRole('button', { name: 'Examples', exact: true }).click();
   await expect(
     page
-      .getByRole('menu', { name: 'Plugin Examples', exact: true })
+      .getByRole('menu', { name: 'Examples', exact: true })
       .getByRole('menuitem'),
   ).toHaveText([
-    'Cards example',
-    'Map example (athletics tracks)',
-    'Charts example',
+    'SELECT example',
+    'CONSTRUCT example',
+    'ASK example',
+    'Gallery',
+    'Castles in North Holland',
+    'Paleis het Loo (3D)',
+    'Top 10 largest cities (bar chart)',
+    'Art movements in Dutch collections (pie chart)',
   ]);
 });
 

@@ -29,6 +29,43 @@ function button(id: string): ButtonPlugin {
 }
 
 describe('live toolbar API', () => {
+  it('supports configured widths and separators through type changes and button moves', () => {
+    const { toolbar, host } = mount();
+    for (const dropdownWidth of [0, -1, NaN, Infinity]) {
+      expect(() =>
+        toolbar.addButtonGroup({ id: 'invalid', dropdownWidth }),
+      ).toThrow('positive finite');
+    }
+    const group = toolbar.addButtonGroup({
+      id: 'separated',
+      type: 'dropdown',
+      dropdownWidth: 300,
+      buttons: [button('first'), button('second')],
+    });
+    expect(() => group.addSeparator('missing')).toThrow('Unknown button');
+    group.addSeparator('second');
+    group.addSeparator('second');
+    expect(group.getButtons().map((item) => item.id)).toEqual([
+      'first',
+      'second',
+    ]);
+    expect(host.querySelectorAll('[role="separator"]')).toHaveLength(1);
+    group.setType('buttons');
+    expect(host.querySelectorAll('[role="separator"]')).toHaveLength(0);
+    group.setType('dropdown');
+    expect(host.querySelectorAll('[role="separator"]')).toHaveLength(1);
+    const second = toolbar.getButton('second');
+    if (!second) throw new Error('Missing second button');
+    toolbar.addButton(second);
+    expect(host.querySelectorAll('[role="separator"]')).toHaveLength(0);
+    group.addButton(button('third'));
+    group.addSeparator('third');
+    const third = toolbar.getButton('third');
+    if (!third) throw new Error('Missing third button');
+    third.delete();
+    expect(host.querySelectorAll('[role="separator"]')).toHaveLength(0);
+  });
+
   it('creates detached reusable buttons, moves them between groups and updates labels/actions', async () => {
     const { toolbar, host, editor } = mount();
     expect(editor.getToolBar()).toBe(toolbar);

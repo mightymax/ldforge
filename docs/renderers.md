@@ -16,10 +16,14 @@ const renderers = [createTableRenderer(), createGeoRenderer()];
 
 ### Geo binding contract
 
-| Variable         | Required | Meaning                                                                         |
-| ---------------- | -------- | ------------------------------------------------------------------------------- |
-| `?geometry`      | Yes      | Literal containing two-dimensional WGS84 WKT; longitude first, latitude second. |
-| `?geometryLabel` | No       | Plain-text feature label, defaults to the result row number.                    |
+| Variable          | Required | Meaning                                                                         |
+| ----------------- | -------- | ------------------------------------------------------------------------------- |
+| `?geometry`       | Yes      | Literal containing two-dimensional WGS84 WKT; longitude first, latitude second. |
+| `?geometryLabel`  | No       | Plain-text feature label, defaults to the result row number.                    |
+| `?geometryHeight` | No       | Nonnegative numeric literal in meters; extrudes polygons in 3D.                 |
+| `?geoImage`       | No       | Absolute HTTP(S) image URI or URL literal, shown in the feature popup.          |
+| `?geoDescription` | No       | Plain-text popup description, with line breaks preserved.                       |
+| `?geoLink`        | No       | Absolute HTTP(S) URI or URL literal; makes the label a link in a new tab.       |
 
 The tab appears for results declaring `geometry`. Use `# view=geo` to activate it automatically and optional `geo-title` for its heading. `POINT`, `LINESTRING`, `POLYGON` (including holes), `MULTIPOINT`, `MULTILINESTRING` and `MULTIPOLYGON` are supported, including mixed types in one result. Bare WKT and the GeoSPARQL CRS84 URI prefix are accepted. Other CRS/SRID values, extra dimensions, EMPTY and geometry collections are rejected rather than projected or guessed. Coordinate bounds, finite numbers, minimum lengths and closed rings are checked; polygon topology is not checked. Invalid or unbound geometries produce a localized row error; empty results show an empty state without loading external assets.
 
@@ -29,31 +33,83 @@ The compact button group offers **Normal**, **Grouped**, and **Heatmap** (locali
 
 Choose the initial mode with `# view=geo; mode=grouped` or `mode=heatmap`; the host option `mode` supplies the default. `geo-mode` remains supported as an alias; `mode` takes precedence when both are supplied. Invalid mode directives fall back to Normal. Switching modes preserves map position. Supercluster 8.0.1 and simpleheat 0.4.0 are separate pinned external ESM downloads that happen only when that mode is first selected. Configure `clusterLibraryUrl`/`heatLibraryUrl` or inject `loadClusterLibrary`/`loadHeatLibrary` for self-hosting. Failed mode loads can be retried; late completions after another selection or cleanup cannot replace the active view. Supercluster is ISC licensed and simpleheat is BSD-2-Clause licensed.
 
-### OpenStreetMap example
+### 3D buildings
 
-Endpoint: `https://api.triplydb.com/datasets/osm/osm/services/osm/sparql` (GET). This query retrieves features tagged `leisure=track` with their WKT geometry and an optional name, falling back to “Atletiekbaan”. It starts in Heatmap mode and has no sport filter or result limit. The demo's **Map example (athletics tracks)** selects this endpoint and query.
+Bind `?geometryHeight` to a finite, nonnegative number in meters. Polygons and
+MultiPolygons retain their holes and extrude upward from ground level. Missing
+heights leave a polygon flat; points and lines remain visible. Invalid bound
+heights produce a row error. WKT remains two-dimensional longitude/latitude data.
+
+Positive polygon heights default to **3D**, unless `mode`/`geo-mode` or the host
+`mode` option explicitly chooses another mode. To always select 3D, use
+`# view=geo; mode=3d`. The 3D button uses MapLibre GL JS 6.18.0 (BSD-3-Clause),
+loaded from a pinned external module with matching CSS only when needed. Normal,
+Grouped and Heatmap continue to use Leaflet without downloading MapLibre.
+
+The demo's **Paleis het Loo (3D)** example uses the OSM endpoint below:
 
 ```sparql
-# view=geo; mode=heatmap; geo-title=Atletiekbanen in Nederland
-PREFIX geo: <http://www.opengis.net/ont/geosparql#>
+# view=geo; mode=3d; geo-title=Paleis het Loo
 PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+PREFIX geo: <http://www.opengis.net/ont/geosparql#>
 PREFIX osmt: <https://data.osm.pldn.nl/wiki/Key:>
-PREFIX track: <https://data.osm.pldn.nl/wiki/Tag:leisure=track>
-PREFIX athletics: <https://data.osm.pldn.nl/wiki/Tag:sport=athletics>
-
-SELECT ?place ?geometryLabel ?geometry WHERE {
-  ?place osmt:leisure track: ;
-         geo:hasGeometry/geo:asWKT ?geometry .
-
-  OPTIONAL {
-    ?place skos:prefLabel ?name .
-  }
-
-  BIND(COALESCE(?name, "Atletiekbaan") AS ?geometryLabel)
+SELECT * WHERE {
+  ?gebouw osmt:building ?building .
+  ?gebouw skos:prefLabel ?geometryLabel .
+  ?gebouw geo:hasGeometry/geo:asWKT ?geometry .
+  BIND(10 AS ?geometryHeight)
+  FILTER(?geometryLabel = "Paleis het Loo")
 }
 ```
 
-The source supplies geometry through `geo:hasGeometry/geo:asWKT`. Other projections must first be converted to WGS84/CRS84.
+This makes a ten-meter building volume, not a detailed roof or architectural
+model. The tilted view fits query bounds. Navigation controls and right-drag
+allow rotation/tilt. Click a feature for its label and height. Returning to a
+Leaflet mode restores the 2D view. WebGL is required; on failure, retry or choose
+Normal. Text geometry/height data stays available. Self-host using
+`threeDLibraryUrl`, `threeDStylesheetUrl` (or `false` for host CSS), and
+`loadThreeDLibrary`. The exported `ThreeDLibrary`, `ThreeDMapHandle` and
+`ThreeDMapEvent` types require no installed MapLibre type dependency. The usual
+`tileUrl`/`tileAttribution` options apply in both renderers, including
+`tileUrl: false`. Allow `worker-src blob:` in CSP for MapLibre's worker.
+
+### Castles in North Holland example
+
+Endpoint: `https://query.wikidata.org/sparql` (GET). The demo's **Kastelen in Noord-Holland**
+returns up to 250 castles in North Holland with coordinates and a Wikidata image. It uses
+mandatory patterns without OPTIONAL. Popup labels link to Wikidata; descriptions
+prefer Dutch and fall back to English. Commons images use HTTPS thumbnail URLs.
+The missing `rdfs` and `schema` prefixes are included explicitly.
+
+```sparql
+# view=geo; geo-title=Kastelen in Noord-Holland
+PREFIX wd: <http://www.wikidata.org/entity/>
+PREFIX wdt: <http://www.wikidata.org/prop/direct/>
+PREFIX wikibase: <http://wikiba.se/ontology#>
+PREFIX bd: <http://www.bigdata.com/rdf#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX schema: <http://schema.org/>
+
+SELECT ?place ?geometryLabel ?geoDescription ?geoImage ?geometry (?place AS ?geoLink) WHERE {
+  ?place wdt:P31 wd:Q23413 ;
+         wdt:P17 wd:Q55 ;
+         wdt:P131+ wd:Q701 ;
+         wdt:P625 ?geometry ;
+         wdt:P18 ?image .
+
+  SERVICE wikibase:label {
+    bd:serviceParam wikibase:language "nl,en" .
+    ?place rdfs:label ?geometryLabel ;
+           schema:description ?geoDescription .
+  }
+
+  BIND(IRI(CONCAT(REPLACE(STR(?image), "^http:", "https:"), "?width=480")) AS ?geoImage)
+}
+LIMIT 250
+```
+
+Wikidata's `wdt:P625` returns WGS84 WKT points directly, so no geometry conversion
+is needed. The separate **Paleis het Loo (3D)** example above keeps using OSM.
 
 This deterministic query demonstrates all three basic types on any SPARQL 1.1 endpoint:
 

@@ -1,7 +1,7 @@
 import type { GeoFeature, Position } from './model.js';
 import type { GeoLayerHandle, GeoMapHandle } from './index.js';
 
-export type GeoMode = 'normal' | 'grouped' | 'heatmap';
+export type GeoMode = 'normal' | 'grouped' | 'heatmap' | '3d';
 export interface ClusterIndex {
   load(features: GeoFeature[]): unknown;
   getClusters(
@@ -14,6 +14,10 @@ export interface ClusterIndex {
       cluster_id?: number;
       point_count?: number;
       label?: string;
+      image?: string;
+      description?: string;
+      link?: string;
+      height?: number;
     };
   }[];
   getClusterExpansionZoom(id: number): number;
@@ -56,7 +60,7 @@ function defaultExport(module: unknown): unknown {
 
 /** Load before mutating the live map, so stale mode requests can be discarded. */
 export async function prepareMode(
-  mode: GeoMode,
+  mode: Exclude<GeoMode, '3d'>,
   features: GeoFeature[],
   loadCluster: () => Promise<unknown>,
   loadHeat: () => Promise<unknown>,
@@ -95,7 +99,10 @@ export async function prepareMode(
                       feature.properties.cluster_id ?? 0,
                     ),
                   }
-                : { label: feature.properties.label ?? '' },
+                : {
+                    ...feature.properties,
+                    label: feature.properties.label ?? '',
+                  },
             })),
         );
       };
