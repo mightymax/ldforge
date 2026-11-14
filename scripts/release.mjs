@@ -11,6 +11,7 @@ export const packagePaths = [
   'packages/prefixes',
   'packages/renderers',
   'packages/charts',
+  'packages/geo',
   'packages/editor',
 ];
 const dependencyFields = [

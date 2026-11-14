@@ -11,6 +11,7 @@ COPY packages/editor/package.json packages/editor/package.json
 COPY packages/prefixes/package.json packages/prefixes/package.json
 COPY packages/renderers/package.json packages/renderers/package.json
 COPY packages/charts/package.json packages/charts/package.json
+COPY packages/geo/package.json packages/geo/package.json
 RUN npm ci --ignore-scripts --no-audit --no-fund
 COPY . .
 RUN npm run build -w @ldforge/demo

@@ -10,39 +10,44 @@ import { URL, fileURLToPath } from 'node:url';
 const directory = mkdtempSync(join(tmpdir(), 'ldforge-consumer-'));
 const npm = process.platform === 'win32' ? 'npm.cmd' : 'npm';
 try {
-  const archives = ['core', 'prefixes', 'editor', 'renderers', 'charts'].map(
-    (name) => {
-      const [archive] = JSON.parse(
-        execFileSync(
-          npm,
-          [
-            'pack',
-            '-w',
-            `@ldforge/${name}`,
-            '--pack-destination',
-            directory,
-            '--json',
-          ],
-          { encoding: 'utf8' },
-        ),
-      );
-      const files = archive.files.map((file) => file.path);
-      for (const path of [
-        'LICENSE',
-        'src/index.ts',
-        'dist/index.js',
-        'dist/index.d.ts',
-      ])
-        assert(files.includes(path), `${name} is missing ${path}`);
-      if (name === 'editor') {
-        assert(files.includes('dist/styles.css'));
-        assert(files.includes('docs/api/configuration.md'));
-        assert(files.includes('docs/api/tab.md'));
-        assert(files.includes('docs/api/toolbar.md'));
-      }
-      return join(directory, archive.filename);
-    },
-  );
+  const archives = [
+    'core',
+    'prefixes',
+    'editor',
+    'renderers',
+    'charts',
+    'geo',
+  ].map((name) => {
+    const [archive] = JSON.parse(
+      execFileSync(
+        npm,
+        [
+          'pack',
+          '-w',
+          `@ldforge/${name}`,
+          '--pack-destination',
+          directory,
+          '--json',
+        ],
+        { encoding: 'utf8' },
+      ),
+    );
+    const files = archive.files.map((file) => file.path);
+    for (const path of [
+      'LICENSE',
+      'src/index.ts',
+      'dist/index.js',
+      'dist/index.d.ts',
+    ])
+      assert(files.includes(path), `${name} is missing ${path}`);
+    if (name === 'editor') {
+      assert(files.includes('dist/styles.css'));
+      assert(files.includes('docs/api/configuration.md'));
+      assert(files.includes('docs/api/tab.md'));
+      assert(files.includes('docs/api/toolbar.md'));
+    }
+    return join(directory, archive.filename);
+  });
   writeFileSync(
     join(directory, 'package.json'),
     JSON.stringify({ private: true, type: 'module' }),
@@ -58,6 +63,7 @@ try {
     import assert from 'node:assert/strict';
     import { existsSync } from 'node:fs';
     import { parseRdfGraph, parseSparqlResults } from '@ldforge/core';
+    import { createGeoRenderer } from '@ldforge/geo';
     import { createChartRenderer } from '@ldforge/charts';
     import { createEditor, formatSparql } from '@ldforge/editor';
     import { prefixes, searchPrefixes } from '@ldforge/prefixes';
@@ -66,6 +72,7 @@ try {
     import { createTableRenderer, createCardsRenderer } from '@ldforge/renderers';
     assert.equal(typeof createEditor, 'function');
     assert.equal(createChartRenderer().id, 'charts');
+    assert.equal(createGeoRenderer().id, 'geo');
     assert.equal((await parseRdfGraph('<https://example.org/s> <https://example.org/p> "value" .')).triples.length, 1);
     assert.equal(createCardsRenderer().id, 'cards');
     assert((await formatSparql('select * where {?s ?p ?o}')).includes('SELECT'));
@@ -89,9 +96,10 @@ try {
     import { createEditor } from '@ldforge/editor';
     import { createHttpExecutor } from '@ldforge/core';
     import { createTableRenderer, createCardsRenderer } from '@ldforge/renderers';
+    import { createGeoRenderer } from '@ldforge/geo';
     const editor = createEditor(document.createElement('div'), {
       executor: createHttpExecutor({ endpoint: 'https://example.org/sparql' }),
-      renderers: [createTableRenderer()],
+      renderers: [createTableRenderer(), createGeoRenderer()],
     });
     editor.destroy();
   `,
@@ -121,7 +129,7 @@ try {
     { cwd: directory, stdio: 'inherit' },
   );
   process.stdout.write(
-    'All five packages install, resolve and typecheck in an isolated consumer.\n',
+    'All six packages install, resolve and typecheck in an isolated consumer.\n',
   );
 } finally {
   rmSync(directory, { recursive: true, force: true });

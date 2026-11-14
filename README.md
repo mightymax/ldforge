@@ -60,6 +60,7 @@ integration. CDN access and the public endpoint require an internet connection.
 | `@ldforge/prefixes`  | Curated common namespace catalog, ready-to-use map and search helper                                        |
 | `@ldforge/renderers` | Independent table, cards, boolean, and normalized JSON renderers                                            |
 | `@ldforge/charts`    | Optional chart renderer; external Chart.js runtime loaded only on activation                                |
+| `@ldforge/geo`       | Optional map renderer with normal, grouped and heatmap views; external libraries loaded on demand           |
 | `apps/demo`          | Minimal Vite host with fixture/live execution and custom action plugins                                     |
 
 The editor depends on core, CodeMirror and the prefix catalog. Default result renderers are supplied by the host, so another application can use its own rendering stack.
@@ -156,6 +157,10 @@ This is a working foundation, not feature parity with LDMax. SELECT/ASK and CONS
 ## License
 
 Licensed under the [European Union Public Licence 1.2](LICENSE), SPDX identifier `EUPL-1.2`. Full license text is included in each library package. See the [official EUPL versions](https://interoperable-europe.ec.europa.eu/collection/eupl/eupl-text-eupl-12). Third-party dependencies retain their own licenses.
+
+## Optional geodata
+
+Register `createGeoRenderer()` from `@ldforge/geo` to visualize WKT points, lines and polygons from `?geometry` with optional `?geometryLabel`. Leaflet JavaScript and CSS load externally only when the Map tab opens. See the [geo guide](docs/renderers.md#geo) for Wikidata and mixed-geometry examples and self-hosting options.
 
 ## Optional charts
 

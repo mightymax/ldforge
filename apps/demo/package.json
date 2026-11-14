@@ -17,6 +17,7 @@
     "@ldforge/editor": "^0.1.2",
     "@ldforge/renderers": "^0.1.2",
     "@lezer/highlight": "^1.2.5",
-    "@ldforge/charts": "^0.1.2"
+    "@ldforge/charts": "^0.1.2",
+    "@ldforge/geo": "^0.1.2"
   }
 }

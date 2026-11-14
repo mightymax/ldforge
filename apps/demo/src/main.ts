@@ -1,3 +1,4 @@
+import { createGeoRenderer } from '@ldforge/geo';
 import { createChartRenderer } from '@ldforge/charts';
 import cardImageUrl from '../assets/logo-mark.svg?no-inline';
 import { mountSiteChrome } from './site-chrome.js';
@@ -192,6 +193,7 @@ const editor = createEditor(mount, {
     createTableRenderer(),
     createCardsRenderer(),
     createChartRenderer(),
+    createGeoRenderer(),
     createBooleanRenderer(),
     createJsonRenderer(),
   ].map((renderer) => ({
@@ -244,6 +246,28 @@ pluginExamples.addButton({
   execute() {
     connection.setEndpoint('https://query.wikidata.org/sparql', 'GET');
     loadExampleQuery(cardsQuery);
+  },
+});
+pluginExamples.addButton({
+  id: 'example-geo',
+  label: { en: 'Map example (Wikidata)', nl: 'Kaartvoorbeeld (Wikidata)' },
+  execute() {
+    connection.setEndpoint('https://query.wikidata.org/sparql', 'GET');
+    loadExampleQuery(`# view=geo; geo-title=Nederlandse plaatsen
+PREFIX wd: <http://www.wikidata.org/entity/>
+PREFIX wdt: <http://www.wikidata.org/prop/direct/>
+PREFIX wikibase: <http://wikiba.se/ontology#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX bd: <http://www.bigdata.com/rdf#>
+SELECT ?place ?geometryLabel ?geometry WHERE {
+  VALUES ?place { wd:Q727 wd:Q36600 wd:Q9920 wd:Q803 wd:Q34370 }
+  ?place wdt:P625 ?geometry .
+  SERVICE wikibase:label {
+    bd:serviceParam wikibase:language "nl,en" .
+    ?place rdfs:label ?geometryLabel .
+  }
+}
+`);
   },
 });
 pluginExamples.addButton({

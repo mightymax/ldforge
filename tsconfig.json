@@ -9,7 +9,8 @@
       "@ldforge/renderers": ["packages/renderers/src/index.ts"],
       "@ldforge/prefixes": ["packages/prefixes/src/index.ts"],
       "@ldforge/prefixes/*": ["packages/prefixes/src/*.ts"],
-      "@ldforge/charts": ["packages/charts/src/index.ts"]
+      "@ldforge/charts": ["packages/charts/src/index.ts"],
+      "@ldforge/geo": ["packages/geo/src/index.ts"]
     },
     "types": ["node", "vite/client"]
   },

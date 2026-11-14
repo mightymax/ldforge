@@ -30,12 +30,14 @@ export default defineConfig({
           new URL('../../packages/editor/src/styles.css', import.meta.url),
         ),
       },
-      ...['core', 'editor', 'renderers', 'prefixes', 'charts'].map((name) => ({
-        find: `@ldforge/${name}`,
-        replacement: fileURLToPath(
-          new URL(`../../packages/${name}/src/index.ts`, import.meta.url),
-        ),
-      })),
+      ...['core', 'editor', 'renderers', 'prefixes', 'charts', 'geo'].map(
+        (name) => ({
+          find: `@ldforge/${name}`,
+          replacement: fileURLToPath(
+            new URL(`../../packages/${name}/src/index.ts`, import.meta.url),
+          ),
+        }),
+      ),
     ],
   },
 });

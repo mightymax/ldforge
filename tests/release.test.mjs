@@ -214,8 +214,9 @@ test('atomic push failure retains a recoverable local release without pushing a 
     );
     const oldMain = git(project.remote, 'rev-parse', 'main');
     const result = version(project.root);
-    assert.notEqual(result.status, 0);
-    assert.equal(verifyVersions(project.root), '0.1.1');
+    assert.notEqual(result.status, 0, errorText(result));
+    assert.match(errorText(result), /Tag publication disabled in test/);
+    assert.equal(verifyVersions(project.root), '0.1.1', errorText(result));
     assert.notEqual(git(project.root, 'rev-parse', 'main'), oldMain);
     assert.equal(git(project.remote, 'rev-parse', 'main'), oldMain);
     assert.equal(git(project.remote, 'tag', '--list'), '');

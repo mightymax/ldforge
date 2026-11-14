@@ -2,6 +2,75 @@
 
 LDForge result renderers turn normalized SELECT, ASK or RDF graph results into independent views. Choose a view through the icon tabs below the query editor. Only plugins supporting the current result appear. The download button always exports the complete result as CSV.
 
+## Geo
+
+**Package:** `@ldforge/geo` (optional) · **Factory:** `createGeoRenderer(options?)` · **ID:** `geo`
+
+Shows WKT points, lines and polygons on an interactive Leaflet map, with automatic bounds and plain-text label popups. The small adapter loads pinned Leaflet 1.9.4 JavaScript and CSS only on activation, outside the application bundle, following the chart plugin's loading pattern. No Leaflet runtime dependency is installed.
+
+```ts
+import { createGeoRenderer } from '@ldforge/geo';
+// Add alongside your other result renderers:
+const renderers = [createTableRenderer(), createGeoRenderer()];
+```
+
+### Geo binding contract
+
+| Variable         | Required | Meaning                                                                         |
+| ---------------- | -------- | ------------------------------------------------------------------------------- |
+| `?geometry`      | Yes      | Literal containing two-dimensional WGS84 WKT; longitude first, latitude second. |
+| `?geometryLabel` | No       | Plain-text feature label, defaults to the result row number.                    |
+
+The tab appears for results declaring `geometry`. Use `# view=geo` to activate it automatically and optional `geo-title` for its heading. `POINT`, `LINESTRING`, `POLYGON` (including holes), `MULTIPOINT`, `MULTILINESTRING` and `MULTIPOLYGON` are supported, including mixed types in one result. Bare WKT and the GeoSPARQL CRS84 URI prefix are accepted. Other CRS/SRID values, extra dimensions, EMPTY and geometry collections are rejected rather than projected or guessed. Coordinate bounds, finite numbers, minimum lengths and closed rings are checked; polygon topology is not checked. Invalid or unbound geometries produce a localized row error; empty results show an empty state without loading external assets.
+
+### Map display modes
+
+The selector offers **Normal**, **Grouped**, and **Heatmap** (localized in Dutch). Normal draws each feature. Grouped uses Supercluster to combine nearby points, shows their counts, and expands clusters on click or zoom. Heatmap uses simpleheat to show point density with equal weight per point. MultiPoint members are individual observations. Lines and polygons remain visible in all modes and are not interpreted as point observations. When there are only shapes, the original geometry is shown without loading a mode library.
+
+Choose the initial mode with `# view=geo; geo-mode=grouped` or `geo-mode=heatmap`; the host option `mode` supplies the default. Invalid mode directives fall back to Normal. Switching modes preserves map position. Supercluster 8.0.1 and simpleheat 0.4.0 are separate pinned external ESM downloads that happen only when that mode is first selected. Configure `clusterLibraryUrl`/`heatLibraryUrl` or inject `loadClusterLibrary`/`loadHeatLibrary` for self-hosting. Failed mode loads can be retried; late completions after another selection or cleanup cannot replace the active view. Supercluster is ISC licensed and simpleheat is BSD-2-Clause licensed.
+
+### Wikidata example
+
+Endpoint: `https://query.wikidata.org/sparql` (GET). This bounded query retrieves five Dutch cities using Wikidata's [coordinate location (P625)](https://www.wikidata.org/wiki/Property:P625). Coordinates are returned as WKT points, ready for the plugin. The demo's **Map example (Wikidata)** selects this endpoint and query.
+
+```sparql
+# view=geo; geo-title=Nederlandse plaatsen
+PREFIX wd: <http://www.wikidata.org/entity/>
+PREFIX wdt: <http://www.wikidata.org/prop/direct/>
+PREFIX wikibase: <http://wikiba.se/ontology#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX bd: <http://www.bigdata.com/rdf#>
+SELECT ?place ?geometryLabel ?geometry WHERE {
+  VALUES ?place { wd:Q727 wd:Q36600 wd:Q9920 wd:Q803 wd:Q34370 }
+  ?place wdt:P625 ?geometry .
+  SERVICE wikibase:label {
+    bd:serviceParam wikibase:language "nl,en" .
+    ?place rdfs:label ?geometryLabel .
+  }
+}
+```
+
+`P625` provides points. For source lines and polygons, return WKT from an endpoint with GeoSPARQL geometry, such as `?item geo:hasGeometry/geo:asWKT ?geometry`. The OSM swimming-pool query can be used as supplied with `# view=geo` added above its prefixes. Other projections must first be converted to WGS84/CRS84.
+
+This deterministic query demonstrates all three basic types on any SPARQL 1.1 endpoint:
+
+```sparql
+# view=geo; geo-title=Points, lines and polygons
+SELECT ?geometryLabel ?geometry WHERE {
+  VALUES (?geometryLabel ?geometry) {
+    ("Point" "POINT(4.9 52.37)")
+    ("Line" "LINESTRING(4.88 52.36,4.92 52.38)")
+    ("Area" "POLYGON((4.86 52.35,4.89 52.35,4.89 52.38,4.86 52.35))")
+  }
+}
+```
+
+### Loading, hosting and lifecycle
+
+See [GeoRendererOptions and supported WKT](https://github.com/mightymax/ldforge/blob/main/packages/geo/README.md) for every option. Defaults are `https://cdn.jsdelivr.net/npm/leaflet@1.9.4/+esm`, the matching external `dist/leaflet.css`, and OpenStreetMap raster tiles with visible attribution. `libraryUrl`, `stylesheetUrl`, `tileUrl` and `tileAttribution` allow self-hosting/custom providers. `loadLibrary` overrides the JavaScript loader only; set `stylesheetUrl: false` if the host supplies CSS. Set `tileUrl: false` for no basemap requests. The exported `GeoLibrary`, `GeoMapHandle` and `GeoLayerHandle` interfaces avoid a mandatory Leaflet type dependency.
+
+External mode requires network access and CSP permissions for CDN scripts/styles and tile images. Leaflet is BSD-2-Clause licensed. The default tiles follow the [OpenStreetMap tile usage policy](https://operations.osmfoundation.org/policies/tiles/); use a suitable provider for production traffic. Only trusted host configuration can specify executable library URLs or attribution HTML; query comments cannot. Module/CSS failures show a retry button. Tile failures are handled by Leaflet and do not remove geometry. An expandable text geometry list remains accessible. Cleanup removes maps and resize observers and ignores late asynchronous completions.
+
 ## Charts
 
 **Package:** `@ldforge/charts` (optional, separate from `@ldforge/renderers`) · **Factory:** `createChartRenderer(options?)` · **ID:** `charts`
