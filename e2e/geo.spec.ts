@@ -56,24 +56,29 @@ test('lazy geo modes render real points, polygons, clusters and a heatmap', asyn
   await page.route('https://tile.openstreetmap.org/**', (route) =>
     route.abort(),
   );
-  await page.route('https://query.wikidata.org/sparql?**', (route) =>
-    route.fulfill({
-      contentType: 'application/sparql-results+json',
-      body: JSON.stringify({
-        head: { vars: ['geometryLabel', 'geometry'] },
-        results: {
-          bindings: [
-            ['Amsterdam', 'Point(4.9 52.37)'],
-            ['Nearby', 'Point(4.9001 52.3701)'],
-            ['Area', 'POLYGON((4.86 52.35,4.89 52.35,4.89 52.38,4.86 52.35))'],
-            ['Line', 'LINESTRING(4.88 52.36,4.92 52.38)'],
-          ].map(([label, geometry]) => ({
-            geometryLabel: { type: 'literal', value: label },
-            geometry: { type: 'literal', value: geometry },
-          })),
-        },
+  await page.route(
+    'https://api.triplydb.com/datasets/osm/osm/services/osm/sparql?**',
+    (route) =>
+      route.fulfill({
+        contentType: 'application/sparql-results+json',
+        body: JSON.stringify({
+          head: { vars: ['geometryLabel', 'geometry'] },
+          results: {
+            bindings: [
+              ['Amsterdam', 'Point(4.9 52.37)'],
+              ['Nearby', 'Point(4.9001 52.3701)'],
+              [
+                'Area',
+                'POLYGON((4.86 52.35,4.89 52.35,4.89 52.38,4.86 52.35))',
+              ],
+              ['Line', 'LINESTRING(4.88 52.36,4.92 52.38)'],
+            ].map(([label, geometry]) => ({
+              geometryLabel: { type: 'literal', value: label },
+              geometry: { type: 'literal', value: geometry },
+            })),
+          },
+        }),
       }),
-    }),
   );
   await page.goto('/');
   await page.getByRole('button', { name: 'Run query', exact: true }).click();
@@ -82,14 +87,28 @@ test('lazy geo modes render real points, polygons, clusters and a heatmap', asyn
     .getByRole('button', { name: 'Plugin Examples', exact: true })
     .click();
   await page
-    .getByRole('menuitem', { name: 'Map example (Wikidata)', exact: true })
+    .getByRole('menuitem', {
+      name: 'Map example (athletics tracks)',
+      exact: true,
+    })
     .click();
   const query = page.getByRole('textbox', {
     name: 'SPARQL query',
     exact: true,
   });
   const initialQuery = await query.innerText();
-  await query.fill(initialQuery.replace('view=geo', 'view=table'));
+  expect(initialQuery).toContain('geo-title=Atletiekbanen in Nederland');
+  expect(initialQuery).toContain(
+    'BIND(COALESCE(?name, "Atletiekbaan") AS ?geometryLabel)',
+  );
+  expect(initialQuery).toContain('mode=heatmap');
+  expect(initialQuery).not.toContain('osmt:sport athletics:');
+  expect(initialQuery).not.toContain('LIMIT');
+  await query.fill(
+    initialQuery
+      .replace('view=geo', 'view=table')
+      .replace('mode=heatmap', 'mode=normal'),
+  );
   await page.getByRole('button', { name: 'Run query', exact: true }).click();
   await expect(page.getByRole('table')).toContainText('Nearby');
   expect(counts.leaflet).toBe(0);
@@ -99,15 +118,18 @@ test('lazy geo modes render real points, polygons, clusters and a heatmap', asyn
   await expect(map).toHaveAttribute('aria-busy', 'false');
   await expect(map.locator('path.leaflet-interactive')).toHaveCount(4);
   expect(counts).toEqual({ leaflet: 1, css: 1, cluster: 0, heat: 0 });
-  const mode = map.getByRole('combobox', { name: 'Map display' });
-  await mode.selectOption('grouped');
+  const mode = map.getByRole('group', { name: 'Map display' });
+  await mode.getByRole('button', { name: 'Grouped', exact: true }).click();
   await expect(map).toHaveAttribute('aria-busy', 'false');
   await expect(map.locator('.leaflet-tooltip')).toHaveText('2');
   await expect(map.locator('path.leaflet-interactive')).toHaveCount(3);
   expect(counts.cluster).toBe(1);
   expect(counts.heat).toBe(0);
-  await mode.selectOption('heatmap');
+  await mode.getByRole('button', { name: 'Heatmap', exact: true }).click();
   await expect(map).toHaveAttribute('aria-busy', 'false');
+  await expect(
+    mode.getByRole('button', { name: 'Heatmap', exact: true }),
+  ).toHaveAttribute('aria-pressed', 'true');
   const canvas = map.locator('canvas');
   await expect(canvas).toBeVisible();
   expect(
@@ -120,7 +142,15 @@ test('lazy geo modes render real points, polygons, clusters and a heatmap', asyn
   ).toBe(true);
   await expect(map.locator('path.leaflet-interactive')).toHaveCount(2);
   expect(counts.heat).toBe(1);
-  await mode.selectOption('normal');
+  await page.setViewportSize({ width: 390, height: 844 });
+  await expect(mode).toBeVisible();
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= innerWidth,
+    ),
+  ).toBe(true);
+  await page.setViewportSize({ width: 1280, height: 720 });
+  await mode.getByRole('button', { name: 'Normal', exact: true }).click();
   await expect(map.locator('path.leaflet-interactive')).toHaveCount(4);
   await expect(canvas).toHaveCount(0);
   await tabs.getByRole('tab', { name: 'Table', exact: true }).click();

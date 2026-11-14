@@ -229,22 +229,55 @@ export function createGeoRenderer(
       section.className = 'ldforge-geo';
       const heading = doc.createElement('h3');
       heading.textContent = context?.directives?.['geo-title'] ?? text.label;
-      const modeLabel = doc.createElement('label');
-      modeLabel.textContent = text.mode;
-      const select = doc.createElement('select');
-      select.setAttribute('aria-label', text.mode);
-      for (const mode of ['normal', 'grouped', 'heatmap'] as const) {
-        const option = doc.createElement('option');
-        option.value = mode;
-        option.textContent = text[mode];
-        select.append(option);
-      }
+      const header = doc.createElement('div');
+      header.className = 'ldforge-geo-header';
+      const modes = doc.createElement('div');
+      modes.className = 'ldforge-geo-modes';
+      modes.setAttribute('role', 'group');
+      modes.setAttribute('aria-label', text.mode);
       const initialMode =
-        context?.directives?.['geo-mode'] ?? options.mode ?? 'normal';
-      select.value = ['normal', 'grouped', 'heatmap'].includes(initialMode)
-        ? initialMode
+        context?.directives?.mode ??
+        context?.directives?.['geo-mode'] ??
+        options.mode ??
+        'normal';
+      let selectedMode: GeoMode = ['normal', 'grouped', 'heatmap'].includes(
+        initialMode,
+      )
+        ? (initialMode as GeoMode)
         : 'normal';
-      modeLabel.append(select);
+      const buttons = new Map<GeoMode, HTMLButtonElement>();
+      function reflectMode(): void {
+        for (const [mode, button] of buttons)
+          button.setAttribute('aria-pressed', String(mode === selectedMode));
+      }
+      for (const mode of ['normal', 'grouped', 'heatmap'] as const) {
+        const button = doc.createElement('button');
+        button.type = 'button';
+        button.textContent = text[mode];
+        button.dataset.geoMode = mode;
+        button.disabled = true;
+        button.addEventListener('click', () => {
+          if (selectedMode === mode) return;
+          selectedMode = mode;
+          reflectMode();
+          void updateMode();
+        });
+        buttons.set(mode, button);
+        modes.append(button);
+      }
+      reflectMode();
+      const style = doc.createElement('style');
+      style.textContent = `
+.ldforge-geo-header { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; margin-bottom:12px; }
+.ldforge-geo-header h3 { margin:0; }
+.ldforge-geo-modes { display:inline-flex; flex-wrap:wrap; gap:3px; padding:3px; border:1px solid #d4dfdd; border-radius:9px; background:#f1f5f4; }
+.ldforge-geo-modes button { appearance:none; border:0; border-radius:6px; background:transparent; color:#405c57; padding:7px 12px; font:500 13px/1.3 system-ui,sans-serif; cursor:pointer; }
+.ldforge-geo-modes button[aria-pressed="true"] { background:#fff; color:#183d35; box-shadow:0 1px 3px #183d3526; }
+.ldforge-geo-modes button:hover:not(:disabled) { background:#e4eeeb; }
+.ldforge-geo-modes button:focus-visible { outline:2px solid #087f73; outline-offset:2px; }
+.ldforge-geo-modes button:disabled { opacity:.55; cursor:wait; }
+`;
+      header.append(heading, modes);
       const frame = doc.createElement('div');
       frame.style.height = '420px';
       frame.style.isolation = 'isolate';
@@ -266,7 +299,7 @@ export function createGeoRenderer(
         list.append(item);
       }
       details.append(summary, list);
-      section.append(heading, modeLabel, frame, status, retry, details);
+      section.append(style, header, frame, status, retry, details);
       container.replaceChildren(section);
       let disposed = false;
       let map: GeoMapHandle | undefined;
@@ -311,7 +344,7 @@ export function createGeoRenderer(
         section.setAttribute('aria-busy', 'true');
         try {
           const render = await prepareMode(
-            select.value as GeoMode,
+            selectedMode,
             features,
             () =>
               options.loadClusterLibrary
@@ -346,10 +379,6 @@ export function createGeoRenderer(
             section.setAttribute('aria-busy', 'false');
         }
       }
-      select.disabled = true;
-      select.addEventListener('change', () => {
-        void updateMode();
-      });
       async function activate(): Promise<void> {
         retry.hidden = true;
         status.textContent = text.loading;
@@ -386,7 +415,7 @@ export function createGeoRenderer(
           const bounds = draw(features);
           map.fitBounds(bounds.getBounds(), { padding: [24, 24], maxZoom: 14 });
           bounds.remove();
-          select.disabled = false;
+          for (const button of buttons.values()) button.disabled = false;
           await updateMode();
           if (disposed) return;
           if (typeof ResizeObserver !== 'undefined') {

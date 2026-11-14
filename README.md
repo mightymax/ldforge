@@ -160,7 +160,7 @@ Licensed under the [European Union Public Licence 1.2](LICENSE), SPDX identifier
 
 ## Optional geodata
 
-Register `createGeoRenderer()` from `@ldforge/geo` to visualize WKT points, lines and polygons from `?geometry` with optional `?geometryLabel`. Leaflet JavaScript and CSS load externally only when the Map tab opens. See the [geo guide](docs/renderers.md#geo) for Wikidata and mixed-geometry examples and self-hosting options.
+Register `createGeoRenderer()` from `@ldforge/geo` to visualize WKT points, lines and polygons from `?geometry` with optional `?geometryLabel`. Leaflet JavaScript and CSS load externally only when the Map tab opens. See the [geo guide](docs/renderers.md#geo) for OpenStreetMap and mixed-geometry examples and self-hosting options.
 
 ## Optional charts
 

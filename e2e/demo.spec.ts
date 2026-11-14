@@ -942,7 +942,11 @@ test('uses configured toolbar dropdowns with keyboard navigation, dismissal and 
     page
       .getByRole('menu', { name: 'Plugin Examples', exact: true })
       .getByRole('menuitem'),
-  ).toHaveText(['Cards example', 'Map example (Wikidata)', 'Charts example']);
+  ).toHaveText([
+    'Cards example',
+    'Map example (athletics tracks)',
+    'Charts example',
+  ]);
 });
 
 test('collapses PREFIX declarations in the gutter without changing the executable query', async ({

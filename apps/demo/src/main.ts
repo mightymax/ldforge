@@ -250,22 +250,31 @@ pluginExamples.addButton({
 });
 pluginExamples.addButton({
   id: 'example-geo',
-  label: { en: 'Map example (Wikidata)', nl: 'Kaartvoorbeeld (Wikidata)' },
+  label: {
+    en: 'Map example (athletics tracks)',
+    nl: 'Kaartvoorbeeld (atletiekbanen)',
+  },
   execute() {
-    connection.setEndpoint('https://query.wikidata.org/sparql', 'GET');
-    loadExampleQuery(`# view=geo; geo-title=Nederlandse plaatsen
-PREFIX wd: <http://www.wikidata.org/entity/>
-PREFIX wdt: <http://www.wikidata.org/prop/direct/>
-PREFIX wikibase: <http://wikiba.se/ontology#>
-PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-PREFIX bd: <http://www.bigdata.com/rdf#>
+    connection.setEndpoint(
+      'https://api.triplydb.com/datasets/osm/osm/services/osm/sparql',
+      'GET',
+    );
+    loadExampleQuery(`# view=geo; mode=heatmap; geo-title=Atletiekbanen in Nederland
+PREFIX geo: <http://www.opengis.net/ont/geosparql#>
+PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+PREFIX osmt: <https://data.osm.pldn.nl/wiki/Key:>
+PREFIX track: <https://data.osm.pldn.nl/wiki/Tag:leisure=track>
+PREFIX athletics: <https://data.osm.pldn.nl/wiki/Tag:sport=athletics>
+
 SELECT ?place ?geometryLabel ?geometry WHERE {
-  VALUES ?place { wd:Q727 wd:Q36600 wd:Q9920 wd:Q803 wd:Q34370 }
-  ?place wdt:P625 ?geometry .
-  SERVICE wikibase:label {
-    bd:serviceParam wikibase:language "nl,en" .
-    ?place rdfs:label ?geometryLabel .
+  ?place osmt:leisure track: ;
+         geo:hasGeometry/geo:asWKT ?geometry .
+
+  OPTIONAL {
+    ?place skos:prefLabel ?name .
   }
+
+  BIND(COALESCE(?name, "Atletiekbaan") AS ?geometryLabel)
 }
 `);
   },

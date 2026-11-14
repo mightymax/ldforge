@@ -25,32 +25,35 @@ The tab appears for results declaring `geometry`. Use `# view=geo` to activate i
 
 ### Map display modes
 
-The selector offers **Normal**, **Grouped**, and **Heatmap** (localized in Dutch). Normal draws each feature. Grouped uses Supercluster to combine nearby points, shows their counts, and expands clusters on click or zoom. Heatmap uses simpleheat to show point density with equal weight per point. MultiPoint members are individual observations. Lines and polygons remain visible in all modes and are not interpreted as point observations. When there are only shapes, the original geometry is shown without loading a mode library.
+The compact button group offers **Normal**, **Grouped**, and **Heatmap** (localized in Dutch). Normal draws each feature. Grouped uses Supercluster to combine nearby points, shows their counts, and expands clusters on click or zoom. Heatmap uses simpleheat to show point density with equal weight per point. MultiPoint members are individual observations. Lines and polygons remain visible in all modes and are not interpreted as point observations. When there are only shapes, the original geometry is shown without loading a mode library.
 
-Choose the initial mode with `# view=geo; geo-mode=grouped` or `geo-mode=heatmap`; the host option `mode` supplies the default. Invalid mode directives fall back to Normal. Switching modes preserves map position. Supercluster 8.0.1 and simpleheat 0.4.0 are separate pinned external ESM downloads that happen only when that mode is first selected. Configure `clusterLibraryUrl`/`heatLibraryUrl` or inject `loadClusterLibrary`/`loadHeatLibrary` for self-hosting. Failed mode loads can be retried; late completions after another selection or cleanup cannot replace the active view. Supercluster is ISC licensed and simpleheat is BSD-2-Clause licensed.
+Choose the initial mode with `# view=geo; mode=grouped` or `mode=heatmap`; the host option `mode` supplies the default. `geo-mode` remains supported as an alias; `mode` takes precedence when both are supplied. Invalid mode directives fall back to Normal. Switching modes preserves map position. Supercluster 8.0.1 and simpleheat 0.4.0 are separate pinned external ESM downloads that happen only when that mode is first selected. Configure `clusterLibraryUrl`/`heatLibraryUrl` or inject `loadClusterLibrary`/`loadHeatLibrary` for self-hosting. Failed mode loads can be retried; late completions after another selection or cleanup cannot replace the active view. Supercluster is ISC licensed and simpleheat is BSD-2-Clause licensed.
 
-### Wikidata example
+### OpenStreetMap example
 
-Endpoint: `https://query.wikidata.org/sparql` (GET). This bounded query retrieves five Dutch cities using Wikidata's [coordinate location (P625)](https://www.wikidata.org/wiki/Property:P625). Coordinates are returned as WKT points, ready for the plugin. The demo's **Map example (Wikidata)** selects this endpoint and query.
+Endpoint: `https://api.triplydb.com/datasets/osm/osm/services/osm/sparql` (GET). This query retrieves features tagged `leisure=track` with their WKT geometry and an optional name, falling back to “Atletiekbaan”. It starts in Heatmap mode and has no sport filter or result limit. The demo's **Map example (athletics tracks)** selects this endpoint and query.
 
 ```sparql
-# view=geo; geo-title=Nederlandse plaatsen
-PREFIX wd: <http://www.wikidata.org/entity/>
-PREFIX wdt: <http://www.wikidata.org/prop/direct/>
-PREFIX wikibase: <http://wikiba.se/ontology#>
-PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-PREFIX bd: <http://www.bigdata.com/rdf#>
+# view=geo; mode=heatmap; geo-title=Atletiekbanen in Nederland
+PREFIX geo: <http://www.opengis.net/ont/geosparql#>
+PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+PREFIX osmt: <https://data.osm.pldn.nl/wiki/Key:>
+PREFIX track: <https://data.osm.pldn.nl/wiki/Tag:leisure=track>
+PREFIX athletics: <https://data.osm.pldn.nl/wiki/Tag:sport=athletics>
+
 SELECT ?place ?geometryLabel ?geometry WHERE {
-  VALUES ?place { wd:Q727 wd:Q36600 wd:Q9920 wd:Q803 wd:Q34370 }
-  ?place wdt:P625 ?geometry .
-  SERVICE wikibase:label {
-    bd:serviceParam wikibase:language "nl,en" .
-    ?place rdfs:label ?geometryLabel .
+  ?place osmt:leisure track: ;
+         geo:hasGeometry/geo:asWKT ?geometry .
+
+  OPTIONAL {
+    ?place skos:prefLabel ?name .
   }
+
+  BIND(COALESCE(?name, "Atletiekbaan") AS ?geometryLabel)
 }
 ```
 
-`P625` provides points. For source lines and polygons, return WKT from an endpoint with GeoSPARQL geometry, such as `?item geo:hasGeometry/geo:asWKT ?geometry`. The OSM swimming-pool query can be used as supplied with `# view=geo` added above its prefixes. Other projections must first be converted to WGS84/CRS84.
+The source supplies geometry through `geo:hasGeometry/geo:asWKT`. Other projections must first be converted to WGS84/CRS84.
 
 This deterministic query demonstrates all three basic types on any SPARQL 1.1 endpoint:
 

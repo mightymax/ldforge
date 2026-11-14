@@ -174,7 +174,9 @@ describe('lazy map lifecycle', () => {
     }).render(node, result());
     await flush();
     expect(node.textContent).toContain('Could not load');
-    node.querySelector('button')?.click();
+    node
+      .querySelector<HTMLButtonElement>('button:not([data-geo-mode])')
+      ?.click();
     await flush();
     expect(loadLibrary).toHaveBeenCalledTimes(2);
     expect(L.tileLayer).toHaveBeenCalledWith(
@@ -219,9 +221,7 @@ describe('map display modes', () => {
     }).render(node, result());
     await flush();
     expect(loadClusterLibrary).not.toHaveBeenCalled();
-    const select = node.querySelector('select') as HTMLSelectElement;
-    select.value = 'grouped';
-    select.dispatchEvent(new Event('change'));
+    node.querySelector<HTMLButtonElement>('[data-geo-mode="grouped"]')?.click();
     await flush();
     expect(loadClusterLibrary).toHaveBeenCalledTimes(1);
     expect(loadHeatLibrary).not.toHaveBeenCalled();
@@ -241,47 +241,49 @@ describe('map display modes', () => {
     expect(bindTooltip).toHaveBeenCalled();
     on.mock.calls[0]?.[1]();
     expect(map.setView).toHaveBeenCalledWith([52.3, 4.9], 12);
-    select.value = 'normal';
-    select.dispatchEvent(new Event('change'));
+    node.querySelector<HTMLButtonElement>('[data-geo-mode="normal"]')?.click();
     await flush();
     expect(map.off).toHaveBeenCalledWith('zoomend', expect.any(Function));
     if (typeof cleanup === 'function') cleanup();
   });
-  it('renders a heat canvas and cleans it up on mode changes', async () => {
-    const { L, map } = mockLibrary();
-    const heat = {
-      data: vi.fn().mockReturnThis(),
-      max: vi.fn().mockReturnThis(),
-      radius: vi.fn().mockReturnThis(),
-      resize: vi.fn().mockReturnThis(),
-      draw: vi.fn().mockReturnThis(),
-    };
-    const loadHeatLibrary = vi.fn(async () => ({ default: () => heat }));
-    const node = document.createElement('div');
-    const cleanup = createGeoRenderer({
-      loadLibrary: async () => L,
-      stylesheetUrl: false,
-      tileUrl: false,
-      loadHeatLibrary,
-    }).render(node, result(), {
-      locale: 'en',
-      directives: { 'geo-mode': 'heatmap' },
-    });
-    await flush();
-    expect(loadHeatLibrary).toHaveBeenCalledTimes(1);
-    expect(node.querySelector('canvas')).not.toBeNull();
-    expect(heat.data).toHaveBeenCalledWith([[100, 100, 1]]);
-    expect(map.on).toHaveBeenCalledWith(
-      'move zoom resize',
-      expect.any(Function),
-    );
-    if (typeof cleanup === 'function') cleanup();
-    expect(node.querySelector('canvas')).toBeNull();
-    expect(map.off).toHaveBeenCalledWith(
-      'move zoom resize',
-      expect.any(Function),
-    );
-  });
+  it.each(['mode', 'geo-mode'])(
+    'accepts %s for the initial heatmap and cleans it up',
+    async (directive) => {
+      const { L, map } = mockLibrary();
+      const heat = {
+        data: vi.fn().mockReturnThis(),
+        max: vi.fn().mockReturnThis(),
+        radius: vi.fn().mockReturnThis(),
+        resize: vi.fn().mockReturnThis(),
+        draw: vi.fn().mockReturnThis(),
+      };
+      const loadHeatLibrary = vi.fn(async () => ({ default: () => heat }));
+      const node = document.createElement('div');
+      const cleanup = createGeoRenderer({
+        loadLibrary: async () => L,
+        stylesheetUrl: false,
+        tileUrl: false,
+        loadHeatLibrary,
+      }).render(node, result(), {
+        locale: 'en',
+        directives: { [directive]: 'heatmap' },
+      });
+      await flush();
+      expect(loadHeatLibrary).toHaveBeenCalledTimes(1);
+      expect(node.querySelector('canvas')).not.toBeNull();
+      expect(heat.data).toHaveBeenCalledWith([[100, 100, 1]]);
+      expect(map.on).toHaveBeenCalledWith(
+        'move zoom resize',
+        expect.any(Function),
+      );
+      if (typeof cleanup === 'function') cleanup();
+      expect(node.querySelector('canvas')).toBeNull();
+      expect(map.off).toHaveBeenCalledWith(
+        'move zoom resize',
+        expect.any(Function),
+      );
+    },
+  );
   it('discards a late mode load after switching back to normal', async () => {
     const { L } = mockLibrary();
     let resolve!: (value: unknown) => void;
@@ -296,12 +298,9 @@ describe('map display modes', () => {
         }),
     }).render(node, result());
     await flush();
-    const select = node.querySelector('select') as HTMLSelectElement;
-    select.value = 'grouped';
-    select.dispatchEvent(new Event('change'));
+    node.querySelector<HTMLButtonElement>('[data-geo-mode="grouped"]')?.click();
     await flush();
-    select.value = 'normal';
-    select.dispatchEvent(new Event('change'));
+    node.querySelector<HTMLButtonElement>('[data-geo-mode="normal"]')?.click();
     await flush();
     const calls = vi.mocked(L.geoJSON).mock.calls.length;
     const getClusters = vi.fn();
