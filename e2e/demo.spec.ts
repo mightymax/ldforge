@@ -380,6 +380,8 @@ test('finds namespaces through the integrated prefix picker and keeps tabs light
       .getByRole('button'),
   ).toHaveCount(2);
   await page.reload();
+  await expect(page.locator('.cm-foldPlaceholder')).toHaveText('…');
+  await page.getByTitle('Unfold', { exact: true }).click();
   await expect(
     page.getByRole('textbox', { name: 'SPARQL query', exact: true }),
   ).toContainText('PREFIX prov:');
@@ -517,6 +519,8 @@ test('inserts missing known prefixes during typing and persists the updated quer
   await expect(query).toContainText('schema:name ?name');
   expect((await query.innerText()).match(/PREFIX schema:/g)).toHaveLength(1);
   await page.reload();
+  await expect(page.locator('.cm-foldPlaceholder')).toHaveText('…');
+  await page.getByTitle('Unfold', { exact: true }).click();
   await expect(query).toContainText('PREFIX schema: <https://schema.org/>');
   await expect(query).toContainText('schema:description ?description');
 });
@@ -951,6 +955,8 @@ test('collapses PREFIX declarations in the gutter without changing the executabl
     name: 'SPARQL query',
     exact: true,
   });
+  await expect(page.locator('.cm-foldPlaceholder')).toHaveText('…');
+  await page.getByTitle('Unfold', { exact: true }).click();
   const original = await query.textContent();
   await page.getByTitle('Fold line', { exact: true }).first().click();
   await expect(page.locator('.cm-foldPlaceholder')).toHaveText('…');
@@ -960,6 +966,10 @@ test('collapses PREFIX declarations in the gutter without changing the executabl
   await page.getByTitle('Unfold', { exact: true }).click();
   await expect(page.locator('.cm-foldPlaceholder')).toHaveCount(0);
   await expect(query).toHaveText(original ?? '');
+  await chooseExample(page, 'SELECT example');
+  await expect(page.locator('.cm-foldPlaceholder')).toHaveText('…');
+  await page.reload();
+  await expect(page.locator('.cm-foldPlaceholder')).toHaveText('…');
   expect(errors).toEqual([]);
 });
 

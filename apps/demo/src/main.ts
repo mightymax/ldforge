@@ -182,6 +182,7 @@ const editor = createEditor(mount, {
   ...(restoredWorkspace ? { workspace: restoredWorkspace } : {}),
   onWorkspaceChange: saveQueryWorkspace,
   query: selectQuery,
+  prefixesCollapsed: true,
   executor: connection.executor,
   settings: [connection.plugin],
   userLocale: readUserLocale(),
@@ -199,6 +200,11 @@ const editor = createEditor(mount, {
   })),
 });
 
+function loadExampleQuery(query: string): void {
+  editor.setQuery(query);
+  editor.setPrefixesCollapsed(true);
+}
+
 // The public demo opts into menus through the runtime API; library defaults stay inline.
 const menuBar = editor.getToolBar();
 const queryExamples = menuBar.addButtonGroup({
@@ -209,22 +215,22 @@ const queryExamples = menuBar.addButtonGroup({
 queryExamples.addButton({
   id: 'example-select',
   label: { en: 'SELECT example', nl: 'SELECT-voorbeeld' },
-  execute(context) {
-    context.setQuery(selectQuery);
+  execute() {
+    loadExampleQuery(selectQuery);
   },
 });
 queryExamples.addButton({
   id: 'example-construct',
   label: { en: 'CONSTRUCT example', nl: 'CONSTRUCT-voorbeeld' },
-  execute(context) {
-    context.setQuery('CONSTRUCT { ?s ?p ?o } WHERE { ?s ?p ?o } LIMIT 10');
+  execute() {
+    loadExampleQuery('CONSTRUCT { ?s ?p ?o } WHERE { ?s ?p ?o } LIMIT 10');
   },
 });
 queryExamples.addButton({
   id: 'example-ask',
   label: { en: 'ASK example', nl: 'ASK-voorbeeld' },
-  execute(context) {
-    context.setQuery('ASK { ?subject ?predicate ?object }');
+  execute() {
+    loadExampleQuery('ASK { ?subject ?predicate ?object }');
   },
 });
 const pluginExamples = menuBar.addButtonGroup({
@@ -235,16 +241,16 @@ const pluginExamples = menuBar.addButtonGroup({
 pluginExamples.addButton({
   id: 'example-cards',
   label: { en: 'Cards example', nl: 'Kaartenvoorbeeld' },
-  execute(context) {
+  execute() {
     connection.setEndpoint('https://query.wikidata.org/sparql', 'GET');
-    context.setQuery(cardsQuery);
+    loadExampleQuery(cardsQuery);
   },
 });
 pluginExamples.addButton({
   id: 'example-charts',
   label: { en: 'Charts example', nl: 'Grafiekvoorbeeld' },
-  execute(context) {
-    context.setQuery(chartQuery);
+  execute() {
+    loadExampleQuery(chartQuery);
   },
 });
 

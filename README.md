@@ -17,6 +17,10 @@ npm run dev
 
 Open the local URL printed by Vite. Run the example SELECT query, switch between Table and JSON, or use the ASK example button. Fixture mode returns deterministic sample data; it does not evaluate SPARQL.
 
+The demo initially folds PREFIX declarations, including restored tabs and newly
+selected example queries. Use the gutter arrow or folded placeholder to expand
+them.
+
 Under **Plugin Examples → Cards example**, load the Wikidata cats query and press
 Run query to show twelve cat cards. Choosing this example selects Wikidata over
 GET, without reusing another connection's headers. That endpoint remains selected
