@@ -1,6 +1,6 @@
 {
   "name": "@ldforge/geo",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "description": "Lazy-loaded Leaflet geodata renderer for LDForge",
   "type": "module",
   "license": "EUPL-1.2",
@@ -25,7 +25,7 @@
     "access": "public"
   },
   "dependencies": {
-    "@ldforge/core": "^0.1.5"
+    "@ldforge/core": "^0.1.6"
   },
   "repository": {
     "type": "git",
