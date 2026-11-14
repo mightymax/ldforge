@@ -74,6 +74,51 @@ export function createCardsRenderer(
 ): ResultRendererPlugin {
   return {
     id: 'cards',
+    wizard: {
+      description: {
+        en: 'Return at least one of the optional card fields.',
+        nl: 'Geef ten minste \u00e9\u00e9n van de optionele kaartvelden terug.',
+      },
+      bindings: [
+        {
+          variable: 'card_title',
+          required: false,
+          description: { en: 'Card heading', nl: 'Titel van de kaart' },
+        },
+        {
+          variable: 'card_text',
+          required: false,
+          description: {
+            en: 'Card description',
+            nl: 'Beschrijving van de kaart',
+          },
+        },
+        {
+          variable: 'card_image',
+          required: false,
+          description: {
+            en: 'HTTP(S) image URL',
+            nl: 'HTTP(S)-URL van afbeelding',
+          },
+        },
+        {
+          variable: 'card_button',
+          required: false,
+          description: {
+            en: 'Button label; requires card_button_url',
+            nl: 'Knoptekst; vereist card_button_url',
+          },
+        },
+        {
+          variable: 'card_button_url',
+          required: false,
+          description: {
+            en: 'HTTP(S) button link',
+            nl: 'HTTP(S)-link voor de knop',
+          },
+        },
+      ],
+    },
     label: { en: 'Cards', nl: 'Kaarten' },
     icon: createSvgIcon(['M3 4h7v16H3zM14 4h7v16h-7zM3 10h7M14 10h7']),
     documentationUrl: 'https://ldforge.nl/plugins.html#cards',

@@ -67,6 +67,65 @@ export function createNetworkRenderer(
   );
   return {
     id: 'network',
+    wizard: {
+      bindings: [
+        {
+          variable: 'source',
+          required: true,
+          description: {
+            en: 'Source URI or blank node',
+            nl: 'Bron-URI of blank node',
+          },
+        },
+        {
+          variable: 'target',
+          required: true,
+          description: {
+            en: 'Target URI or blank node',
+            nl: 'Doel-URI of blank node',
+          },
+        },
+        {
+          variable: 'sourceLabel',
+          required: false,
+          description: { en: 'Source label', nl: 'Bronlabel' },
+        },
+        {
+          variable: 'targetLabel',
+          required: false,
+          description: { en: 'Target label', nl: 'Doellabel' },
+        },
+        {
+          variable: 'relationLabel',
+          required: false,
+          description: { en: 'Relationship label', nl: 'Relatielabel' },
+        },
+        {
+          variable: 'sourceGroup',
+          required: false,
+          description: {
+            en: 'Source color group',
+            nl: 'Kleurgroep van de bron',
+          },
+        },
+        {
+          variable: 'targetGroup',
+          required: false,
+          description: {
+            en: 'Target color group',
+            nl: 'Kleurgroep van het doel',
+          },
+        },
+      ],
+      options: [
+        {
+          key: 'network-title',
+          label: { en: 'Title', nl: 'Titel' },
+          type: 'text',
+          defaultValue: '',
+        },
+      ],
+    },
     label: { en: 'Network', nl: 'Netwerk' },
     documentationUrl: 'https://ldforge.nl/plugins.html#network',
     icon: createSvgIcon([

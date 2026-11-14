@@ -83,3 +83,51 @@ Settings plugins are not mounted when `controls.settings` is false. They are cle
 ## PluginRegistry
 
 The generic `PluginRegistry<T extends { id: string }>` is exported by core. Construct it with an optional ordered list; `register(plugin)` returns an unregister function; `list()` returns an ordered array snapshot. Duplicate and blank IDs throw. It is independent of editor mounting and does not dynamically update an already mounted IDE.
+
+## Wizard metadata
+
+A result renderer can declare optional `wizard: RendererWizardSchema` metadata.
+It belongs to the plugin: the editor has no global catalogue of unregistered
+renderers. Schemas are plain data and do not load visualization libraries.
+
+```ts
+const wizard = {
+  description: {
+    en: 'Requires SELECT bindings.',
+    nl: 'Vereist SELECT-bindings.',
+  },
+  bindings: [
+    {
+      variable: 'value',
+      required: true,
+      description: { en: 'Numeric value', nl: 'Numerieke waarde' },
+    },
+  ],
+  options: [
+    {
+      key: 'my-title',
+      label: { en: 'Title', nl: 'Titel' },
+      type: 'text',
+      defaultValue: '',
+    },
+    {
+      key: 'my-mode',
+      label: 'Mode',
+      type: 'select',
+      defaultValue: 'bar',
+      choices: [{ value: 'bar', label: 'Bar' }],
+    },
+  ],
+} satisfies import('@ldforge/core').RendererWizardSchema;
+// Add wizard to a ResultRendererPlugin descriptor.
+```
+
+`RendererBindingContract` has `variable` (without `?`), optional `required`, and a
+localized `description`. `RendererWizardOption` has a lowercase directive `key`,
+localized `label`, `type: 'text' | 'select'`, optional `defaultValue` and select
+`choices` (`value`/localized `label`). Omitted select defaults use their first
+choice. Empty option values are omitted from the header. `view` and `css` are
+reserved. Values are quoted/escaped for header parsing; multiline values and
+unknown options/choices are rejected. A schema's optional description becomes a
+localized comment alongside its binding declarations. These types are exported
+from core and re-exported by editor.

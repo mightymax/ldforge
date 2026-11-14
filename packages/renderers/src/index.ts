@@ -9,6 +9,13 @@ import type { ResultRendererPlugin } from '@ldforge/core';
 export function createTableRenderer(): ResultRendererPlugin {
   return {
     id: 'table',
+    wizard: {
+      description: {
+        en: 'Accepts SELECT bindings or RDF graph results.',
+        nl: 'Voor SELECT-bindings of RDF-graafresultaten.',
+      },
+      bindings: [],
+    },
     documentationUrl: 'https://ldforge.nl/plugins.html#table',
     icon: createSvgIcon(['M3 3h18v18H3zM3 9h18M9 9v12']),
     label: { en: 'Table', nl: 'Tabel' },
@@ -55,6 +62,13 @@ export function createTableRenderer(): ResultRendererPlugin {
 export function createBooleanRenderer(): ResultRendererPlugin {
   return {
     id: 'boolean',
+    wizard: {
+      description: {
+        en: 'Requires a boolean ASK result.',
+        nl: 'Vereist een boolean ASK-resultaat.',
+      },
+      bindings: [],
+    },
     documentationUrl: 'https://ldforge.nl/plugins.html#boolean',
     icon: createSvgIcon(['m5 12 4 4L19 6']),
     label: { en: 'Boolean', nl: 'Booleaans' },
@@ -76,6 +90,13 @@ export function createBooleanRenderer(): ResultRendererPlugin {
 export function createJsonRenderer(): ResultRendererPlugin {
   return {
     id: 'json',
+    wizard: {
+      description: {
+        en: 'Accepts any query result.',
+        nl: 'Geschikt voor elk queryresultaat.',
+      },
+      bindings: [],
+    },
     documentationUrl: 'https://ldforge.nl/plugins.html#json',
     icon: createSvgIcon(['M8 3H6v7l-3 2 3 2v7h2M16 3h2v7l3 2-3 2v7h-2']),
     label: 'JSON',

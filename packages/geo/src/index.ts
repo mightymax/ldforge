@@ -219,6 +219,76 @@ export function createGeoRenderer(
   }
   return {
     id: 'geo',
+    wizard: {
+      bindings: [
+        {
+          variable: 'geometry',
+          required: true,
+          description: {
+            en: 'WGS84 WKT; longitude first, latitude second',
+            nl: 'WGS84 WKT; eerst lengtegraad, dan breedtegraad',
+          },
+        },
+        {
+          variable: 'geometryLabel',
+          required: false,
+          description: { en: 'Feature label', nl: 'Naam van het object' },
+        },
+        {
+          variable: 'geometryHeight',
+          required: false,
+          description: {
+            en: 'Polygon height in meters; nonnegative number',
+            nl: 'Polygoonhoogte in meters; niet-negatief getal',
+          },
+        },
+        {
+          variable: 'geoImage',
+          required: false,
+          description: {
+            en: 'HTTP(S) image URL',
+            nl: 'HTTP(S)-URL van afbeelding',
+          },
+        },
+        {
+          variable: 'geoDescription',
+          required: false,
+          description: {
+            en: 'Plain-text description',
+            nl: 'Beschrijving als platte tekst',
+          },
+        },
+        {
+          variable: 'geoLink',
+          required: false,
+          description: {
+            en: 'HTTP(S) label link',
+            nl: 'HTTP(S)-link op het label',
+          },
+        },
+      ],
+      options: [
+        {
+          key: 'mode',
+          label: { en: 'Map display', nl: 'Kaartweergave' },
+          type: 'select',
+          defaultValue: '',
+          choices: [
+            { value: '', label: { en: 'Automatic', nl: 'Automatisch' } },
+            { value: 'normal', label: { en: 'Normal', nl: 'Normaal' } },
+            { value: 'grouped', label: { en: 'Grouped', nl: 'Gegroepeerd' } },
+            { value: 'heatmap', label: { en: 'Heatmap', nl: 'Heatmap' } },
+            { value: '3d', label: { en: '3D', nl: '3D' } },
+          ],
+        },
+        {
+          key: 'geo-title',
+          label: { en: 'Title', nl: 'Titel' },
+          type: 'text',
+          defaultValue: '',
+        },
+      ],
+    },
     label: { en: 'Map', nl: 'Kaart' },
     documentationUrl: 'https://ldforge.nl/plugins.html#geo',
     icon: createSvgIcon([

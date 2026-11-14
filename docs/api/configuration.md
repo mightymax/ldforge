@@ -1,6 +1,6 @@
 # Editor configuration
 
-`createEditor(container, options)` accepts an `HTMLElement` and an `EditorOptions` object. Configuration is read at mount time. Recreate the editor to change result/settings plugin sets or built-in control visibility. Toolbar actions and groups can also change through `editor.getToolBar()`. Query text, tabs and language have runtime methods.
+`createEditor(container, options)` accepts an `HTMLElement` and an `EditorOptions` object. Configuration is read at mount time. Recreate the editor to change result/settings plugin sets or built-in control visibility, except the plugin wizard which also has runtime visibility control. Toolbar actions and groups can also change through `editor.getToolBar()`. Query text, tabs and language have runtime methods.
 
 ## EditorOptions
 
@@ -38,6 +38,7 @@ Every property is optional and defaults to `true`.
 | `cancel`                | The action with reserved ID `cancel`, including `createCancelButton()`.                                                     |
 | `prefixFolding`         | Gutter arrows to fold and unfold PREFIX declarations. Hiding these leaves the folding API and keyboard shortcuts available. |
 | `prefixes`              | Prefix search icon and its entry point.                                                                                     |
+| `rendererWizard`        | Plugin wizard icon; defaults to true. API remains available when hidden.                                                    |
 | `format`                | Format-query icon.                                                                                                          |
 | `settings`              | Gear icon and settings plugin mounting. Hides access to the language selector too.                                          |
 | `language`              | Built-in language field inside settings; other settings stay available.                                                     |
@@ -46,13 +47,14 @@ Every property is optional and defaults to `true`.
 | `renameTab`             | Rename icon and double-click renaming.                                                                                      |
 | `closeTab`              | Tab close buttons.                                                                                                          |
 
-The core tools group is ordered **Prefixes → Format query → Settings**, with icons, localized accessible names and tooltips. Run/Cancel are separate from custom project actions. Custom plugin buttons use their `group` identifier; a project cannot accidentally merge its buttons into the core action group just by using the same group name.
+The core tools group is ordered **Prefixes → Format query → Plugin wizard → Settings**, with icons, localized accessible names and tooltips. Run/Cancel are separate from custom project actions. Custom plugin buttons use their `group` identifier; a project cannot accidentally merge its buttons into the core action group just by using the same group name.
 
 ```ts
 // Only hide these controls; all public methods remain available.
 const controls = {
   prefixes: false,
   format: true,
+  rendererWizard: false,
   settings: true,
   closeTab: false,
 };

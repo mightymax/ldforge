@@ -96,6 +96,52 @@ export function createChartRenderer(
   }
   return {
     id: 'charts',
+    wizard: {
+      description: {
+        en: 'Pie and doughnut require one nonnegative series.',
+        nl: 'Taart- en ringdiagrammen vereisen \u00e9\u00e9n niet-negatieve reeks.',
+      },
+      bindings: [
+        {
+          variable: 'chart_label',
+          required: true,
+          description: { en: 'Category label', nl: 'Categorielabel' },
+        },
+        {
+          variable: 'chart_value',
+          required: true,
+          description: {
+            en: 'Finite numeric value',
+            nl: 'Eindige numerieke waarde',
+          },
+        },
+        {
+          variable: 'chart_series',
+          required: false,
+          description: { en: 'Series name', nl: 'Reeksnaam' },
+        },
+      ],
+      options: [
+        {
+          key: 'chart',
+          label: { en: 'Chart type', nl: 'Grafiektype' },
+          type: 'select',
+          defaultValue: 'bar',
+          choices: [
+            { value: 'bar', label: { en: 'Bar', nl: 'Bar' } },
+            { value: 'line', label: { en: 'Line', nl: 'Line' } },
+            { value: 'pie', label: { en: 'Pie', nl: 'Pie' } },
+            { value: 'doughnut', label: { en: 'Doughnut', nl: 'Doughnut' } },
+          ],
+        },
+        {
+          key: 'chart-title',
+          label: { en: 'Title', nl: 'Titel' },
+          type: 'text',
+          defaultValue: '',
+        },
+      ],
+    },
     label: { en: 'Charts', nl: 'Grafieken' },
     documentationUrl: 'https://ldforge.nl/plugins.html#charts',
     icon: createSvgIcon(['M4 3v18h17M8 16v-5M13 16V6M18 16v-8']),

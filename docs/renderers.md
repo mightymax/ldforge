@@ -552,6 +552,38 @@ const unstyledByQuery = createCardsRenderer({ allowQueryStyles: false });
 
 `CardsRendererOptions.allowQueryStyles?: boolean` defaults to `true`. The shared editor stylesheet provides the grid, images, headings and buttons. A standalone renderer can use the same stylesheet or host CSS targeting `.ldforge-cards`, `.ldforge-card`, `.ldforge-card-body` and `.ldforge-card-button`.
 
+## Plugin wizard
+
+The right-hand toolbar's **Plugin wizard** button guides you through choosing a
+registered renderer, setting its header options, and reviewing a header with
+optional binding-contract comments. **Apply to query** replaces existing renderer
+header settings and previously generated contracts without changing the query
+body, unrelated comments, host metadata or CSS. It does not run or rewrite your
+SELECT/ASK/graph query: use the contract comments to choose matching bindings.
+Closing the dialog leaves the query unchanged.
+
+Every registered plugin can appear; only its declared `wizard` metadata supplies
+options and contracts. No unregistered renderer catalogue is imported, and lazy
+visualization libraries are not downloaded. Custom renderers without metadata
+still get a view-only header. For example:
+
+```sparql
+# view=charts; chart=bar; chart-title="My chart"
+# ldforge-bindings:start
+# Pie and doughnut require one nonnegative series.
+# ?chart_label (required): Category label
+# ?chart_value (required): Finite numeric value
+# ?chart_series (optional): Series name
+# ldforge-bindings:end
+```
+
+The button defaults to enabled. Hide it with `controls.rendererWizard: false`, or
+call `editor.getRendererWizard().setVisible(false)` at runtime. The API remains
+available when hidden; `generate(config)` returns a header and `apply(config)`
+applies it to the active query. `editor.getRenderers()` lists registered plugins.
+See [Plugin wizard API](api/editor.md#plugin-wizard) and
+[renderer metadata](api/plugins.md#wizard-metadata) for types and examples.
+
 ## Query headers
 
 Put metadata in the leading SPARQL comment block, before PREFIX/BASE and the query operation. Keep plugin settings together on one comment line, using semicolon-separated `key=value` assignments: `# view=charts; chart=bar; chart-title=Example city populations`. Put CSS on its own `# css=...` line, because CSS declarations themselves contain semicolons. Separate configuration lines remain supported for existing queries. Blank lines and ordinary comments are allowed in that block. Keys are case-insensitive, values can optionally be quoted, and the last occurrence wins, including across lines. Quote values containing semicolons, for example `chart-title="Cities; populations"`; quoted values also support escaped quotes and backslashes. Apostrophes inside unquoted values such as `People's cities` do not start a quoted value. CSS consumes its entire dedicated comment line; `css` embedded among plugin assignments is ignored. Parsing stops at the first non-comment SPARQL line: comments inside the query and strings are never directives. Formatting and prefix insertion preserve the header. These are normal SPARQL comments and are sent to the executor unchanged.

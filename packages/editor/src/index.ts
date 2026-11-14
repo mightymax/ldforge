@@ -1,3 +1,9 @@
+import { createRendererWizard } from './renderer-wizard.js';
+import type { RendererWizardApi } from './renderer-wizard.js';
+export type {
+  RendererWizardApi,
+  RendererHeaderConfig,
+} from './renderer-wizard.js';
 import {
   prefixFolding,
   prefixFoldRanges,
@@ -76,6 +82,9 @@ import type {
 
 export type {
   ResultRendererContext,
+  RendererWizardSchema,
+  RendererWizardOption,
+  RendererBindingContract,
   QueryViewDirectives,
   ButtonPlugin,
   PluginIcon,
@@ -121,6 +130,9 @@ export interface ForgeEditor extends EditorContext {
   /** Returns the resulting collapsed state. False when no PREFIX exists. */
   togglePrefixes(): boolean;
   getToolBar(): ToolbarApi;
+  /** Registered renderers only; does not load their external visual libraries. */
+  getRenderers(): readonly ResultRendererPlugin[];
+  getRendererWizard(): RendererWizardApi;
   getWorkspace(): QueryWorkspace;
   /** Live indexable collection; handles remain stable across edits and renaming. */
   getTabs(): TabCollection;
@@ -306,6 +318,14 @@ export function createEditor(
       context.setPrefixesCollapsed(!context.arePrefixesCollapsed());
       return context.arePrefixesCollapsed();
     },
+    getRenderers() {
+      assertAlive();
+      return renderers.list();
+    },
+    getRendererWizard() {
+      assertAlive();
+      return rendererWizard.api;
+    },
     getToolBar() {
       assertAlive();
       return toolbarView.api;
@@ -348,6 +368,7 @@ export function createEditor(
     focus: () => view.focus(),
     destroy() {
       if (disposed) return;
+      rendererWizard.destroy();
       toolbarView.destroy();
       disposed = true;
       unsubscribe();
@@ -561,6 +582,22 @@ export function createEditor(
   prefixPicker.toggle.setAttribute('aria-controls', prefixPicker.panel.id);
   if (controls.prefixes) tools.append(prefixPicker.toggle);
   if (controls.format) tools.append(formatButton);
+  const rendererWizard = createRendererWizard({
+    root,
+    tools,
+    visible: controls.rendererWizard,
+    getLocale: () => locale,
+    getRenderers: () => renderers.list(),
+    getQuery: () => context.getQuery(),
+    setQuery: (query) => context.setQuery(query),
+    getTabId: () => queryTabs.snapshot().activeId,
+    assertAlive,
+    onOpen() {
+      prefixPicker.close();
+      settingsPanel.hidden = true;
+      toggle.setAttribute('aria-expanded', 'false');
+    },
+  });
   root.insertBefore(prefixPicker.panel, tabBar);
 
   function refreshButtons(): void {
@@ -798,6 +835,7 @@ export function createEditor(
   }
 
   function refreshLocale(): void {
+    rendererWizard.refreshLocale();
     prefixPicker.refreshLocale();
     tools.setAttribute('aria-label', translate(locale, 'coreTools'));
     customActions.setAttribute('aria-label', translate(locale, 'extraActions'));

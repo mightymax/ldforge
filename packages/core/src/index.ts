@@ -75,6 +75,27 @@ export interface ResultRendererContext {
   readonly query?: string;
   readonly directives?: QueryViewDirectives;
 }
+/** Serializable, renderer-owned guidance; importing a plugin does not load its visual library. */
+export interface RendererBindingContract {
+  readonly variable: string;
+  readonly required?: boolean;
+  readonly description: LocalizedText;
+}
+export interface RendererWizardOption {
+  readonly key: string;
+  readonly label: LocalizedText;
+  readonly type: 'text' | 'select';
+  readonly defaultValue?: string;
+  readonly choices?: readonly {
+    readonly value: string;
+    readonly label: LocalizedText;
+  }[];
+}
+export interface RendererWizardSchema {
+  readonly description?: LocalizedText;
+  readonly bindings: readonly RendererBindingContract[];
+  readonly options?: readonly RendererWizardOption[];
+}
 export interface ResultRendererPlugin {
   /** Optional HTTP(S) or relative URL describing usage and binding requirements. */
   readonly documentationUrl?: string;
@@ -82,6 +103,8 @@ export interface ResultRendererPlugin {
   readonly label: LocalizedText;
   /** Optional decorative icon factory; return a fresh node for each mount. */
   readonly icon?: PluginIcon;
+  /** Optional header options and binding guidance for the editor wizard. */
+  readonly wizard?: RendererWizardSchema;
   supports(result: QueryResult): boolean;
   /** Return a cleanup function when allocating listeners or other resources. */
   render(

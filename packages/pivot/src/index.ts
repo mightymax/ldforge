@@ -84,6 +84,61 @@ export function createPivotRenderer(
     throw new Error('maximumFractionDigits must be an integer from 0 to 20.');
   return {
     id: 'pivot',
+    wizard: {
+      bindings: [
+        {
+          variable: 'pivotRow',
+          required: true,
+          description: { en: 'Row category', nl: 'Rijcategorie' },
+        },
+        {
+          variable: 'pivotColumn',
+          required: true,
+          description: { en: 'Column category', nl: 'Kolomcategorie' },
+        },
+        {
+          variable: 'pivotValue',
+          required: true,
+          description: {
+            en: 'Finite numeric value',
+            nl: 'Eindige numerieke waarde',
+          },
+        },
+      ],
+      options: [
+        {
+          key: 'pivot-aggregate',
+          label: { en: 'Aggregate', nl: 'Aggregatie' },
+          type: 'select',
+          defaultValue: 'sum',
+          choices: [
+            { value: 'sum', label: { en: 'Sum', nl: 'Som' } },
+            { value: 'count', label: { en: 'Count', nl: 'Aantal' } },
+            { value: 'avg', label: { en: 'Average', nl: 'Gemiddelde' } },
+            { value: 'min', label: { en: 'Minimum', nl: 'Minimum' } },
+            { value: 'max', label: { en: 'Maximum', nl: 'Maximum' } },
+          ],
+        },
+        {
+          key: 'pivot-title',
+          label: { en: 'Title', nl: 'Titel' },
+          type: 'text',
+          defaultValue: '',
+        },
+        {
+          key: 'pivot-row-title',
+          label: { en: 'Row title', nl: 'Rijtitel' },
+          type: 'text',
+          defaultValue: '',
+        },
+        {
+          key: 'pivot-column-title',
+          label: { en: 'Column title', nl: 'Kolomtitel' },
+          type: 'text',
+          defaultValue: '',
+        },
+      ],
+    },
     label: { en: 'Pivot', nl: 'Draaitabel' },
     documentationUrl: 'https://ldforge.nl/plugins.html#pivot',
     icon: createSvgIcon(['M3 3h18v18H3zM3 9h18M9 3v18M15 9v12M9 15h12']),

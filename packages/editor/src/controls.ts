@@ -7,6 +7,7 @@ export interface EditorControls {
   readonly prefixes?: boolean;
   readonly prefixFolding?: boolean;
   readonly format?: boolean;
+  readonly rendererWizard?: boolean;
   readonly settings?: boolean;
   readonly language?: boolean;
   readonly tabs?: boolean;
@@ -25,6 +26,7 @@ export function resolveControls(
     prefixes: true,
     prefixFolding: true,
     format: true,
+    rendererWizard: true,
     settings: true,
     language: true,
     tabs: true,

@@ -77,6 +77,68 @@ export function createTimelineRenderer(
   );
   return {
     id: 'timeline',
+    wizard: {
+      bindings: [
+        {
+          variable: 'timelineLabel',
+          required: true,
+          description: { en: 'Event label', nl: 'Naam van de gebeurtenis' },
+        },
+        {
+          variable: 'timelineStart',
+          required: true,
+          description: {
+            en: 'ISO date or timezone-qualified dateTime',
+            nl: 'ISO-datum of dateTime met tijdzone',
+          },
+        },
+        {
+          variable: 'timelineEnd',
+          required: false,
+          description: {
+            en: 'ISO end date; must not precede start',
+            nl: 'ISO-einddatum; mag niet vóór het begin liggen',
+          },
+        },
+        {
+          variable: 'timelineGroup',
+          required: false,
+          description: { en: 'Group name', nl: 'Groepsnaam' },
+        },
+        {
+          variable: 'timelineDescription',
+          required: false,
+          description: {
+            en: 'Plain-text description',
+            nl: 'Beschrijving als platte tekst',
+          },
+        },
+        {
+          variable: 'timelineImage',
+          required: false,
+          description: {
+            en: 'HTTP(S) image URL',
+            nl: 'HTTP(S)-URL van afbeelding',
+          },
+        },
+        {
+          variable: 'timelineLink',
+          required: false,
+          description: {
+            en: 'HTTP(S) label link',
+            nl: 'HTTP(S)-link op het label',
+          },
+        },
+      ],
+      options: [
+        {
+          key: 'timeline-title',
+          label: { en: 'Title', nl: 'Titel' },
+          type: 'text',
+          defaultValue: '',
+        },
+      ],
+    },
     label: { en: 'Timeline', nl: 'Tijdlijn' },
     documentationUrl: 'https://ldforge.nl/plugins.html#timeline',
     icon: createSvgIcon(['M3 12h18M6 8v8M12 5v14M18 8v8']),

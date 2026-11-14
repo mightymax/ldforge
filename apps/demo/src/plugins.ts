@@ -33,8 +33,10 @@ if (navigation) {
   );
 }
 for (const link of content.querySelectorAll<HTMLAnchorElement>('a[href]')) {
-  if (link.getAttribute('href') === 'api/plugins.md')
-    link.href = './api.html?page=plugins';
+  const apiLink = /^api\/([a-z-]+)\.md(#.*)?$/.exec(
+    link.getAttribute('href') ?? '',
+  );
+  if (apiLink) link.href = `./api.html?page=${apiLink[1]}${apiLink[2] ?? ''}`;
   if (link.getAttribute('href') === '../apps/demo/guide.html')
     link.href = './guide.html';
 }

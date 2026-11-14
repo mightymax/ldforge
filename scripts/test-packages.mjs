@@ -113,6 +113,11 @@ try {
       executor: createHttpExecutor({ endpoint: 'https://example.org/sparql' }),
       renderers: [createTableRenderer(), createGeoRenderer(), createNetworkRenderer(), createTimelineRenderer(), createPivotRenderer()],
     });
+    const wizard = editor.getRendererWizard();
+    const header: string = wizard.generate({ rendererId: 'geo', options: { mode: '3d' } });
+    wizard.setVisible(false);
+    const registeredIds: string[] = editor.getRenderers().map(renderer => renderer.id);
+    void header; void registeredIds;
     editor.destroy();
   `,
   );

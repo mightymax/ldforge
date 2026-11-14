@@ -59,3 +59,13 @@ The full object-based reference is included in the npm package and rendered by t
 - [Transport and results](docs/api/transport.md)
 
 Formatting returns a promise and loads its parser/printer on demand. Inactive tab operations do not allocate another editor view. Persistence is host-owned through onWorkspaceChange. controls only changes visibility; it does not disable public API methods. License: EUPL-1.2.
+
+## Plugin wizard
+
+The **Plugin wizard** icon is enabled by default in the right toolbar. It offers
+only registered renderers and builds a query header with their options and binding
+contract comments. Hide it with `controls.rendererWizard: false` or
+`editor.getRendererWizard().setVisible(false)`. Use `generate()` for a header
+without editing, or `apply()` to update the active query. See the
+[API and preservation rules](docs/api/editor.md#plugin-wizard) and
+[renderer-owned wizard metadata](docs/api/plugins.md#wizard-metadata).

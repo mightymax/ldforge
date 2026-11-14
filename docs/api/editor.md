@@ -84,3 +84,49 @@ the gutter; the API operates on all of them. With no declarations, toggling is a
 no-op returning false. Folding never changes query text, undo history, results,
 or `onQueryChange`/`onWorkspaceChange` callbacks. Executing, copying with
 `getQuery()` and saving `getWorkspace()` always use the complete query.
+
+## Plugin wizard
+
+The icon-only **Plugin wizard** control is shown by default in the right toolbar.
+Set `controls.rendererWizard: false` (or `controls: false`) to hide it. This hides
+only the entry point; the API remains available.
+
+```ts
+const registered = editor.getRenderers(); // exactly the plugins passed in renderers
+const wizard = editor.getRendererWizard();
+wizard.setVisible(false);
+wizard.setVisible(true);
+wizard.open();
+wizard.close();
+const header = wizard.generate({
+  rendererId: 'charts',
+  options: { chart: 'bar', 'chart-title': 'My chart' },
+  includeBindings: true,
+}); // no query mutation
+wizard.apply({ rendererId: 'geo', options: { mode: '3d' } });
+```
+
+`RendererWizardApi` exposes readonly `isVisible`, `isOpen`, `getRenderers()`,
+`generate(config)` and `apply(config)` plus the methods above. `RendererHeaderConfig`
+requires `rendererId`, with optional string-valued `options` and `includeBindings`
+(default true). Only registered IDs and declared options are accepted. Methods
+throw after editor destruction. No renderer imports or visualization downloads
+occur when listing plugins or using the wizard.
+
+The three steps select a registered renderer, configure its declared header
+options, and preview a copyable header before choosing **Apply to query**.
+Closing the wizard leaves the query unchanged. Applying uses a single query edit
+and never runs the query. The UI checks that the active query tab did not change
+while the dialog was open. Programmatic `apply()` targets the current active tab.
+Existing leading renderer directives and generated `ldforge-bindings:start/end`
+comments are replaced. Query body, unrelated comments, unknown host metadata and
+`# css=...` lines are retained. Repeated application does not duplicate a contract.
+Binding comments describe required variables; they do not rewrite SELECT bindings
+or validate whether the query will return the required result.
+
+`editor.getRenderers()` and `wizard.getRenderers()` return readonly lists of the
+registered `ResultRendererPlugin` objects in registration order, including their
+optional `wizard` metadata. Here “available” means registered, not whether a lazy
+external visualization library has already downloaded. Plugins without metadata
+remain selectable with a view-only header; the UI explains that no contract or
+options have been declared.
