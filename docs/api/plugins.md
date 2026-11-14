@@ -124,10 +124,19 @@ const wizard = {
 
 `RendererBindingContract` has `variable` (without `?`), optional `required`, and a
 localized `description`. `RendererWizardOption` has a lowercase directive `key`,
-localized `label`, `type: 'text' | 'select'`, optional `defaultValue` and select
+localized `label`, `type: 'text' | 'select'`, optional `aliases` for legacy query keys, optional `defaultValue` and select
 `choices` (`value`/localized `label`). Omitted select defaults use their first
 choice. Empty option values are omitted from the header. `view` and `css` are
 reserved. Values are quoted/escaped for header parsing; multiline values and
 unknown options/choices are rejected. A schema's optional description becomes a
 localized comment alongside its binding declarations. These types are exported
 from core and re-exported by editor.
+
+## State-dependent button presentation
+
+Optional `ButtonPlugin.getLabel(context)`, `getTitle(context)` and `getIcon(context)`
+callbacks override their static counterparts when toolbar state refreshes. The
+built-in Run factory uses these to become **Stop query** while running, without
+being disabled. `createCancelButton()` remains available as an explicit secondary
+action. The `icon` property already works on both buttons and `ButtonGroupOptions`;
+the demo's Examples dropdown uses a decorative book icon.

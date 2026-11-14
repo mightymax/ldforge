@@ -177,6 +177,9 @@ export function createRendererWizard(host: Host) {
       )?.wizard?.options ?? []) {
         const value =
           directives[option.key] ??
+          option.aliases
+            ?.map((alias) => directives[alias])
+            .find((value) => value !== undefined) ??
           option.defaultValue ??
           option.choices?.[0]?.value ??
           '';

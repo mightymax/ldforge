@@ -15,7 +15,7 @@
 | `userLocale`        | `'auto' \| 'en' \| 'nl'`                 | `'auto'`             | Restored user override. Auto follows the project setting.                                                                                                                            |
 | `sparql`            | `SparqlOptions`                          | Built-in catalogs    | Namespace and predicate completion configuration.                                                                                                                                    |
 | `toolbar`           | `ToolbarOptions`                         | `{}`                 | Optional custom group presentation and initial group actions. Existing groups stay adjacent buttons unless configured as dropdowns; see [Toolbar](toolbar.md).                       |
-| `buttons`           | `readonly ButtonPlugin[]`                | Run and Cancel       | Replaces the default action list. Include the built-in factories to retain those actions.                                                                                            |
+| `buttons`           | `readonly ButtonPlugin[]`                | Combined Run/Stop    | Replaces the default action list. Include createRunButton() to retain Run/Stop; createCancelButton() is optional.                                                                    |
 | `renderers`         | `readonly ResultRendererPlugin[]`        | `[]`                 | Ordered result views. No implicit renderer is installed.                                                                                                                             |
 | `settings`          | `readonly SettingsPlugin[]`              | `[]`                 | Host-owned panels under the gear button. Not mounted when `controls.settings` is false.                                                                                              |
 | `extensions`        | `readonly Extension[]`                   | `[]`                 | Additional CodeMirror 6 extensions, recreated on a tab switch.                                                                                                                       |
@@ -38,6 +38,8 @@ Every property is optional and defaults to `true`.
 | `cancel`                | The action with reserved ID `cancel`, including `createCancelButton()`.                                                     |
 | `prefixFolding`         | Gutter arrows to fold and unfold PREFIX declarations. Hiding these leaves the folding API and keyboard shortcuts available. |
 | `prefixes`              | Prefix search icon and its entry point.                                                                                     |
+| `fontSize`              | Query text-size field in settings; API remains available when hidden.                                                       |
+| `loadingIndicator`      | Spinner in results while a query runs; defaults to true.                                                                    |
 | `rendererWizard`        | Plugin wizard icon; defaults to true. API remains available when hidden.                                                    |
 | `format`                | Format-query icon.                                                                                                          |
 | `settings`              | Gear icon and settings plugin mounting. Hides access to the language selector too.                                          |
@@ -47,7 +49,7 @@ Every property is optional and defaults to `true`.
 | `renameTab`             | Rename icon and double-click renaming.                                                                                      |
 | `closeTab`              | Tab close buttons.                                                                                                          |
 
-The core tools group is ordered **Prefixes → Format query → Plugin wizard → Settings**, with icons, localized accessible names and tooltips. Run/Cancel are separate from custom project actions. Custom plugin buttons use their `group` identifier; a project cannot accidentally merge its buttons into the core action group just by using the same group name.
+The core tools group is ordered **Prefixes → Format query → Plugin wizard → Settings**, with icons, localized accessible names and tooltips. Run/Stop is separate from custom project actions. Custom plugin buttons use their `group` identifier; a project cannot accidentally merge its buttons into the core action group just by using the same group name.
 
 ```ts
 // Only hide these controls; all public methods remain available.
@@ -122,3 +124,19 @@ with a 44px touch target, and Cancel is hidden. Run keeps its localized accessib
 name and tooltip. Above that breakpoint both labels and Cancel are shown as
 usual. A custom Run action without an icon retains its label. These styles apply
 to the IDE's core actions, not custom button groups or dropdown menu items.
+
+## Query text size
+
+`EditorOptions.fontSize?: number` defaults to **12 px**, with integer values from
+10 through 24. It applies only to the CodeMirror query area (including its line
+numbers), keeping toolbar, settings and result fonts unchanged. The gear panel
+provides smaller/larger buttons, a size selector and Reset (12 px). Hide the field
+with `controls.fontSize: false`; `getFontSize()`/`setFontSize(size)` remain available.
+The optional `onFontSizeChange(size)` callback supports host-owned persistence.
+The demo restores/saves this preference in `localStorage` under
+`ldforge.demo.font-size.v1`, without cookies. An existing saved choice overrides
+the demo's default. Storage failures leave current-session controls usable.
+
+`controls.loadingIndicator: false` disables the default query spinner. Runtime
+methods are `isLoadingIndicatorEnabled()` and `setLoadingIndicatorEnabled(boolean)`.
+These affect presentation only; running queries and the stop action remain active.

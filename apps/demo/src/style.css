@@ -263,13 +263,6 @@ a:focus-visible {
   display: block;
   width: 100%;
   min-width: 0;
-  border: 1px solid #c9d4ca;
-  padding: 10px 12px;
-  border-radius: 6px;
-  font: inherit;
-  font-size: 13px;
-  color: #183c35;
-  background: #fff;
 }
 #endpoint-history-help {
   font-size: 12px;

@@ -72,3 +72,79 @@ describe('result renderers', () => {
     expect(container.querySelector('img')).toBeNull();
   });
 });
+
+it('uses equal fixed-layout widths by default and accepts configured/header percentages', () => {
+  const container = document.createElement('div');
+  const three: QueryResult = {
+    kind: 'bindings',
+    variables: ['a', 'b', 'c'],
+    bindings: [
+      { c: { type: 'literal', value: 'Very long value '.repeat(100) } },
+    ],
+  };
+  createTableRenderer().render(container, three);
+  expect(container.querySelector('table')?.style.tableLayout).toBe('fixed');
+  for (const column of container.querySelectorAll('col'))
+    expect(parseFloat(column.style.width)).toBeCloseTo(100 / 3, 3);
+  expect(container.querySelector('td')?.style.overflowWrap).toBe('anywhere');
+  createTableRenderer({ columnWidths: [20, 30, 50] }).render(container, three);
+  expect(
+    [...container.querySelectorAll('col')].map((column) => column.style.width),
+  ).toEqual(['20%', '30%', '50%']);
+  for (const key of ['columns', 'colums']) {
+    createTableRenderer().render(container, three, {
+      locale: 'en',
+      directives: { [key]: '40%,40%,20%' },
+    });
+    expect(
+      [...container.querySelectorAll('col')].map(
+        (column) => column.style.width,
+      ),
+    ).toEqual(['40%', '40%', '20%']);
+  }
+  createTableRenderer().render(container, three, {
+    locale: 'en',
+    directives: { columns: '10%,20%,70%', colums: '40%,40%,20%' },
+  });
+  expect(container.querySelector('col')?.style.width).toBe('10%');
+});
+it.each([
+  '50%,50%',
+  '0%,40%,60%',
+  '40,40,20',
+  '40%,40%,30%',
+  '40%,40%,20%;color:red',
+  '-10%,50%,60%',
+  'NaN%,40%,60%',
+])(
+  'falls back to equal columns with a useful warning for invalid %s',
+  (columns) => {
+    const container = document.createElement('div');
+    const data: QueryResult = {
+      kind: 'bindings',
+      variables: ['a', 'b', 'c'],
+      bindings: [],
+    };
+    createTableRenderer().render(container, data, {
+      locale: 'nl',
+      directives: { columns },
+    });
+    expect(container.querySelector('[role=alert]')?.textContent).toContain(
+      'Gelijke breedtes',
+    );
+    expect(container.querySelectorAll('col')).toHaveLength(3);
+    expect(
+      parseFloat(container.querySelector('col')?.style.width ?? '0'),
+    ).toBeCloseTo(100 / 3, 3);
+  },
+);
+it('validates host widths and makes column widths discoverable in the plugin wizard', () => {
+  expect(() => createTableRenderer({ columnWidths: [50, 40] })).toThrow(
+    'totaling 100',
+  );
+  expect(createTableRenderer().wizard?.options?.[0]).toMatchObject({
+    key: 'columns',
+    aliases: ['colums'],
+    type: 'text',
+  });
+});

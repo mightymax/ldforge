@@ -81,7 +81,10 @@ export function applyRendererHeader(
   const keys = new Set([
     'view',
     ...renderers.flatMap((renderer) =>
-      (renderer.wizard?.options ?? []).map((option) => option.key),
+      (renderer.wizard?.options ?? []).flatMap((option) => [
+        option.key,
+        ...(option.aliases ?? []),
+      ]),
     ),
   ]);
   const lines = query.replace(/^\uFEFF/, '').split(/\r?\n/);

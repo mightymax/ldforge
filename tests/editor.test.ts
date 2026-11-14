@@ -84,7 +84,7 @@ describe('editor integration', () => {
       expect(host.textContent).toContain('Action failed: Async failure'),
     );
   });
-  it('disables actions during execution and cancels pending requests', async () => {
+  it('turns Run into an enabled Stop action and cancels pending requests', async () => {
     let signal: AbortSignal | undefined;
     const { host, editor } = mount({
       executor: {
@@ -96,12 +96,14 @@ describe('editor integration', () => {
       query: 'ASK {}',
     });
     void editor.run();
-    expect(host.querySelectorAll('button')[0]?.disabled).toBe(true);
-    expect(host.querySelectorAll('button')[1]?.disabled).toBe(false);
+    expect(
+      host.querySelector<HTMLButtonElement>('[aria-label="Stop query"]')
+        ?.disabled,
+    ).toBe(false);
     expect(
       host.querySelector('.ldforge-results')?.getAttribute('aria-busy'),
     ).toBe('true');
-    host.querySelectorAll('button')[1]?.click();
+    host.querySelector<HTMLButtonElement>('[aria-label="Stop query"]')?.click();
     await vi.waitFor(() => expect(signal?.aborted).toBe(true));
     expect(host.textContent).toContain('Ready.');
   });
@@ -326,7 +328,7 @@ it('renders plugin icons, supports keyboard result tabs and retains accessible l
   });
   expect(
     host.querySelectorAll('.ldforge-core-actions button svg'),
-  ).toHaveLength(2);
+  ).toHaveLength(1);
   expect(
     host.querySelector('[aria-label="Download CSV"]')?.hasAttribute('hidden'),
   ).toBe(true);

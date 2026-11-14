@@ -130,3 +130,25 @@ optional `wizard` metadata. Here “available” means registered, not whether a
 external visualization library has already downloaded. Plugins without metadata
 remain selectable with a view-only header; the UI explains that no contract or
 options have been declared.
+
+## Run/Stop, loading and query text size
+
+The default action is a combined Run/Stop button. It displays **Run query** when
+idle and **Stop query** with a stop icon while executing. Stopping aborts the
+pending request and restores the Run action. Hosts may explicitly add
+`createCancelButton()` if they want an additional Cancel action.
+
+A spinner appears in the result area during execution and disappears on success,
+error or cancellation. Set `controls.loadingIndicator: false`, or use:
+
+```ts
+editor.setLoadingIndicatorEnabled(false);
+editor.setLoadingIndicatorEnabled(true);
+const enabled = editor.isLoadingIndicatorEnabled();
+editor.setFontSize(16); // CodeMirror only, integer 10–24
+const size = editor.getFontSize();
+```
+
+The text-size field is under the gear button; default and Reset are 12 px. The
+host can supply `fontSize` and `onFontSizeChange` for persistence. The demo uses
+localStorage. Text-size and spinner API methods throw after editor destruction.

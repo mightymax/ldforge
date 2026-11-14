@@ -4,7 +4,7 @@ Plugins are ordinary TypeScript objects registered per editor instance. Identifi
 
 ## Button plugins
 
-Provide `buttons` to replace the default toolbar. Include the built-in factories to retain Run and Cancel.
+Provide `buttons` to replace the default toolbar. Include createRunButton() to retain the combined Run/Stop action. createCancelButton() adds an optional separate Cancel action.
 
 ```ts
 import {

@@ -92,3 +92,41 @@ Framework-independent core class, constructed with a QueryExecutor. `state` read
 A newer request cancels the previous request. Cancellation and identity checks suppress late replies/errors even when a transport ignores its signal. Tab switches cancel execution. Aborting fetch does not guarantee server-side query cancellation.
 
 `QueryExecutionError` extends Error and exposes readonly `code` (emptyQuery or httpError) and optional `status`. Known codes can be translated by UI adapters; other backend error text is preserved.
+
+## Portable endpoint headers
+
+The demo honors a `sparql-endpoint` directive in the leading query-comment block.
+It selects the endpoint on **Run**, updates visible connection settings/history,
+and uses GET. Pasting or loading a query alone does not execute a request.
+
+```sparql
+# view=table
+# sparql-endpoint=https://datasetregister.netwerkdigitaalerfgoed.nl/sparql
+DESCRIBE <https://n2t.net/ark:/72166/dataset>
+```
+
+Embedded hosts enable the same behavior with the core adapter:
+
+```ts
+import { createHttpExecutor, createQueryEndpointExecutor } from '@ldforge/core';
+const executor = createQueryEndpointExecutor({
+  executor: createHttpExecutor({ endpoint: 'https://example.org/default' }),
+  method: 'GET', // default; POST is also supported
+});
+// Pass executor to createEditor().
+```
+
+`QueryEndpointExecutorOptions` requires a fallback `executor`. Optional `method`,
+`fetch` and `onEndpoint(endpoint, method)` configure header-directed requests.
+Only absolute HTTP(S) URLs are accepted. Invalid values fail before a request;
+without a leading endpoint directive, execution uses the supplied fallback.
+Header-directed requests use a fresh HTTP executor with protocol headers rather
+than inheriting fallback Authorization/custom headers. The same cancellation
+signal reaches fetch. The notification runs after validation and before the HTTP
+request; host callbacks should update connection UI without cancelling that request.
+
+Each demo example explicitly declares either a public endpoint or local fixture
+execution. All four basic examples choose local data. Live examples prepend their
+own `sparql-endpoint` comment so a copied query carries its connection with it.
+Adding such a header manually to a basic query opts into that live endpoint.
+The Plugin wizard preserves this transport directive while updating renderers.

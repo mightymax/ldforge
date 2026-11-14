@@ -8,8 +8,10 @@ export interface EditorControls {
   readonly prefixFolding?: boolean;
   readonly format?: boolean;
   readonly rendererWizard?: boolean;
+  readonly loadingIndicator?: boolean;
   readonly settings?: boolean;
   readonly language?: boolean;
+  readonly fontSize?: boolean;
   readonly tabs?: boolean;
   readonly addTab?: boolean;
   readonly renameTab?: boolean;
@@ -27,8 +29,10 @@ export function resolveControls(
     prefixFolding: true,
     format: true,
     rendererWizard: true,
+    loadingIndicator: true,
     settings: true,
     language: true,
+    fontSize: true,
     tabs: true,
     addTab: true,
     renameTab: true,

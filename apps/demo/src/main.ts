@@ -1,3 +1,5 @@
+import { prefixes as extendedPrefixes } from '@ldforge/prefixes/extended';
+import { readUserFontSize, saveUserFontSize } from './font-size-preference.js';
 import { createPivotRenderer } from '@ldforge/pivot';
 import { createNetworkRenderer } from '@ldforge/network';
 import { createTimelineRenderer } from '@ldforge/timeline';
@@ -13,10 +15,9 @@ import { mountSiteChrome } from './site-chrome.js';
 import {
   createEditor,
   createRunButton,
-  createCancelButton,
   buttonGroupTypes,
 } from '@ldforge/editor';
-import { isGraphQuery } from '@ldforge/core';
+import { isGraphQuery, createSvgIcon } from '@ldforge/core';
 import type { QueryExecutor, QueryResult } from '@ldforge/core';
 import {
   createCardsRenderer,
@@ -196,6 +197,54 @@ const cardsResult: QueryResult = {
 const fixtureExecutor: QueryExecutor = {
   async execute({ query, signal }): Promise<QueryResult> {
     signal.throwIfAborted();
+    if (/\bDESCRIBE\b/i.test(query)) {
+      const subject = {
+        type: 'uri' as const,
+        value:
+          /\bDESCRIBE\s+<([^>]+)>/i.exec(query)?.[1] ??
+          'https://example.org/dataset',
+      };
+      return {
+        kind: 'graph',
+        triples: [
+          {
+            subject,
+            predicate: {
+              type: 'uri',
+              value: 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type',
+            },
+            object: { type: 'uri', value: 'http://www.w3.org/ns/dcat#Dataset' },
+          },
+          {
+            subject,
+            predicate: {
+              type: 'uri',
+              value: 'http://www.w3.org/2000/01/rdf-schema#label',
+            },
+            object: {
+              type: 'literal',
+              value: 'Lokale DESCRIBE-demodataset',
+              'xml:lang': 'nl',
+            },
+          },
+          {
+            subject,
+            predicate: {
+              type: 'uri',
+              value: 'http://purl.org/dc/terms/description',
+            },
+            object: {
+              type: 'literal',
+              value:
+                'Dit zijn lokale voorbeeldgegevens om een DESCRIBE-resultaat te tonen zonder een SPARQL-endpoint te benaderen. '.repeat(
+                  5,
+                ),
+              'xml:lang': 'nl',
+            },
+          },
+        ],
+      };
+    }
     if (isGraphQuery(query))
       return {
         kind: 'graph',
@@ -258,16 +307,20 @@ const connection = createEndpointSettings(fixtureExecutor, (label) => {
 const mount = document.querySelector<HTMLElement>('#editor');
 if (!mount) throw new Error('Editor mount point is missing.');
 const restoredWorkspace = readQueryWorkspace();
+const restoredFontSize = readUserFontSize();
 const editor = createEditor(mount, {
   ...(restoredWorkspace ? { workspace: restoredWorkspace } : {}),
   onWorkspaceChange: saveQueryWorkspace,
   query: selectQuery,
   prefixesCollapsed: true,
+  sparql: { prefixes: extendedPrefixes },
   executor: connection.executor,
   settings: [connection.plugin],
   userLocale: readUserLocale(),
+  ...(restoredFontSize !== undefined ? { fontSize: restoredFontSize } : {}),
+  onFontSizeChange: saveUserFontSize,
   onLocaleChange: saveUserLocale,
-  buttons: [createRunButton(), createCancelButton()],
+  buttons: [createRunButton()],
   renderers: [
     createTableRenderer(),
     createCardsRenderer(),
@@ -284,8 +337,9 @@ const editor = createEditor(mount, {
   })),
 });
 
-function loadExampleQuery(query: string): void {
-  editor.setQuery(query);
+function loadExampleQuery(query: string, endpoint: string | null): void {
+  connection.setEndpoint(endpoint ?? '', 'GET');
+  editor.setQuery(endpoint ? `# sparql-endpoint=${endpoint}\n${query}` : query);
   editor.setPrefixesCollapsed(true);
 }
 
@@ -294,6 +348,9 @@ const menuBar = editor.getToolBar();
 const queryExamples = menuBar.addButtonGroup({
   id: 'examples',
   dropdownWidth: 300,
+  icon: createSvgIcon([
+    'M12 5c-3-2-6-2-9-1v15c3-1 6-1 9 1 3-2 6-2 9-1V4c-3-1-6-1-9 1zM12 5v15',
+  ]),
   type: buttonGroupTypes.dropdown,
   label: { en: 'Examples', nl: 'Voorbeelden' },
 });
@@ -301,37 +358,46 @@ queryExamples.addButton({
   id: 'example-select',
   label: { en: 'SELECT example', nl: 'SELECT-voorbeeld' },
   execute() {
-    loadExampleQuery(selectQuery);
+    loadExampleQuery(selectQuery, null);
   },
 });
 queryExamples.addButton({
   id: 'example-construct',
   label: { en: 'CONSTRUCT example', nl: 'CONSTRUCT-voorbeeld' },
   execute() {
-    loadExampleQuery('CONSTRUCT { ?s ?p ?o } WHERE { ?s ?p ?o } LIMIT 10');
+    loadExampleQuery(
+      'CONSTRUCT { ?s ?p ?o } WHERE { ?s ?p ?o } LIMIT 10',
+      null,
+    );
   },
 });
 queryExamples.addButton({
   id: 'example-ask',
   label: { en: 'ASK example', nl: 'ASK-voorbeeld' },
   execute() {
-    loadExampleQuery('ASK { ?subject ?predicate ?object }');
+    loadExampleQuery('ASK { ?subject ?predicate ?object }', null);
+  },
+});
+queryExamples.addButton({
+  id: 'example-describe',
+  label: { en: 'DESCRIBE example', nl: 'DESCRIBE-voorbeeld' },
+  execute() {
+    loadExampleQuery('DESCRIBE <https://n2t.net/ark:/72166/dataset>', null);
   },
 });
 queryExamples.addButton({
   id: 'example-cards',
   label: { en: 'Gallery', nl: 'Kattenplaatjes' },
   execute() {
-    connection.setEndpoint('https://query.wikidata.org/sparql', 'GET');
-    loadExampleQuery(cardsQuery);
+    loadExampleQuery(cardsQuery, 'https://query.wikidata.org/sparql');
   },
 });
 queryExamples.addButton({
   id: 'example-geo',
   label: { en: 'Castles in North Holland', nl: 'Kastelen in Noord-Holland' },
   execute() {
-    connection.setEndpoint('https://query.wikidata.org/sparql', 'GET');
-    loadExampleQuery(`# view=geo; geo-title=Kastelen in Noord-Holland
+    loadExampleQuery(
+      `# view=geo; geo-title=Kastelen in Noord-Holland
 PREFIX wd: <http://www.wikidata.org/entity/>
 PREFIX wdt: <http://www.wikidata.org/prop/direct/>
 PREFIX wikibase: <http://wikiba.se/ontology#>
@@ -357,18 +423,17 @@ SELECT ?place ?geometryLabel ?geoDescription ?geoImage ?geometry ?geoLink WHERE 
 
   BIND(IRI(CONCAT(REPLACE(STR(?image), "^http:", "https:"), "?width=480")) AS ?geoImage)
 }
-LIMIT 250`);
+LIMIT 250`,
+      'https://query.wikidata.org/sparql',
+    );
   },
 });
 queryExamples.addButton({
   id: 'example-palace',
   label: { en: 'Paleis het Loo (3D)', nl: 'Paleis het Loo (3D)' },
   execute() {
-    connection.setEndpoint(
-      'https://api.triplydb.com/datasets/osm/osm/services/osm/sparql',
-      'GET',
-    );
-    loadExampleQuery(`# view=geo; mode=3d; geo-title=Paleis het Loo
+    loadExampleQuery(
+      `# view=geo; mode=3d; geo-title=Paleis het Loo
 PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
 PREFIX geo: <http://www.opengis.net/ont/geosparql#>
 PREFIX osmt: <https://data.osm.pldn.nl/wiki/Key:>
@@ -378,7 +443,9 @@ SELECT * WHERE {
   ?gebouw geo:hasGeometry/geo:asWKT ?geometry .
   BIND(10 AS ?geometryHeight)
   FILTER(?geometryLabel = "Paleis het Loo")
-}`);
+}`,
+      'https://api.triplydb.com/datasets/osm/osm/services/osm/sparql',
+    );
   },
 });
 queryExamples.addButton({
@@ -388,8 +455,7 @@ queryExamples.addButton({
     nl: 'Top 10 grootste steden (staafdiagram)',
   },
   execute() {
-    connection.setEndpoint('https://query.wikidata.org/sparql', 'GET');
-    loadExampleQuery(chartQuery);
+    loadExampleQuery(chartQuery, 'https://query.wikidata.org/sparql');
   },
 });
 
@@ -400,8 +466,7 @@ queryExamples.addButton({
     nl: 'Kunststromingen in Nederlandse collecties (taartdiagram)',
   },
   execute() {
-    connection.setEndpoint('https://query.wikidata.org/sparql', 'GET');
-    loadExampleQuery(artMovementsQuery);
+    loadExampleQuery(artMovementsQuery, 'https://query.wikidata.org/sparql');
   },
 });
 
@@ -412,8 +477,7 @@ queryExamples.addButton({
     nl: 'Nederlandse schilders en hun relaties (netwerk)',
   },
   execute() {
-    connection.setEndpoint('https://query.wikidata.org/sparql', 'GET');
-    loadExampleQuery(artistsNetworkQuery);
+    loadExampleQuery(artistsNetworkQuery, 'https://query.wikidata.org/sparql');
   },
 });
 queryExamples.addButton({
@@ -423,8 +487,10 @@ queryExamples.addButton({
     nl: 'Levens van Nederlandse schilders (tijdlijn)',
   },
   execute() {
-    connection.setEndpoint('https://query.wikidata.org/sparql', 'GET');
-    loadExampleQuery(paintersTimelineQuery);
+    loadExampleQuery(
+      paintersTimelineQuery,
+      'https://query.wikidata.org/sparql',
+    );
   },
 });
 queryExamples.addButton({
@@ -434,8 +500,7 @@ queryExamples.addButton({
     nl: 'Kunststromingen per collectie (draaitabel)',
   },
   execute() {
-    connection.setEndpoint('https://query.wikidata.org/sparql', 'GET');
-    loadExampleQuery(paintingsPivotQuery);
+    loadExampleQuery(paintingsPivotQuery, 'https://query.wikidata.org/sparql');
   },
 });
 queryExamples.addSeparator('example-cards');

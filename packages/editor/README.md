@@ -69,3 +69,14 @@ contract comments. Hide it with `controls.rendererWizard: false` or
 without editing, or `apply()` to update the active query. See the
 [API and preservation rules](docs/api/editor.md#plugin-wizard) and
 [renderer-owned wizard metadata](docs/api/plugins.md#wizard-metadata).
+
+## Query execution and appearance
+
+Run becomes Stop while a query is pending. A result-area spinner is enabled by
+default; disable it with `controls.loadingIndicator: false` or
+`editor.setLoadingIndicatorEnabled(false)`. A separate Cancel button is optional.
+
+The gear panel offers query-text size controls (10–24 px, default/reset **12 px**).
+Only CodeMirror text changes; toolbar/settings/results fonts stay unchanged. Use
+`fontSize`/`onFontSizeChange` and `getFontSize()`/`setFontSize(size)` in hosts. The
+demo persists the choice in localStorage. `controls.fontSize: false` hides the field.

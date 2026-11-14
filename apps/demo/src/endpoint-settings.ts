@@ -2,7 +2,7 @@ import {
   readActiveEndpoint,
   saveActiveEndpoint,
 } from './endpoint-preference.js';
-import { createHttpExecutor } from '@ldforge/core';
+import { createHttpExecutor, createQueryEndpointExecutor } from '@ldforge/core';
 import type { QueryExecutor, SettingsPlugin } from '@ldforge/core';
 import { createEndpointHistory } from './endpoint-history.js';
 import type { EndpointSettings } from './endpoint-history.js';
@@ -21,14 +21,24 @@ export function createEndpointSettings(
   let executor = fixtureExecutor;
   let updateLabels = () => {};
   let configureEndpoint:
-    ((endpoint: string, method: 'GET' | 'POST') => void) | undefined;
+    | ((
+        endpoint: string,
+        method: 'GET' | 'POST',
+        cancelCurrent?: boolean,
+      ) => void)
+    | undefined;
   return {
     setEndpoint(endpoint, method = 'GET') {
       if (!configureEndpoint)
         throw new Error('Endpoint settings are not mounted.');
       configureEndpoint(endpoint, method);
     },
-    executor: { execute: (request) => executor.execute(request) },
+    executor: createQueryEndpointExecutor({
+      executor: { execute: (request) => executor.execute(request) },
+      onEndpoint(endpoint, method) {
+        configureEndpoint?.(endpoint, method, false);
+      },
+    }),
     plugin: {
       id: 'demo.endpoints',
       label: { en: 'Endpoint settings', nl: 'Endpointinstellingen' },
@@ -173,7 +183,7 @@ export function createEndpointSettings(
           savedEndpoints.value = selected;
         }
 
-        function applyEndpoint(value: string): void {
+        function applyEndpoint(value: string, cancelCurrent = true): boolean {
           try {
             const endpoint = value.trim();
             const settings = endpoint
@@ -182,7 +192,7 @@ export function createEndpointSettings(
             const next = endpoint
               ? createHttpExecutor({ endpoint, ...settings })
               : fixtureExecutor;
-            context.cancel();
+            if (cancelCurrent) context.cancel();
             executor = next;
             input.value = endpoint;
             const persisted = endpoint
@@ -194,19 +204,22 @@ export function createEndpointSettings(
             storageAvailable = saveActiveEndpoint(endpoint) && persisted;
             errorMessage = undefined;
             refreshStatus();
+            return true;
           } catch (error) {
             errorMessage =
               error instanceof Error ? error.message : String(error);
             refreshStatus();
+            return false;
           }
         }
 
-        configureEndpoint = (endpoint, method) => {
+        configureEndpoint = (endpoint, method, cancelCurrent = true) => {
           input.value = endpoint;
           methodInput.value = method;
           // Public examples must never inherit another connection's credentials.
           headerRows.replaceChildren();
-          applyEndpoint(endpoint);
+          if (!applyEndpoint(endpoint, cancelCurrent))
+            throw new Error(errorMessage ?? 'Could not configure endpoint.');
         };
 
         function refreshStatus(): void {

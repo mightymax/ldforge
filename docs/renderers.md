@@ -586,6 +586,24 @@ See [Plugin wizard API](api/editor.md#plugin-wizard) and
 
 ## Query headers
 
+### Shared endpoints
+
+In the demo, a leading endpoint comment makes a query portable:
+
+```sparql
+# view=table
+# sparql-endpoint=https://datasetregister.netwerkdigitaalerfgoed.nl/sparql
+DESCRIBE <https://n2t.net/ark:/72166/dataset>
+```
+
+The endpoint is selected when you run the query and is shown under the editor.
+The request uses fresh connection headers. Live examples include this comment
+when loaded; SELECT, CONSTRUCT, ASK and DESCRIBE basics explicitly select local
+fixtures and make no endpoint request unless you add an endpoint header yourself.
+The Plugin wizard preserves endpoint comments. Embedded applications can enable
+this through core's `createQueryEndpointExecutor`; see
+[portable endpoint headers](api/transport.md#portable-endpoint-headers).
+
 Put metadata in the leading SPARQL comment block, before PREFIX/BASE and the query operation. Keep plugin settings together on one comment line, using semicolon-separated `key=value` assignments: `# view=charts; chart=bar; chart-title=Example city populations`. Put CSS on its own `# css=...` line, because CSS declarations themselves contain semicolons. Separate configuration lines remain supported for existing queries. Blank lines and ordinary comments are allowed in that block. Keys are case-insensitive, values can optionally be quoted, and the last occurrence wins, including across lines. Quote values containing semicolons, for example `chart-title="Cities; populations"`; quoted values also support escaped quotes and backslashes. Apostrophes inside unquoted values such as `People's cities` do not start a quoted value. CSS consumes its entire dedicated comment line; `css` embedded among plugin assignments is ignored. Parsing stops at the first non-comment SPARQL line: comments inside the query and strings are never directives. Formatting and prefix insertion preserve the header. These are normal SPARQL comments and are sent to the executor unchanged.
 
 ```sparql
@@ -616,7 +634,7 @@ A custom renderer can read `context?.directives?.['my-setting']`. Document each 
 
 ## Table
 
-**Package:** `@ldforge/renderers` · **Factory:** `createTableRenderer()` · **ID:** `table`
+**Package:** `@ldforge/renderers` · **Factory:** `createTableRenderer(options?)` · **ID:** `table`
 
 Displays SELECT bindings or CONSTRUCT/DESCRIBE triples as a table. Graph results use subject/predicate/object columns. Column order follows the SELECT variable order, rows follow the endpoint's result order, and unbound values produce empty cells. RDF values are rendered as text, including URL-like values. Datatype and language information appear in cell tooltips. The table caption and result count follow the editor language.
 
@@ -635,6 +653,53 @@ import { createTableRenderer } from '@ldforge/renderers';
 const renderers = [createTableRenderer()];
 // Pass renderers to createEditor().
 ```
+
+### Column widths
+
+By default, every result column gets `100 / n` percent of the table width. Fixed
+table layout and wrapping prevent a long RDF literal or URI from squeezing the
+other columns. This also applies to the subject/predicate/object columns of
+CONSTRUCT and DESCRIBE results.
+
+```sparql
+# view=table; columns=40%,40%,20%
+DESCRIBE <https://n2t.net/ark:/72166/dataset>
+```
+
+`columns` is the canonical directive; `colums` is accepted as a legacy spelling.
+Supply exactly one positive percentage per result column, totaling 100. Invalid
+or mismatched query widths show a localized warning and use equal widths while
+retaining the result data. If both spellings occur, `columns` takes precedence.
+The Plugin wizard offers this field and reads either spelling from existing
+queries; applying its header writes the canonical `columns` key.
+
+```ts
+createTableRenderer({ columnWidths: [40, 40, 20] });
+```
+
+`TableRendererOptions.columnWidths` supplies default percentages in result-variable
+order. Invalid host percentages throw at construction; a column-count mismatch
+falls back to equal widths at render time with a warning. Query widths override
+host defaults. No arbitrary CSS values are accepted as widths.
+
+### Local DESCRIBE example
+
+The demo's **DESCRIBE-voorbeeld** explicitly selects local example data (no
+endpoint) and loads:
+
+```sparql
+DESCRIBE <https://n2t.net/ark:/72166/dataset>
+```
+
+The URI is used as the subject of a small, clearly labeled local demonstration
+graph. These are fixture triples, not a fetched description of the actual dataset.
+The same query can be run manually against
+`https://datasetregister.netwerkdigitaalerfgoed.nl/sparql` for live data. All four
+basic examples (SELECT, CONSTRUCT, ASK, DESCRIBE) reset the active connection to
+local fixtures, even after a live example or manually configured endpoint. The
+demo fixture is deterministic and is not a general SPARQL engine. Every example
+explicitly declares either its endpoint or no endpoint; visual plugin examples
+continue to select their own public service.
 
 ## Boolean
 

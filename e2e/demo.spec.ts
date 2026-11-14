@@ -370,13 +370,19 @@ test('finds namespaces through the integrated prefix picker and keeps tabs light
   ).toContainText('PREFIX prov: <http://www.w3.org/ns/prov#>');
   await page
     .getByRole('searchbox', { name: 'Find a prefix', exact: true })
+    .fill('dbo');
+  await expect(
+    page.getByRole('button', { name: 'Add PREFIX dbo', exact: true }),
+  ).toBeVisible();
+  await page
+    .getByRole('searchbox', { name: 'Find a prefix', exact: true })
     .press('Escape');
   await expect(page.locator('.ldforge-prefix-picker')).toBeHidden();
   await expect(
     page
       .getByRole('group', { name: 'Query execution', exact: true })
       .getByRole('button'),
-  ).toHaveCount(2);
+  ).toHaveCount(1);
   await page.reload();
   await expect(page.locator('.cm-foldPlaceholder')).toHaveText('…');
   await page.getByTitle('Unfold', { exact: true }).click();
@@ -513,13 +519,13 @@ test('inserts missing known prefixes during typing and persists the updated quer
   await query.pressSequentially(
     'schema:name ?name . ?s schema:description ?description }',
   );
-  await expect(query).toContainText('PREFIX schema: <https://schema.org/>');
+  await expect(query).toContainText('PREFIX schema: <http://schema.org/>');
   await expect(query).toContainText('schema:name ?name');
   expect((await query.innerText()).match(/PREFIX schema:/g)).toHaveLength(1);
   await page.reload();
   await expect(page.locator('.cm-foldPlaceholder')).toHaveText('…');
   await page.getByTitle('Unfold', { exact: true }).click();
-  await expect(query).toContainText('PREFIX schema: <https://schema.org/>');
+  await expect(query).toContainText('PREFIX schema: <http://schema.org/>');
   await expect(query).toContainText('schema:description ?description');
 });
 
@@ -534,8 +540,8 @@ test('uses accessible result tabs and downloads complete CSV independently of th
     page.getByRole('button', { name: 'Run query', exact: true }).locator('svg'),
   ).toHaveCount(1);
   await expect(
-    page.getByRole('button', { name: 'Cancel', exact: true }).locator('svg'),
-  ).toHaveCount(1);
+    page.getByRole('button', { name: 'Cancel', exact: true }),
+  ).toHaveCount(0);
   await page.getByRole('button', { name: 'Run query', exact: true }).click();
   const tabs = page.getByRole('tablist', { name: 'Result view', exact: true });
   await expect(tabs.getByRole('tab')).toHaveCount(2);
@@ -940,6 +946,7 @@ test('uses configured toolbar dropdowns with keyboard navigation, dismissal and 
     'SELECT example',
     'CONSTRUCT example',
     'ASK example',
+    'DESCRIBE example',
     'Gallery',
     'Castles in North Holland',
     'Paleis het Loo (3D)',
@@ -1002,6 +1009,7 @@ test('uses configured toolbar dropdowns with keyboard navigation, dismissal and 
     'SELECT example',
     'CONSTRUCT example',
     'ASK example',
+    'DESCRIBE example',
     'Gallery',
     'Castles in North Holland',
     'Paleis het Loo (3D)',
@@ -1041,19 +1049,19 @@ test('collapses PREFIX declarations in the gutter without changing the executabl
   expect(errors).toEqual([]);
 });
 
-test('uses an accessible icon-only Run action and hides Cancel on mobile', async ({
+test('uses an accessible icon-only Run action on mobile without a separate Cancel button', async ({
   page,
 }) => {
   await page.goto('/');
   const run = page.getByRole('button', { name: 'Run query', exact: true });
   const cancel = page.getByRole('button', { name: 'Cancel', exact: true });
   await expect(run.locator('.ldforge-button-label')).toBeVisible();
-  await expect(cancel).toBeVisible();
+  await expect(cancel).toHaveCount(0);
   await page.setViewportSize({ width: 390, height: 844 });
   await expect(run).toBeVisible();
   await expect(run.locator('.ldforge-button-label')).toBeHidden();
   await expect(run.locator('svg')).toBeVisible();
-  await expect(cancel).toBeHidden();
+  await expect(cancel).toHaveCount(0);
   const bounds = await run.boundingBox();
   expect(bounds?.width).toBeGreaterThanOrEqual(44);
   expect(bounds?.height).toBeGreaterThanOrEqual(44);
@@ -1061,7 +1069,7 @@ test('uses an accessible icon-only Run action and hides Cancel on mobile', async
   await expect(page.getByRole('table')).toContainText('Amsterdam');
   await page.setViewportSize({ width: 1280, height: 900 });
   await expect(run.locator('.ldforge-button-label')).toBeVisible();
-  await expect(cancel).toBeVisible();
+  await expect(cancel).toHaveCount(0);
 });
 
 test('serves complete social sharing metadata without JavaScript', async ({

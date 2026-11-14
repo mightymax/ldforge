@@ -1,3 +1,4 @@
+import { parseQueryViewDirectives } from './query-directives.js';
 import type { RdfTriple } from './graph.js';
 import { isGraphQuery, parseRdfGraph } from './graph.js';
 export { isGraphQuery, parseRdfGraph, graphToBindings } from './graph.js';
@@ -66,6 +67,10 @@ export interface ButtonPlugin {
   /** Optional decorative icon factory; return a fresh node for each mount. */
   readonly icon?: PluginIcon;
   readonly title?: LocalizedText;
+  /** Optional state-dependent presentation; static fields remain fallbacks. */
+  readonly getLabel?: (context: EditorContext) => LocalizedText;
+  readonly getTitle?: (context: EditorContext) => LocalizedText;
+  readonly getIcon?: (context: EditorContext) => PluginIcon | undefined;
   readonly isDisabled?: (context: EditorContext) => boolean;
   execute(context: EditorContext): void | Promise<void>;
 }
@@ -82,6 +87,8 @@ export interface RendererBindingContract {
   readonly description: LocalizedText;
 }
 export interface RendererWizardOption {
+  /** Legacy query directive aliases; generation always uses key. */
+  readonly aliases?: readonly string[];
   readonly key: string;
   readonly label: LocalizedText;
   readonly type: 'text' | 'select';
@@ -325,6 +332,37 @@ export function createHttpExecutor(
           response.url || endpoint.href,
         );
       return parseSparqlResults(await response.json());
+    },
+  };
+}
+
+export interface QueryEndpointExecutorOptions {
+  /** Used when the query has no sparql-endpoint directive. */
+  readonly executor: QueryExecutor;
+  readonly method?: 'GET' | 'POST';
+  readonly fetch?: typeof globalThis.fetch;
+  /** Notification after validation, before execution. Must not cancel this request. */
+  readonly onEndpoint?: (endpoint: string, method: 'GET' | 'POST') => void;
+}
+/** Opt-in routing for portable queries, using fresh HTTP credentials/headers. */
+export function createQueryEndpointExecutor(
+  options: QueryEndpointExecutorOptions,
+): QueryExecutor {
+  return {
+    execute(request) {
+      const declared = parseQueryViewDirectives(request.query)[
+        'sparql-endpoint'
+      ];
+      if (declared === undefined) return options.executor.execute(request);
+      const method = options.method ?? 'GET';
+      const http = createHttpExecutor({
+        endpoint: declared.trim(),
+        method,
+        ...(options.fetch ? { fetch: options.fetch } : {}),
+      });
+      const endpoint = new URL(declared.trim()).href;
+      options.onEndpoint?.(endpoint, method);
+      return http.execute(request);
     },
   };
 }

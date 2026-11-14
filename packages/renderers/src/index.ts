@@ -1,3 +1,4 @@
+import { parseColumnWidths, validColumnWidths } from './table-widths.js';
 import {
   translate,
   resolveLocale,
@@ -6,7 +7,17 @@ import {
 } from '@ldforge/core';
 import type { ResultRendererPlugin } from '@ldforge/core';
 
-export function createTableRenderer(): ResultRendererPlugin {
+export interface TableRendererOptions {
+  /** Percentages in result-variable order; must be positive and total 100. */
+  readonly columnWidths?: readonly number[];
+}
+export function createTableRenderer(
+  options: TableRendererOptions = {},
+): ResultRendererPlugin {
+  if (options.columnWidths && !validColumnWidths(options.columnWidths))
+    throw new Error(
+      'columnWidths must contain positive percentages totaling 100.',
+    );
   return {
     id: 'table',
     wizard: {
@@ -14,6 +25,18 @@ export function createTableRenderer(): ResultRendererPlugin {
         en: 'Accepts SELECT bindings or RDF graph results.',
         nl: 'Voor SELECT-bindings of RDF-graafresultaten.',
       },
+      options: [
+        {
+          key: 'columns',
+          aliases: ['colums'],
+          label: {
+            en: 'Column widths (e.g. 40%,40%,20%)',
+            nl: 'Kolombreedtes (bijv. 40%,40%,20%)',
+          },
+          type: 'text',
+          defaultValue: '',
+        },
+      ],
       bindings: [],
     },
     documentationUrl: 'https://ldforge.nl/plugins.html#table',
@@ -25,6 +48,30 @@ export function createTableRenderer(): ResultRendererPlugin {
       if (result.kind !== 'bindings') return;
       const doc = container.ownerDocument;
       const table = doc.createElement('table');
+      table.className = 'ldforge-table';
+      table.style.tableLayout = 'fixed';
+      table.style.width = '100%';
+      const configured =
+        context?.directives?.columns ?? context?.directives?.colums;
+      const requested =
+        configured === undefined
+          ? options.columnWidths
+          : parseColumnWidths(configured);
+      const invalid =
+        (configured !== undefined && !requested) ||
+        (requested !== undefined &&
+          requested.length !== result.variables.length);
+      const widths =
+        !invalid && requested
+          ? requested
+          : result.variables.map(() => 100 / result.variables.length);
+      const columns = doc.createElement('colgroup');
+      for (const width of widths) {
+        const column = doc.createElement('col');
+        column.style.width = `${width}%`;
+        columns.append(column);
+      }
+      table.append(columns);
       const caption = table.createCaption();
       const locale = context?.locale ?? resolveLocale();
       caption.textContent = translate(
@@ -36,6 +83,7 @@ export function createTableRenderer(): ResultRendererPlugin {
       for (const variable of result.variables) {
         const cell = doc.createElement('th');
         cell.scope = 'col';
+        cell.style.overflowWrap = 'anywhere';
         cell.textContent = variable;
         header.append(cell);
       }
@@ -44,6 +92,8 @@ export function createTableRenderer(): ResultRendererPlugin {
         const row = body.insertRow();
         for (const variable of result.variables) {
           const cell = row.insertCell();
+          cell.style.overflowWrap = 'anywhere';
+          cell.style.whiteSpace = 'pre-wrap';
           const term = binding[variable];
           cell.textContent = term?.value ?? '';
           if (term)
@@ -54,7 +104,15 @@ export function createTableRenderer(): ResultRendererPlugin {
               : (term.datatype ?? term.type);
         }
       }
-      container.replaceChildren(table);
+      if (invalid) {
+        const warning = doc.createElement('p');
+        warning.setAttribute('role', 'alert');
+        warning.textContent =
+          locale === 'nl'
+            ? 'Ongeldige kolombreedtes: gebruik één positief percentage per kolom, samen 100%. Gelijke breedtes worden gebruikt.'
+            : 'Invalid column widths: use one positive percentage per column, totaling 100%. Equal widths are used.';
+        container.replaceChildren(warning, table);
+      } else container.replaceChildren(table);
     },
   };
 }

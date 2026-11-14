@@ -69,7 +69,7 @@
 }
 .ldforge .cm-editor {
   min-height: 240px;
-  font-size: 14px;
+  font-size: var(--ldforge-query-font-size, 12px);
 }
 .ldforge .cm-scroller {
   font-family: ui-monospace, monospace;
@@ -739,4 +739,98 @@
 }
 .ldforge-renderer-wizard [role='alert']:empty {
   display: none;
+}
+.ldforge-renderer-wizard .ldforge-wizard-checkbox input {
+  width: auto;
+  flex: 0 0 auto;
+  margin: 0;
+}
+
+.ldforge-loading-indicator {
+  min-height: 120px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  color: #405c57;
+  font-size: 13px;
+}
+.ldforge-spinner {
+  display: inline-block;
+  width: 28px;
+  height: 28px;
+  border: 3px solid #cde0d8;
+  border-top-color: #087f73;
+  border-radius: 50%;
+  animation: ldforge-spin 0.8s linear infinite;
+}
+@keyframes ldforge-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ldforge-spinner {
+    animation: none;
+  }
+}
+
+.ldforge-font-size {
+  margin: 16px 0;
+  border: 1px solid var(--ldforge-border);
+  border-radius: 6px;
+}
+.ldforge-font-size button,
+.ldforge-font-size select {
+  margin: 3px;
+}
+.ldforge-settings select:not([multiple]) {
+  appearance: none;
+  -webkit-appearance: none;
+  min-height: 38px;
+  max-width: 100%;
+  padding: 8px 34px 8px 12px;
+  border: 1px solid #bfd0c6;
+  border-radius: 8px;
+  background-color: #f7faf6;
+  background-image:
+    linear-gradient(45deg, transparent 50%, #537460 50%),
+    linear-gradient(135deg, #537460 50%, transparent 50%);
+  background-position:
+    calc(100% - 18px) 50%,
+    calc(100% - 14px) 50%;
+  background-size: 4px 4px;
+  background-repeat: no-repeat;
+  color: #183c35;
+  cursor: pointer;
+  transition:
+    border-color 120ms ease,
+    background-color 120ms ease;
+}
+.ldforge-settings select:not([multiple]):hover:not(:disabled) {
+  border-color: #7e9e8b;
+  background-color: #f0f6ef;
+}
+.ldforge-settings select:focus-visible {
+  outline: 2px solid #087f73;
+  outline-offset: 2px;
+  border-color: #087f73;
+}
+.ldforge-settings select:disabled {
+  cursor: default;
+  opacity: 0.55;
+}
+.ldforge-settings option {
+  background: #fff;
+  color: #183c35;
+}
+.ldforge-font-size select {
+  min-width: 100px;
+}
+@media (forced-colors: active) {
+  .ldforge-settings select:not([multiple]) {
+    appearance: auto;
+    -webkit-appearance: auto;
+    background-image: none;
+  }
 }

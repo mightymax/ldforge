@@ -77,3 +77,5 @@ Exports from `@ldforge/editor` for custom CodeMirror hosts:
 | `defaultPrefixes` / `defaultPredicates`       | Default namespace map / small predicate vocabulary.                                                       |
 
 Cursor `position` is subject, predicate, object, expression, service or other. Diagnostics report parser recovery spans and undeclared names. They do not certify semantic validity, endpoint capabilities or query safety. This implementation does not start a language server.
+
+The public demo opts into the extended catalog through `sparql: { prefixes: extendedPrefixes }`. Embedded editors still default to the compact catalog unless the host explicitly supplies the extended map.

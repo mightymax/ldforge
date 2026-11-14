@@ -1,3 +1,8 @@
+import {
+  createFontSizeControl,
+  DEFAULT_FONT_SIZE,
+  validateFontSize,
+} from './font-size.js';
 import { createRendererWizard } from './renderer-wizard.js';
 import type { RendererWizardApi } from './renderer-wizard.js';
 export type {
@@ -113,7 +118,10 @@ export interface EditorOptions {
   /** Restored user choice, which takes precedence over the project preference. */
   readonly userLocale?: LocalePreference;
   readonly onLocaleChange?: (preference: LocalePreference) => void;
-  /** Omit to use Run and Cancel; provide an array to replace the toolbar. */
+  /** CodeMirror query text size only, 10–24px. */
+  readonly fontSize?: number;
+  readonly onFontSizeChange?: (size: number) => void;
+  /** Omit to use the combined Run/Stop button; provide an array to replace the toolbar. */
   readonly buttons?: readonly ButtonPlugin[];
   /** Optional dropdown presentation and additional declarative button groups. */
   readonly toolbar?: ToolbarOptions;
@@ -133,6 +141,10 @@ export interface ForgeEditor extends EditorContext {
   /** Registered renderers only; does not load their external visual libraries. */
   getRenderers(): readonly ResultRendererPlugin[];
   getRendererWizard(): RendererWizardApi;
+  getFontSize(): number;
+  setFontSize(size: number): void;
+  isLoadingIndicatorEnabled(): boolean;
+  setLoadingIndicatorEnabled(enabled: boolean): void;
   getWorkspace(): QueryWorkspace;
   /** Live indexable collection; handles remain stable across edits and renaming. */
   getTabs(): TabCollection;
@@ -143,17 +155,35 @@ export interface ForgeEditor extends EditorContext {
 }
 
 export function createRunButton(): ButtonPlugin {
+  const label = { en: 'Run query', nl: 'Query uitvoeren' };
+  const stopLabel = { en: 'Stop query', nl: 'Query stoppen' };
+  const title = {
+    en: 'Run query (Ctrl/Cmd+Enter)',
+    nl: 'Query uitvoeren (Ctrl/Cmd+Enter)',
+  };
+  const icon = createSvgIcon(['m8 4 12 8-12 8z']);
+  const stopIcon = createSvgIcon(['M6 6h12v12H6z']);
   return {
     id: 'run',
-    icon: createSvgIcon(['m8 4 12 8-12 8z']),
     group: 'query',
-    label: { en: 'Run query', nl: 'Query uitvoeren' },
-    title: {
-      en: 'Run query (Ctrl/Cmd+Enter)',
-      nl: 'Query uitvoeren (Ctrl/Cmd+Enter)',
+    label,
+    title,
+    icon,
+    getLabel(context) {
+      return context.getState().status === 'running' ? stopLabel : this.label;
     },
-    isDisabled: (context) => context.getState().status === 'running',
-    execute: (context) => context.run(),
+    getTitle(context) {
+      return context.getState().status === 'running'
+        ? stopLabel
+        : (this.title ?? this.label);
+    },
+    getIcon(context) {
+      return context.getState().status === 'running' ? stopIcon : this.icon;
+    },
+    execute(context) {
+      if (context.getState().status === 'running') context.cancel();
+      else return context.run();
+    },
   };
 }
 export function createCancelButton(): ButtonPlugin {
@@ -174,9 +204,12 @@ export function createEditor(
   container: HTMLElement,
   options: EditorOptions,
 ): ForgeEditor {
+  let fontSize = options.fontSize ?? DEFAULT_FONT_SIZE;
+  validateFontSize(fontSize);
   const controls = resolveControls(options.controls);
+  let loadingIndicatorEnabled = controls.loadingIndicator;
   const buttons = new PluginRegistry(
-    (options.buttons ?? [createRunButton(), createCancelButton()]).filter(
+    (options.buttons ?? [createRunButton()]).filter(
       (button) =>
         (button.id !== 'run' || controls.run) &&
         (button.id !== 'cancel' || controls.cancel),
@@ -220,6 +253,7 @@ export function createEditor(
   tabBar.hidden = !controls.tabs;
   const editorHost = doc.createElement('div');
   editorHost.className = 'ldforge-code';
+  editorHost.style.setProperty('--ldforge-query-font-size', `${fontSize}px`);
   editorHost.id = `ldforge-query-${settingsPanelNumber + 1}`;
   editorHost.setAttribute('role', 'tabpanel');
   tabBar.dataset.panelId = editorHost.id;
@@ -238,6 +272,14 @@ export function createEditor(
   download.className = 'ldforge-result-download';
   appendIcon(download, createSvgIcon(['M12 3v12m-5-5 5 5 5-5M4 16v5h16v-5']));
   download.hidden = true;
+  const loadingIndicator = doc.createElement('div');
+  loadingIndicator.className = 'ldforge-loading-indicator';
+  loadingIndicator.setAttribute('role', 'status');
+  const spinner = doc.createElement('span');
+  spinner.className = 'ldforge-spinner';
+  spinner.setAttribute('aria-hidden', 'true');
+  const loadingLabel = doc.createElement('span');
+  loadingIndicator.append(spinner, loadingLabel);
   const rendererDocs = doc.createElement('a');
   rendererDocs.className = 'ldforge-renderer-docs';
   rendererDocs.target = '_blank';
@@ -282,6 +324,14 @@ export function createEditor(
   languageLabel.hidden = !controls.language;
   languageHelp.hidden = !controls.language;
   settingsPanel.append(languageLabel, languageHelp);
+  const fontSizeControl = createFontSizeControl(
+    doc,
+    () => fontSize,
+    () => locale,
+    (size) => context.setFontSize(size),
+  );
+  fontSizeControl.element.hidden = !controls.fontSize;
+  settingsPanel.append(fontSizeControl.element);
   const toggle = doc.createElement('button');
   root.append(
     toolbar,
@@ -317,6 +367,29 @@ export function createEditor(
     togglePrefixes() {
       context.setPrefixesCollapsed(!context.arePrefixesCollapsed());
       return context.arePrefixesCollapsed();
+    },
+    getFontSize() {
+      assertAlive();
+      return fontSize;
+    },
+    setFontSize(size) {
+      assertAlive();
+      validateFontSize(size);
+      if (size === fontSize) return;
+      fontSize = size;
+      editorHost.style.setProperty('--ldforge-query-font-size', `${size}px`);
+      fontSizeControl.refresh();
+      view.requestMeasure();
+      options.onFontSizeChange?.(size);
+    },
+    isLoadingIndicatorEnabled() {
+      assertAlive();
+      return loadingIndicatorEnabled;
+    },
+    setLoadingIndicatorEnabled(enabled) {
+      assertAlive();
+      loadingIndicatorEnabled = enabled;
+      refreshLoadingIndicator();
     },
     getRenderers() {
       assertAlive();
@@ -608,6 +681,13 @@ export function createEditor(
     toolbarView.refresh();
   }
 
+  function refreshLoadingIndicator(): void {
+    loadingLabel.textContent = translate(locale, 'running');
+    if (loadingIndicatorEnabled && controller.state.status === 'running')
+      output.append(loadingIndicator);
+    else loadingIndicator.remove();
+  }
+
   function renderResult(): void {
     const previousCleanup = cleanup;
     cleanup = undefined;
@@ -622,7 +702,10 @@ export function createEditor(
       download.hidden =
         !controls.download || controller.state.status !== 'success';
       const state = controller.state;
-      if (state.status !== 'success') return;
+      if (state.status !== 'success') {
+        refreshLoadingIndicator();
+        return;
+      }
       const available = renderers
         .list()
         .filter((renderer) => renderer.supports(state.result));
@@ -835,6 +918,7 @@ export function createEditor(
   }
 
   function refreshLocale(): void {
+    fontSizeControl.refresh();
     rendererWizard.refreshLocale();
     prefixPicker.refreshLocale();
     tools.setAttribute('aria-label', translate(locale, 'coreTools'));

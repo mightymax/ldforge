@@ -1,6 +1,7 @@
 /** Leading SPARQL comment metadata, extensible by renderer plugins. */
 export interface QueryViewDirectives {
   readonly view?: string;
+  readonly 'sparql-endpoint'?: string;
   readonly css?: string;
   readonly [key: string]: string | undefined;
 }

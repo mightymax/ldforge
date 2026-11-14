@@ -21,7 +21,7 @@ const toolbar = {
 // Other groups remain ordinary button groups.
 ```
 
-`EditorOptions.toolbar?: ToolbarOptions` defaults to `{}`. `ToolbarOptions.groups?: readonly ButtonGroupOptions[]` describes presentation for existing button groups and can also add groups with their own `buttons`. Initial `EditorOptions.buttons` keeps its existing replacement semantics: omit it to retain Run/Cancel, or include their factories when supplying your own array. Configuring toolbar groups does not itself remove default actions.
+`EditorOptions.toolbar?: ToolbarOptions` defaults to `{}`. `ToolbarOptions.groups?: readonly ButtonGroupOptions[]` describes presentation for existing button groups and can also add groups with their own `buttons`. Initial `EditorOptions.buttons` keeps its existing replacement semantics: omit it to retain the combined Run/Stop action, or include its factory when supplying your own array. Configuring toolbar groups does not itself remove default actions.
 
 [Try the demo](./). The demo website explicitly creates two dropdowns using the runtime API: Query Examples (SELECT → CONSTRUCT → ASK) and Plugin Examples (Cards → Charts). This is host configuration; library groups still default to adjacent buttons.
 
@@ -99,7 +99,7 @@ group.addButton(button);
 
 `buttonGroupTypes` is a frozen exported constant: `{ buttons: 'buttons', dropdown: 'dropdown' }`. `ButtonGroupType` is the union of those values. You can use the strings directly or import the constants. There is no automatic overflow conversion: dropdowns are an explicit developer choice.
 
-For initial configuration, groups receiving existing `buttons` appear where their first member was registered. Additional groups are appended in configuration order. Within a group, actions preserve insertion order. Runtime standalone actions and new groups append to project actions. The core Run/Cancel group and built-in tools remain separate; reserved `run` and `cancel` actions cannot be moved into custom groups.
+For initial configuration, groups receiving existing `buttons` appear where their first member was registered. Additional groups are appended in configuration order. Within a group, actions preserve insertion order. Runtime standalone actions and new groups append to project actions. The core query-action group and built-in tools remain separate; reserved `run` and `cancel` actions cannot be moved into custom groups.
 
 ## ToolbarButtonGroupHandle
 

@@ -178,7 +178,10 @@ export function createToolbar(
         ...items.slice(0, index + 1),
       ];
       next = candidates.find((item) =>
-        localize(item.plugin.label, host.getLocale())
+        localize(
+          item.plugin.getLabel?.(host.context) ?? item.plugin.label,
+          host.getLocale(),
+        )
           .toLowerCase()
           .startsWith(prefix),
       );
@@ -217,7 +220,7 @@ export function createToolbar(
         return record.plugin.id;
       },
       get label() {
-        return record.plugin.label;
+        return record.plugin.getLabel?.(host.context) ?? record.plugin.label;
       },
       get groupId() {
         return record.group?.options.id;
@@ -479,20 +482,23 @@ export function createToolbar(
     if (disposed) return;
     const locale = host.getLocale();
     for (const record of buttons.values()) {
-      const label = localize(record.plugin.label, locale);
+      const label = localize(
+        record.plugin.getLabel?.(host.context) ?? record.plugin.label,
+        locale,
+      );
+      const icon = record.plugin.getIcon
+        ? record.plugin.getIcon(host.context)
+        : record.plugin.icon;
+      const title =
+        record.plugin.getTitle?.(host.context) ?? record.plugin.title;
       const text = doc.createElement('span');
       text.className = 'ldforge-button-label';
       text.textContent = label;
       record.element.replaceChildren(text);
       record.element.setAttribute('aria-label', label);
-      record.element.classList.toggle(
-        'ldforge-button-has-icon',
-        Boolean(record.plugin.icon),
-      );
-      appendIcon(record.element, record.plugin.icon);
-      record.element.title = record.plugin.title
-        ? localize(record.plugin.title, locale)
-        : label;
+      record.element.classList.toggle('ldforge-button-has-icon', Boolean(icon));
+      appendIcon(record.element, icon);
+      record.element.title = title ? localize(title, locale) : label;
       record.element.disabled =
         record.plugin.isDisabled?.(host.context) ?? false;
       record.element.hidden = !host.isVisible(record.plugin);
