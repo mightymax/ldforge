@@ -10,14 +10,22 @@ export default defineConfig({
           new URL(`./packages/prefixes/src/${variant}.ts`, import.meta.url),
         ),
       ]),
-      ...['core', 'editor', 'renderers', 'prefixes', 'charts', 'geo'].map(
-        (name) => [
-          `@ldforge/${name}`,
-          fileURLToPath(
-            new URL(`./packages/${name}/src/index.ts`, import.meta.url),
-          ),
-        ],
-      ),
+      ...[
+        'core',
+        'editor',
+        'renderers',
+        'prefixes',
+        'charts',
+        'geo',
+        'network',
+        'timeline',
+        'pivot',
+      ].map((name) => [
+        `@ldforge/${name}`,
+        fileURLToPath(
+          new URL(`./packages/${name}/src/index.ts`, import.meta.url),
+        ),
+      ]),
     ]),
   },
   test: {

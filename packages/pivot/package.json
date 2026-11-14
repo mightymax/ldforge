@@ -1,0 +1,39 @@
+{
+  "name": "@ldforge/pivot",
+  "version": "0.1.5",
+  "description": "Accessible pivot table result renderer for LDForge",
+  "type": "module",
+  "license": "EUPL-1.2",
+  "files": [
+    "dist",
+    "src",
+    "README.md",
+    "LICENSE"
+  ],
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "preversion": "node ../../scripts/release.mjs reject-workspace"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "dependencies": {
+    "@ldforge/core": "^0.1.5"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mightymax/ldforge.git",
+    "directory": "packages/pivot"
+  },
+  "homepage": "https://github.com/mightymax/ldforge/tree/main/packages/pivot#readme",
+  "bugs": {
+    "url": "https://github.com/mightymax/ldforge/issues"
+  }
+}

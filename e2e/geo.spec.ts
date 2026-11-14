@@ -121,7 +121,9 @@ test('lazy geo modes render real points, polygons, clusters and a heatmap', asyn
   const initialQuery = await query.innerText();
   expect(initialQuery).toContain('geo-title=Kastelen in Noord-Holland');
   expect(initialQuery).toContain('?geoDescription ?geoImage ?geometry');
-  expect(initialQuery).toContain('(?place AS ?geoLink)');
+  expect(initialQuery).toContain('?geometry ?geoLink WHERE');
+  expect(initialQuery).toContain('?geoLink schema:about ?place');
+  expect(initialQuery).toContain('schema:isPartOf <https://nl.wikipedia.org/>');
   expect(initialQuery).toContain('wdt:P31 wd:Q23413');
   expect(initialQuery).toContain('wdt:P625 ?geometry');
   expect(initialQuery).toContain('wdt:P131+ wd:Q701');

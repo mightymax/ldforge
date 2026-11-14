@@ -175,3 +175,19 @@ Existing action groups remain adjacent buttons by default. Configure `toolbar.gr
 The built demo is static HTML/CSS/JavaScript. Use the [deployment guide](docs/deployment.md) for container builds, Kubernetes/Helm, Argo CD and optional per-installation analytics. Public defaults contain no tracking ID; local operator values belong under the gitignored `.local/` directory or in a private GitOps repository.
 
 After one-time GitOps setup, `npm version patch` can also deploy the website after publishing npm. Deploy only the site with `gh workflow run website.yml --ref main -f source_ref=main`; no npm version or release tag is created. See [automated website releases](docs/deployment.md#automated-website-releases).
+
+### Network and timeline renderers
+
+Optional `@ldforge/network` and `@ldforge/timeline` packages add interactive
+relationship graphs and dated events/ranges. Their visual libraries are downloaded
+only when their result tab opens. Try **Nederlandse schilders en hun relaties
+(netwerk)** and **Levens van Nederlandse schilders (tijdlijn)** in the demo's
+Examples menu; both query the public Wikidata endpoint. See the
+[renderer guide](docs/renderers.md#network) for the binding contracts and options.
+
+### Pivot renderer
+
+`@ldforge/pivot` adds native, accessible pivot tables with sum/count/average/min/max,
+correct totals, axis sorting/transposition and cell colors. It needs no external
+visualization library. Try **Kunststromingen per collectie (draaitabel)** on the demo
+or read the [pivot contract and example](docs/renderers.md#pivot).

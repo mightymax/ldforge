@@ -1,3 +1,11 @@
+import { createPivotRenderer } from '@ldforge/pivot';
+import { createNetworkRenderer } from '@ldforge/network';
+import { createTimelineRenderer } from '@ldforge/timeline';
+import {
+  artistsNetworkQuery,
+  paintersTimelineQuery,
+  paintingsPivotQuery,
+} from './renderer-examples.js';
 import { createGeoRenderer } from '@ldforge/geo';
 import { createChartRenderer } from '@ldforge/charts';
 import cardImageUrl from '../assets/logo-mark.svg?no-inline';
@@ -265,6 +273,9 @@ const editor = createEditor(mount, {
     createCardsRenderer(),
     createChartRenderer(),
     createGeoRenderer(),
+    createNetworkRenderer(),
+    createTimelineRenderer(),
+    createPivotRenderer(),
     createBooleanRenderer(),
     createJsonRenderer(),
   ].map((renderer) => ({
@@ -328,12 +339,15 @@ PREFIX bd: <http://www.bigdata.com/rdf#>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX schema: <http://schema.org/>
 
-SELECT ?place ?geometryLabel ?geoDescription ?geoImage ?geometry (?place AS ?geoLink) WHERE {
+SELECT ?place ?geometryLabel ?geoDescription ?geoImage ?geometry ?geoLink WHERE {
   ?place wdt:P31 wd:Q23413 ;
          wdt:P17 wd:Q55 ;
          wdt:P131+ wd:Q701 ;
          wdt:P625 ?geometry ;
          wdt:P18 ?image .
+
+  ?geoLink schema:about ?place ;
+           schema:isPartOf <https://nl.wikipedia.org/> .
 
   SERVICE wikibase:label {
     bd:serviceParam wikibase:language "nl,en" .
@@ -391,6 +405,39 @@ queryExamples.addButton({
   },
 });
 
+queryExamples.addButton({
+  id: 'example-network',
+  label: {
+    en: 'Dutch painters and their connections (network)',
+    nl: 'Nederlandse schilders en hun relaties (netwerk)',
+  },
+  execute() {
+    connection.setEndpoint('https://query.wikidata.org/sparql', 'GET');
+    loadExampleQuery(artistsNetworkQuery);
+  },
+});
+queryExamples.addButton({
+  id: 'example-timeline',
+  label: {
+    en: 'Lives of Dutch painters (timeline)',
+    nl: 'Levens van Nederlandse schilders (tijdlijn)',
+  },
+  execute() {
+    connection.setEndpoint('https://query.wikidata.org/sparql', 'GET');
+    loadExampleQuery(paintersTimelineQuery);
+  },
+});
+queryExamples.addButton({
+  id: 'example-pivot',
+  label: {
+    en: 'Art movements by collection (pivot)',
+    nl: 'Kunststromingen per collectie (draaitabel)',
+  },
+  execute() {
+    connection.setEndpoint('https://query.wikidata.org/sparql', 'GET');
+    loadExampleQuery(paintingsPivotQuery);
+  },
+});
 queryExamples.addSeparator('example-cards');
 
 if (import.meta.hot) import.meta.hot.dispose(() => editor.destroy());

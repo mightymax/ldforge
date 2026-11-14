@@ -39,7 +39,7 @@ invalid URLs are omitted without dropping the geometry. Labels and descriptions
 are text, never HTML. Individual point popups retain these fields in Grouped mode;
 cluster bubbles show their count. The castles demo queries Wikidata directly for
 castles in North Holland with coordinates and an image, without OPTIONAL, and links each
-label to its Wikidata item. Only castles with an image appear.
+label to its Dutch Wikipedia article via `schema:about` and `schema:isPartOf`. Only castles with an image and a Dutch Wikipedia article appear.
 
 Supported WKT: `POINT`, `LINESTRING`, `POLYGON`, `MULTIPOINT`, `MULTILINESTRING`, `MULTIPOLYGON`, case insensitive. Bare WKT and the GeoSPARQL `<http://www.opengis.net/def/crs/OGC/1.3/CRS84>` prefix are accepted. Other CRSs, SRIDs, dimensions, EMPTY and geometry collections are rejected. Reproject other coordinate systems before returning results. Geometry validation checks finite geographic coordinates, minimum line/ring lengths and ring closure; it does not validate polygon topology.
 

@@ -945,6 +945,9 @@ test('uses configured toolbar dropdowns with keyboard navigation, dismissal and 
     'Paleis het Loo (3D)',
     'Top 10 largest cities (bar chart)',
     'Art movements in Dutch collections (pie chart)',
+    'Dutch painters and their connections (network)',
+    'Lives of Dutch painters (timeline)',
+    'Art movements by collection (pivot)',
   ]);
   await expect(
     menu.getByRole('menuitem', { name: 'SELECT example', exact: true }),
@@ -966,7 +969,7 @@ test('uses configured toolbar dropdowns with keyboard navigation, dismissal and 
   await page.keyboard.press('End');
   await expect(
     menu.getByRole('menuitem', {
-      name: 'Art movements in Dutch collections (pie chart)',
+      name: 'Art movements by collection (pivot)',
       exact: true,
     }),
   ).toBeFocused();
@@ -1004,6 +1007,9 @@ test('uses configured toolbar dropdowns with keyboard navigation, dismissal and 
     'Paleis het Loo (3D)',
     'Top 10 largest cities (bar chart)',
     'Art movements in Dutch collections (pie chart)',
+    'Dutch painters and their connections (network)',
+    'Lives of Dutch painters (timeline)',
+    'Art movements by collection (pivot)',
   ]);
 });
 

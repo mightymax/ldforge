@@ -12,6 +12,9 @@ export const packagePaths = [
   'packages/renderers',
   'packages/charts',
   'packages/geo',
+  'packages/network',
+  'packages/timeline',
+  'packages/pivot',
   'packages/editor',
 ];
 const dependencyFields = [

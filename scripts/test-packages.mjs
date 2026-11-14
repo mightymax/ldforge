@@ -17,6 +17,9 @@ try {
     'renderers',
     'charts',
     'geo',
+    'network',
+    'timeline',
+    'pivot',
   ].map((name) => {
     const [archive] = JSON.parse(
       execFileSync(
@@ -64,6 +67,9 @@ try {
     import { existsSync } from 'node:fs';
     import { parseRdfGraph, parseSparqlResults } from '@ldforge/core';
     import { createGeoRenderer } from '@ldforge/geo';
+    import { createNetworkRenderer } from '@ldforge/network';
+    import { createTimelineRenderer } from '@ldforge/timeline';
+    import { createPivotRenderer } from '@ldforge/pivot';
     import { createChartRenderer } from '@ldforge/charts';
     import { createEditor, formatSparql } from '@ldforge/editor';
     import { prefixes, searchPrefixes } from '@ldforge/prefixes';
@@ -73,6 +79,9 @@ try {
     assert.equal(typeof createEditor, 'function');
     assert.equal(createChartRenderer().id, 'charts');
     assert.equal(createGeoRenderer().id, 'geo');
+    assert.equal(createNetworkRenderer().id, 'network');
+    assert.equal(createTimelineRenderer().id, 'timeline');
+    assert.equal(createPivotRenderer().id, 'pivot');
     assert.equal((await parseRdfGraph('<https://example.org/s> <https://example.org/p> "value" .')).triples.length, 1);
     assert.equal(createCardsRenderer().id, 'cards');
     assert((await formatSparql('select * where {?s ?p ?o}')).includes('SELECT'));
@@ -97,9 +106,12 @@ try {
     import { createHttpExecutor } from '@ldforge/core';
     import { createTableRenderer, createCardsRenderer } from '@ldforge/renderers';
     import { createGeoRenderer } from '@ldforge/geo';
+    import { createNetworkRenderer } from '@ldforge/network';
+    import { createTimelineRenderer } from '@ldforge/timeline';
+    import { createPivotRenderer } from '@ldforge/pivot';
     const editor = createEditor(document.createElement('div'), {
       executor: createHttpExecutor({ endpoint: 'https://example.org/sparql' }),
-      renderers: [createTableRenderer(), createGeoRenderer()],
+      renderers: [createTableRenderer(), createGeoRenderer(), createNetworkRenderer(), createTimelineRenderer(), createPivotRenderer()],
     });
     editor.destroy();
   `,
@@ -129,7 +141,7 @@ try {
     { cwd: directory, stdio: 'inherit' },
   );
   process.stdout.write(
-    'All six packages install, resolve and typecheck in an isolated consumer.\n',
+    'All nine packages install, resolve and typecheck in an isolated consumer.\n',
   );
 } finally {
   rmSync(directory, { recursive: true, force: true });

@@ -77,7 +77,8 @@ Normal. Text geometry/height data stays available. Self-host using
 
 Endpoint: `https://query.wikidata.org/sparql` (GET). The demo's **Kastelen in Noord-Holland**
 returns up to 250 castles in North Holland with coordinates and a Wikidata image. It uses
-mandatory patterns without OPTIONAL. Popup labels link to Wikidata; descriptions
+mandatory patterns without OPTIONAL, including a Dutch Wikipedia sitelink. Only castles
+with a Dutch article appear. Popup labels link to that Wikipedia article; descriptions
 prefer Dutch and fall back to English. Commons images use HTTPS thumbnail URLs.
 The missing `rdfs` and `schema` prefixes are included explicitly.
 
@@ -90,12 +91,15 @@ PREFIX bd: <http://www.bigdata.com/rdf#>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX schema: <http://schema.org/>
 
-SELECT ?place ?geometryLabel ?geoDescription ?geoImage ?geometry (?place AS ?geoLink) WHERE {
+SELECT ?place ?geometryLabel ?geoDescription ?geoImage ?geometry ?geoLink WHERE {
   ?place wdt:P31 wd:Q23413 ;
          wdt:P17 wd:Q55 ;
          wdt:P131+ wd:Q701 ;
          wdt:P625 ?geometry ;
          wdt:P18 ?image .
+
+  ?geoLink schema:about ?place ;
+           schema:isPartOf <https://nl.wikipedia.org/> .
 
   SERVICE wikibase:label {
     bd:serviceParam wikibase:language "nl,en" .
@@ -107,6 +111,12 @@ SELECT ?place ?geometryLabel ?geoDescription ?geoImage ?geometry (?place AS ?geo
 }
 LIMIT 250
 ```
+
+Wikipedia sitelinks are modeled from the article to the Wikidata item:
+`?geoLink schema:about ?place`. The additional
+`schema:isPartOf <https://nl.wikipedia.org/>` selects Dutch Wikipedia rather than
+another language or Wikimedia project. This is a sitelink, not a `wdt:P…`
+statement on the castle. See the [Wikibase RDF sitelink format](https://www.mediawiki.org/wiki/Wikibase/Indexing/RDF_Dump_Format#Sitelinks).
 
 Wikidata's `wdt:P625` returns WGS84 WKT points directly, so no geometry conversion
 is needed. The separate **Paleis het Loo (3D)** example above keeps using OSM.
@@ -129,6 +139,273 @@ SELECT ?geometryLabel ?geometry WHERE {
 See [GeoRendererOptions and supported WKT](https://github.com/mightymax/ldforge/blob/main/packages/geo/README.md) for every option. Defaults are `https://cdn.jsdelivr.net/npm/leaflet@1.9.4/+esm`, the matching external `dist/leaflet.css`, and OpenStreetMap raster tiles with visible attribution. `libraryUrl`, `stylesheetUrl`, `tileUrl` and `tileAttribution` allow self-hosting/custom providers. `loadLibrary` overrides the JavaScript loader only; set `stylesheetUrl: false` if the host supplies CSS. Set `tileUrl: false` for no basemap requests. The exported `GeoLibrary`, `GeoMapHandle` and `GeoLayerHandle` interfaces avoid a mandatory Leaflet type dependency.
 
 External mode requires network access and CSP permissions for CDN scripts/styles and tile images. Leaflet is BSD-2-Clause licensed. The default tiles follow the [OpenStreetMap tile usage policy](https://operations.osmfoundation.org/policies/tiles/); use a suitable provider for production traffic. Only trusted host configuration can specify executable library URLs or attribution HTML; query comments cannot. Module/CSS failures show a retry button. Tile failures are handled by Leaflet and do not remove geometry. An expandable text geometry list remains accessible. Cleanup removes maps and resize observers and ignores late asynchronous completions.
+
+## Network
+
+**Package:** `@ldforge/network` (optional) · **Factory:** `createNetworkRenderer(options?)` · **ID:** `network`
+
+Interactive directed relationship graphs using vis-network 10.1.5, loaded from a
+pinned external ESM module only when the Network tab opens. The library is not
+bundled or a package runtime dependency. Register it alongside other renderers:
+
+```ts
+import { createNetworkRenderer } from '@ldforge/network';
+const renderers = [createTableRenderer(), createNetworkRenderer()];
+```
+
+| Binding                        | Required | Meaning                                                                        |
+| ------------------------------ | -------- | ------------------------------------------------------------------------------ |
+| `?source`, `?target`           | Yes      | URI or blank-node identifiers. Literals and missing nodes produce a row error. |
+| `?sourceLabel`, `?targetLabel` | No       | Plain-text names; fall back to each identifier.                                |
+| `?relationLabel`               | No       | Plain-text directed edge label.                                                |
+| `?sourceGroup`, `?targetGroup` | No       | Group names used for node colors and the legend.                               |
+
+A node is identified by its RDF term type and value. Repeated nodes and identical
+source/target/label edges are deduplicated; different relation labels stay separate.
+Use consistent group names for a node across rows. URI nodes have a safe HTTP(S)
+link in the selected-node panel and the always-available Network data list; blank
+nodes and unsafe URL schemes remain plain text. No labels are interpreted as HTML.
+
+Use `# view=network; network-title=My graph`. Drag nodes/background, zoom, select a
+node to highlight its connected edges, or use the labeled node picker to focus a
+node and expose its link. Fit/zoom buttons are available. Arrow keys and +/- work
+while the network canvas is focused; they do not capture keys globally.
+
+Options: `libraryUrl` defaults to
+`https://cdn.jsdelivr.net/npm/vis-network@10.1.5/standalone/esm/vis-network.min.mjs`;
+`loadLibrary` supplies a custom lazy loader exporting `Network` with the exported
+`NetworkConstructor`/`NetworkHandle` interfaces. Optional `stylesheetUrl` loads
+host CSS (or `false` disables it); the default standalone build includes its own
+styles. vis-network is dual Apache-2.0/MIT licensed. Only trusted host options can
+change executable asset URLs. Failed downloads/module exports can be retried;
+late loads after cleanup never create a network. Cleanup calls `destroy()`.
+
+### Dutch painters example
+
+Public endpoint: `https://query.wikidata.org/sparql` (GET). Both Netherlands and
+Kingdom of the Netherlands citizenship values are included. The bounded query
+returns up to 75 teacher/movement relations with Dutch labels, falling back to
+English. Values reflect Wikidata's current statements, not a curated art history.
+
+```sparql
+# view=network; network-title=Nederlandse schilders, leermeesters en kunststromingen
+PREFIX wd: <http://www.wikidata.org/entity/>
+PREFIX wdt: <http://www.wikidata.org/prop/direct/>
+PREFIX wikibase: <http://wikiba.se/ontology#>
+PREFIX bd: <http://www.bigdata.com/rdf#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+
+SELECT ?source ?sourceLabel ?target ?targetLabel ?relationLabel ?sourceGroup ?targetGroup WHERE {
+  {
+    SELECT DISTINCT ?source ?target ?relationLabel ?targetGroup WHERE {
+      VALUES ?country { wd:Q55 wd:Q29999 }
+      ?source wdt:P27 ?country ;
+              wdt:P106/wdt:P279* wd:Q1028181 .
+      {
+        ?source wdt:P135 ?target .
+        BIND("kunststroming" AS ?relationLabel)
+        BIND("Kunststroming" AS ?targetGroup)
+      }
+      UNION
+      {
+        ?source wdt:P1066 ?target .
+        BIND("leermeester" AS ?relationLabel)
+        BIND("Kunstenaar" AS ?targetGroup)
+      }
+    }
+    LIMIT 75
+  }
+  BIND("Kunstenaar" AS ?sourceGroup)
+  SERVICE wikibase:label {
+    bd:serviceParam wikibase:language "nl,en" .
+    ?source rdfs:label ?sourceLabel .
+    ?target rdfs:label ?targetLabel .
+  }
+}
+```
+
+## Timeline
+
+**Package:** `@ldforge/timeline` (optional) · **Factory:** `createTimelineRenderer(options?)` · **ID:** `timeline`
+
+Interactive dated points and ranges with vis-timeline 8.5.6, downloaded only when
+the Timeline tab opens. Supports grouping, dragging through time, Ctrl + scroll
+to zoom, explicit zoom buttons and a Fit action. Large overlapping sets can be
+scrolled vertically. Events are read-only; dragging does not edit source data.
+
+```ts
+import { createTimelineRenderer } from '@ldforge/timeline';
+const renderers = [createTableRenderer(), createTimelineRenderer()];
+```
+
+| Binding                | Required | Meaning                                                                                             |
+| ---------------------- | -------- | --------------------------------------------------------------------------------------------------- |
+| `?timelineLabel`       | Yes      | Nonempty plain-text event label.                                                                    |
+| `?timelineStart`       | Yes      | Literal ISO year, year-month, calendar date, or timezone-qualified dateTime.                        |
+| `?timelineEnd`         | No       | Same format; makes a range. Must not precede the start.                                             |
+| `?timelineGroup`       | No       | Row/group name. Mixed grouped/ungrouped events use an Other row.                                    |
+| `?timelineLink`        | No       | Absolute HTTP(S) URL on the label, opened with `noopener noreferrer`.                               |
+| `?timelineDescription` | No       | Plain-text details shown on selection.                                                              |
+| `?timelineImage`       | No       | Absolute HTTP(S) image URI or URL literal. Thumbnail on the timeline and larger image on selection. |
+
+Use `# view=timeline; timeline-title=My timeline`. `buildTimelineModel` and
+`parseTimelineDate` are exported for hosts that need to inspect normalized data.
+Years/months start on January 1/the first of the month, at midnight UTC. Full
+calendar dates and dateTimes are validated (including leap days); ambiguous locale
+formats and reversed ranges report their row. Signed extended years and Wikidata's
+leading plus are accepted. No imprecise year/month value is silently treated as an
+exact source date: the display uses the first day of the given period. The example
+uses available Wikidata date literals; date precision/uncertainty qualifiers are
+not modeled. The fallback Timeline data table formats dates in UTC and remains
+available during loading or failure. All labels/descriptions/group names use DOM
+text; query values are never executable HTML.
+
+Timeline images load lazily, use no-referrer, and disappear on image errors. Unsafe or invalid image URLs are omitted without dropping events. The example samples one portrait per painter and requests a Commons thumbnail.
+
+Options: `libraryUrl` defaults to
+`https://cdn.jsdelivr.net/npm/vis-timeline@8.5.6/standalone/esm/vis-timeline-graph2d.min.mjs`;
+`stylesheetUrl` defaults to the same version's `styles/vis-timeline-graph2d.min.css`
+(or `false` for host-supplied CSS). `loadLibrary` overrides the JS loader and must
+export `Timeline` following `TimelineConstructor`/`TimelineHandle`. Library and CSS
+failures can be retried, stale loads are discarded, and cleanup destroys the view.
+vis-timeline is dual Apache-2.0/MIT licensed. Standalone builds own their internal
+DataSets: these plugins pass plain arrays and do not exchange DataSet instances.
+
+### Lives of Dutch painters example
+
+Public endpoint: `https://query.wikidata.org/sparql` (GET). Up to 35 deceased
+painters with a Wikidata image and at least 30 sitelinks, ranked by sitelinks, with birth/death ranges
+and links. MIN/MAX collapse repeated birth/death statements per person; this is a
+data demonstration, not an assessment of conflicting historical dates. Citizenship
+includes the Netherlands and Kingdom of the Netherlands. Names/descriptions prefer
+Dutch and fall back to English.
+
+```sparql
+# view=timeline; timeline-title=Levens van Nederlandse schilders
+PREFIX wd: <http://www.wikidata.org/entity/>
+PREFIX wdt: <http://www.wikidata.org/prop/direct/>
+PREFIX wikibase: <http://wikiba.se/ontology#>
+PREFIX bd: <http://www.bigdata.com/rdf#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX schema: <http://schema.org/>
+
+SELECT ?timelineLabel ?timelineStart ?timelineEnd ?timelineGroup ?timelineDescription ?timelineImage (?person AS ?timelineLink) WHERE {
+  {
+    SELECT ?person (MIN(?birth) AS ?timelineStart) (MAX(?death) AS ?timelineEnd) (SAMPLE(?portrait) AS ?photo) WHERE {
+      VALUES ?country { wd:Q55 wd:Q29999 }
+      ?person wdt:P31 wd:Q5 ;
+              wdt:P27 ?country ;
+              wdt:P106 wd:Q1028181 ;
+              wdt:P569 ?birth ;
+              wdt:P570 ?death ;
+              wdt:P18 ?portrait ;
+              wikibase:sitelinks ?sitelinks .
+      FILTER(?sitelinks >= 30)
+    }
+    GROUP BY ?person
+    ORDER BY DESC(MAX(?sitelinks))
+    LIMIT 35
+  }
+  BIND(IRI(CONCAT(REPLACE(STR(?photo), "^http:", "https:"), "?width=320")) AS ?timelineImage)
+  BIND("Schilders" AS ?timelineGroup)
+  SERVICE wikibase:label {
+    bd:serviceParam wikibase:language "nl,en" .
+    ?person rdfs:label ?timelineLabel ;
+            schema:description ?timelineDescription .
+  }
+}
+ORDER BY ?timelineStart
+```
+
+## Pivot
+
+**Package:** `@ldforge/pivot` (optional) · **Factory:** `createPivotRenderer(options?)` · **ID:** `pivot`
+
+An accessible native HTML pivot table: rows cross columns, cells aggregate the
+matching source observations, and margins show row, column and grand totals. No
+external JavaScript, stylesheet, canvas or runtime dependency is needed.
+
+```ts
+import { createPivotRenderer } from '@ldforge/pivot';
+const renderers = [
+  createTableRenderer(),
+  createPivotRenderer({ aggregate: 'sum' }),
+];
+```
+
+| Binding        | Required | Meaning                                                       |
+| -------------- | -------- | ------------------------------------------------------------- |
+| `?pivotRow`    | Yes      | Nonempty row category; compared by its exact string value.    |
+| `?pivotColumn` | Yes      | Nonempty column category; compared by its exact string value. |
+| `?pivotValue`  | Yes      | Finite numeric literal, including negative values and zero.   |
+
+Use `# view=pivot; pivot-aggregate=sum; pivot-title=My pivot`. Optional
+`pivot-row-title` and `pivot-column-title` name the axes. Supported aggregations:
+
+- `sum` (default): sum of source values.
+- `count`: number of source observations, including zero-valued observations.
+- `avg`: mean of source values. Totals use all underlying observations, so an
+  average of displayed averages is never substituted for the weighted mean.
+- `min` and `max`: extrema of source values, including for totals.
+
+Repeated row/column pairs are aggregated. Missing combinations display an em dash
+with a “No observations” tooltip, distinct from a real zero. Invalid bindings,
+unsupported operations and nonfinite sum/average results report an error with the
+source row. Numeric cells expose full precision in `title`/`data-value`; localized
+formatting controls the visible representation. Category labels are DOM text,
+never HTML. Group keys such as `__proto__` remain ordinary data.
+
+Controls choose the aggregation, sort either axis by labels or totals, swap axes
+without losing observations, and toggle cell colors. Color intensity reflects
+absolute cell magnitude; positive values are green and negative values are warm
+red. Values remain readable independently of color. Row/column headers use table
+scopes; the overflow region is labeled, keyboard-focusable and scrolls horizontally
+on narrow screens. Cleanup disables renderer-owned controls.
+
+`PivotRendererOptions` accepts `aggregate`, `heatmap` (default `true`),
+`maximumFractionDigits` (integer 0–20, default 3), `rowTitle` and `columnTitle`.
+Query directives override the initial operation/axis titles; runtime controls only
+change this result view. `buildPivotModel`, `transposePivotModel`, `pivotAggregates`,
+`PivotDataError`, `PivotAggregate` and `PivotModel` are exported for host use.
+
+### Art movements by collection example
+
+Public endpoint: `https://query.wikidata.org/sparql` (GET). Counts Wikidata paintings
+by art movement in the Rijksmuseum, Van Gogh Museum and Mauritshuis. Dutch labels
+fall back to English. There is no LIMIT on the grouped combinations, so the pivot
+covers all matches in these three collections. It describes Wikidata coverage,
+not the institutions' complete inventories. A painting can have multiple movement
+or collection statements: totals count assignments across cells, not globally
+unique paintings. Keep the initial `sum` to sum the query's painting counts;
+choosing `count` instead counts the returned grouped query rows.
+
+```sparql
+# view=pivot; pivot-title=Schilderijen per kunststroming en collectie; pivot-aggregate=sum; pivot-row-title=Kunststroming; pivot-column-title=Collectie
+PREFIX wd: <http://www.wikidata.org/entity/>
+PREFIX wdt: <http://www.wikidata.org/prop/direct/>
+PREFIX wikibase: <http://wikiba.se/ontology#>
+PREFIX bd: <http://www.bigdata.com/rdf#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+
+SELECT ?pivotRow ?pivotColumn ?pivotValue WHERE {
+  {
+    SELECT ?movement ?collection (COUNT(DISTINCT ?painting) AS ?pivotValue) WHERE {
+      # Rijksmuseum, Van Gogh Museum, Mauritshuis
+      VALUES ?collection { wd:Q190804 wd:Q224124 wd:Q221092 }
+      ?painting wdt:P31 wd:Q3305213 ;
+                wdt:P135 ?movement ;
+                wdt:P195 ?collection .
+    }
+    GROUP BY ?movement ?collection
+  }
+  SERVICE wikibase:label {
+    bd:serviceParam wikibase:language "nl,en" .
+    ?movement rdfs:label ?pivotRow .
+    ?collection rdfs:label ?pivotColumn .
+  }
+}
+ORDER BY ?pivotRow ?pivotColumn
+```
 
 ## Charts
 

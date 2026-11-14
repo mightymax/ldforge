@@ -18,6 +18,9 @@
     "@ldforge/renderers": "^0.1.5",
     "@lezer/highlight": "^1.2.5",
     "@ldforge/charts": "^0.1.5",
-    "@ldforge/geo": "^0.1.5"
+    "@ldforge/geo": "^0.1.5",
+    "@ldforge/network": "^0.1.5",
+    "@ldforge/timeline": "^0.1.5",
+    "@ldforge/pivot": "^0.1.5"
   }
 }

@@ -12,7 +12,7 @@
   ],
   "scripts": {
     "dev": "npm run dev -w @ldforge/demo --",
-    "build": "npm run build -w @ldforge/core && npm run build -w @ldforge/prefixes && npm run build -w @ldforge/renderers && npm run build -w @ldforge/charts && npm run build -w @ldforge/geo && npm run build -w @ldforge/editor && npm run build -w @ldforge/demo",
+    "build": "npm run build -w @ldforge/core && npm run build -w @ldforge/prefixes && npm run build -w @ldforge/renderers && npm run build -w @ldforge/charts && npm run build -w @ldforge/geo && npm run build -w @ldforge/network && npm run build -w @ldforge/timeline && npm run build -w @ldforge/pivot && npm run build -w @ldforge/editor && npm run build -w @ldforge/demo",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "lint": "eslint . --max-warnings 0",
     "format": "prettier --write .",
@@ -55,6 +55,8 @@
     "supercluster": "^8.0.1",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.72.2",
+    "vis-network": "10.1.5",
+    "vis-timeline": "8.5.6",
     "vite": "^8.3.8",
     "vitest": "^5.1.0",
     "yaml": "^2.9.1"

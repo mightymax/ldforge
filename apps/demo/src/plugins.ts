@@ -18,6 +18,20 @@ renderer.heading = function ({ tokens, depth, text }) {
 };
 // This Markdown is bundled repository documentation, not remote or user input.
 content.innerHTML = marked.parse(markdown, { async: false, renderer });
+// Keep the guide menu in sync with every documented plugin and top-level section.
+const navigation = document.querySelector('#plugin-navigation');
+if (navigation) {
+  navigation.replaceChildren(
+    ...[...content.querySelectorAll<HTMLHeadingElement>('h2[id]')].map(
+      (heading) => {
+        const link = document.createElement('a');
+        link.href = `#${heading.id}`;
+        link.textContent = heading.textContent;
+        return link;
+      },
+    ),
+  );
+}
 for (const link of content.querySelectorAll<HTMLAnchorElement>('a[href]')) {
   if (link.getAttribute('href') === 'api/plugins.md')
     link.href = './api.html?page=plugins';

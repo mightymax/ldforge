@@ -10,7 +10,10 @@
       "@ldforge/prefixes": ["packages/prefixes/src/index.ts"],
       "@ldforge/prefixes/*": ["packages/prefixes/src/*.ts"],
       "@ldforge/charts": ["packages/charts/src/index.ts"],
-      "@ldforge/geo": ["packages/geo/src/index.ts"]
+      "@ldforge/geo": ["packages/geo/src/index.ts"],
+      "@ldforge/network": ["packages/network/src/index.ts"],
+      "@ldforge/timeline": ["packages/timeline/src/index.ts"],
+      "@ldforge/pivot": ["packages/pivot/src/index.ts"]
     },
     "types": ["node", "vite/client"]
   },
