@@ -80,6 +80,7 @@ test('the plugin guide menu includes every documented plugin and follows its sec
     'Network',
     'Timeline',
     'Pivot',
+    'Tree',
     'Charts',
     'Cards',
     'Table',

@@ -958,6 +958,8 @@ test('uses configured toolbar dropdowns with keyboard navigation, dismissal and 
     'Dutch painters and their connections (network)',
     'Lives of Dutch painters (timeline)',
     'Art movements by collection (pivot)',
+    'SKOS hierarchy (local tree)',
+    'Getty paintings (live tree)',
   ]);
   await expect(
     menu.getByRole('menuitem', {
@@ -982,7 +984,7 @@ test('uses configured toolbar dropdowns with keyboard navigation, dismissal and 
   await page.keyboard.press('End');
   await expect(
     menu.getByRole('menuitem', {
-      name: 'Art movements by collection (pivot)',
+      name: 'Getty paintings (live tree)',
       exact: true,
     }),
   ).toBeFocused();
@@ -1025,6 +1027,8 @@ test('uses configured toolbar dropdowns with keyboard navigation, dismissal and 
     'Dutch painters and their connections (network)',
     'Lives of Dutch painters (timeline)',
     'Art movements by collection (pivot)',
+    'SKOS hierarchy (local tree)',
+    'Getty paintings (live tree)',
   ]);
 });
 

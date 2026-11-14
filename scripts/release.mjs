@@ -15,6 +15,7 @@ export const packagePaths = [
   'packages/network',
   'packages/timeline',
   'packages/pivot',
+  'packages/tree',
   'packages/editor',
 ];
 const dependencyFields = [

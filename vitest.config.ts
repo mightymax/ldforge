@@ -20,6 +20,7 @@ export default defineConfig({
         'network',
         'timeline',
         'pivot',
+        'tree',
       ].map((name) => [
         `@ldforge/${name}`,
         fileURLToPath(

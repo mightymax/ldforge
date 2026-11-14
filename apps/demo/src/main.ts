@@ -1,5 +1,11 @@
 import { prefixes as extendedPrefixes } from '@ldforge/prefixes/extended';
 import { readUserFontSize, saveUserFontSize } from './font-size-preference.js';
+import { createTreeRenderer } from '@ldforge/tree';
+import {
+  localTreeQuery,
+  localTreeResult,
+  gettyTreeQuery,
+} from './tree-example.js';
 import { createPivotRenderer } from '@ldforge/pivot';
 import { createNetworkRenderer } from '@ldforge/network';
 import { createTimelineRenderer } from '@ldforge/timeline';
@@ -247,6 +253,7 @@ const fixtureExecutor: QueryExecutor = {
         ],
       };
     }
+    if (/\btree_id\b/.test(query)) return localTreeResult;
     if (isGraphQuery(query))
       return {
         kind: 'graph',
@@ -333,6 +340,7 @@ const editor = createEditor(mount, {
     createNetworkRenderer(),
     createTimelineRenderer(),
     createPivotRenderer(),
+    createTreeRenderer(),
     createBooleanRenderer(),
     createJsonRenderer(),
   ].map((renderer) => ({
@@ -520,6 +528,26 @@ queryExamples.addButton({
   },
   execute() {
     loadExampleQuery(paintingsPivotQuery, 'https://query.wikidata.org/sparql');
+  },
+});
+queryExamples.addButton({
+  id: 'example-tree',
+  label: {
+    en: 'SKOS hierarchy (local tree)',
+    nl: 'SKOS-hiërarchie (lokale boom)',
+  },
+  execute() {
+    loadExampleQuery(localTreeQuery, '');
+  },
+});
+queryExamples.addButton({
+  id: 'example-tree-getty',
+  label: {
+    en: 'Getty paintings (live tree)',
+    nl: 'Getty-schilderijen (live boom)',
+  },
+  execute() {
+    loadExampleQuery(gettyTreeQuery, 'https://vocab.getty.edu/sparql.json');
   },
 });
 queryExamples.addSeparator('example-table-publishers');

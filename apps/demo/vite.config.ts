@@ -40,6 +40,7 @@ export default defineConfig({
         'network',
         'timeline',
         'pivot',
+        'tree',
       ].map((name) => ({
         find: `@ldforge/${name}`,
         replacement: fileURLToPath(

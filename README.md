@@ -191,3 +191,5 @@ Examples menu; both query the public Wikidata endpoint. See the
 correct totals, axis sorting/transposition and cell colors. It needs no external
 visualization library. Try **Kunststromingen per collectie (draaitabel)** on the demo
 or read the [pivot contract and example](docs/renderers.md#pivot).
+
+`@ldforge/tree` adds accessible lazy hierarchy exploration for SKOS, class and organizational structures. Register `createTreeRenderer()` and select `# view=tree`; see the [tree binding contract and examples](docs/renderers.md#tree).
