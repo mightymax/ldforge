@@ -22,6 +22,7 @@
     "@ldforge/network": "^0.1.6",
     "@ldforge/timeline": "^0.1.6",
     "@ldforge/pivot": "^0.1.6",
-    "@ldforge/prefixes": "^0.1.6"
+    "@ldforge/prefixes": "^0.1.6",
+    "@ldforge/tree": "^0.1.6"
   }
 }

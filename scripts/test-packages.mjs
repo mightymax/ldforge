@@ -20,6 +20,7 @@ try {
     'network',
     'timeline',
     'pivot',
+    'tree',
   ].map((name) => {
     const [archive] = JSON.parse(
       execFileSync(
@@ -70,6 +71,7 @@ try {
     import { createNetworkRenderer } from '@ldforge/network';
     import { createTimelineRenderer } from '@ldforge/timeline';
     import { createPivotRenderer } from '@ldforge/pivot';
+    import { createTreeRenderer } from '@ldforge/tree';
     import { createChartRenderer } from '@ldforge/charts';
     import { createEditor, formatSparql } from '@ldforge/editor';
     import { prefixes, searchPrefixes } from '@ldforge/prefixes';
@@ -82,6 +84,7 @@ try {
     assert.equal(createNetworkRenderer().id, 'network');
     assert.equal(createTimelineRenderer().id, 'timeline');
     assert.equal(createPivotRenderer().id, 'pivot');
+    assert.equal(createTreeRenderer().id, 'tree');
     assert.equal((await parseRdfGraph('<https://example.org/s> <https://example.org/p> "value" .')).triples.length, 1);
     assert.equal(createCardsRenderer().id, 'cards');
     assert((await formatSparql('select * where {?s ?p ?o}')).includes('SELECT'));
@@ -109,9 +112,10 @@ try {
     import { createNetworkRenderer } from '@ldforge/network';
     import { createTimelineRenderer } from '@ldforge/timeline';
     import { createPivotRenderer } from '@ldforge/pivot';
+    import { createTreeRenderer } from '@ldforge/tree';
     const editor = createEditor(document.createElement('div'), {
       executor: createHttpExecutor({ endpoint: 'https://example.org/sparql' }),
-      renderers: [createTableRenderer(), createGeoRenderer(), createNetworkRenderer(), createTimelineRenderer(), createPivotRenderer()],
+      renderers: [createTableRenderer(), createGeoRenderer(), createNetworkRenderer(), createTimelineRenderer(), createPivotRenderer(), createTreeRenderer()],
     });
     const wizard = editor.getRendererWizard();
     const header: string = wizard.generate({ rendererId: 'geo', options: { mode: '3d' } });
@@ -146,7 +150,7 @@ try {
     { cwd: directory, stdio: 'inherit' },
   );
   process.stdout.write(
-    'All nine packages install, resolve and typecheck in an isolated consumer.\n',
+    'All ten packages install, resolve and typecheck in an isolated consumer.\n',
   );
 } finally {
   rmSync(directory, { recursive: true, force: true });

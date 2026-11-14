@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { createEditor } from '@ldforge/editor';
 import type { ForgeEditor } from '@ldforge/editor';
 import type { ResultRendererPlugin } from '@ldforge/core';
+import { createTreeRenderer } from '@ldforge/tree';
 import { createChartRenderer } from '@ldforge/charts';
 import { createGeoRenderer } from '@ldforge/geo';
 import { createTableRenderer, createBooleanRenderer } from '@ldforge/renderers';
@@ -53,6 +54,14 @@ describe('registered renderer headers', () => {
     );
     expect(header).toContain('?chart_label (verplicht)');
     expect(header).toContain('ldforge-bindings:start');
+    const treeHeader = generateRendererHeader(
+      [createTreeRenderer()],
+      { rendererId: 'tree', options: { 'tree-title': 'Concepts' } },
+      'en',
+    );
+    expect(treeHeader).toContain('# view=tree; tree-title=Concepts');
+    expect(treeHeader).toContain('?tree_id (required)');
+    expect(treeHeader).toContain('?tree_parent');
     expect(
       generateRendererHeader(renderers, { rendererId: 'boolean' }, 'en'),
     ).toContain('Requires a boolean ASK result');

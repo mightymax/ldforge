@@ -12,6 +12,10 @@ COPY packages/prefixes/package.json packages/prefixes/package.json
 COPY packages/renderers/package.json packages/renderers/package.json
 COPY packages/charts/package.json packages/charts/package.json
 COPY packages/geo/package.json packages/geo/package.json
+COPY packages/network/package.json packages/network/package.json
+COPY packages/timeline/package.json packages/timeline/package.json
+COPY packages/pivot/package.json packages/pivot/package.json
+COPY packages/tree/package.json packages/tree/package.json
 RUN npm ci --ignore-scripts --no-audit --no-fund
 COPY . .
 RUN npm run build -w @ldforge/demo

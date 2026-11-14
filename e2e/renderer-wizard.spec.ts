@@ -30,7 +30,7 @@ test('plugin wizard previews registered renderer options, preserves query/CSS an
     name: 'Renderer',
     exact: true,
   });
-  await expect(renderers.locator('option')).toHaveCount(9);
+  await expect(renderers.locator('option')).toHaveCount(10);
   await renderers.selectOption('charts');
   await dialog.getByRole('button', { name: 'Next', exact: true }).click();
   await dialog

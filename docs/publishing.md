@@ -4,15 +4,15 @@ The public repository is [mightymax/ldforge](https://github.com/mightymax/ldforg
 
 ## One version for the project
 
-Release from the repository root. `@ldforge/core`, `@ldforge/prefixes`, `@ldforge/renderers`, `@ldforge/charts`, `@ldforge/geo`, `@ldforge/network`, `@ldforge/timeline`, `@ldforge/pivot` and `@ldforge/editor` share one version and one `vVERSION` Git tag. The private root coordinates releases; the demo remains private. Internal dependency ranges are synchronized automatically.
+Release from the repository root. `@ldforge/core`, `@ldforge/prefixes`, `@ldforge/renderers`, `@ldforge/charts`, `@ldforge/geo`, `@ldforge/network`, `@ldforge/timeline`, `@ldforge/pivot`, `@ldforge/tree` and `@ldforge/editor` share one version and one `vVERSION` Git tag. The private root coordinates releases; the demo remains private. Internal dependency ranges are synchronized automatically.
 
-This keeps compatible package combinations easy to identify and avoids nine separate release commands. A change to one package releases all nine, including unchanged packages. Independent versioning would reduce those releases but require dependency-specific version management; it is unnecessary for the current tightly integrated project.
+This keeps compatible package combinations easy to identify and avoids ten separate release commands. A change to one package releases all ten, including unchanged packages. Independent versioning would reduce those releases but require dependency-specific version management; it is unnecessary for the current tightly integrated project.
 
 ## One-time npm authentication
 
-The `ldforge` npm organization must own the package scope, and the publishing account must have write access to all nine packages. The workflow publishes public packages.
+The `ldforge` npm organization must own the package scope, and the publishing account must have write access to all ten packages. The workflow publishes public packages.
 
-New packages such as `@ldforge/network`, `@ldforge/timeline` and `@ldforge/pivot` require a first interactive local publication (`npm login`, then `npm publish -w PACKAGE --access public`) before their npm Trusted Publishers can be configured. Do this from a tested, committed build; do not add CI npm tokens. Both publication workflows authenticate exclusively through GitHub OIDC; no npm access token is configured in CI. Configure **Trusted publishing** in the npm settings of each of the nine packages:
+New packages such as `@ldforge/network`, `@ldforge/timeline`, `@ldforge/pivot` and `@ldforge/tree` require a first interactive local publication (`npm login`, then `npm publish -w PACKAGE --access public`) before their npm Trusted Publishers can be configured. Do this from a tested, committed build; do not add CI npm tokens. Both publication workflows authenticate exclusively through GitHub OIDC; no npm access token is configured in CI. Configure **Trusted publishing** in the npm settings of each of the ten packages:
 
 | Field                 | Value                                                               |
 | --------------------- | ------------------------------------------------------------------- |
@@ -49,7 +49,7 @@ The lifecycle hooks:
 
 Use standard npm lifecycle hooks and tag creation. Do not bypass them with `--ignore-scripts`, `--force`, custom tag prefixes or `--no-git-tag-version`. Per-workspace `npm version` commands are rejected. Wait for a release to finish before starting the next one.
 
-The GitHub check job verifies the tag, main ancestry and versions; runs type checking, lint, formatting, coverage, release-hook tests, builds, documentation checks, isolated package installation and Chromium tests; then packs the nine packages. Only after success does a separate job publish those exact checked tarballs, in dependency order, and create a GitHub release with the tarballs attached. Artifacts are retained for 14 days. Stable versions use npm's `latest` tag; prereleases use `next`.
+The GitHub check job verifies the tag, main ancestry and versions; runs type checking, lint, formatting, coverage, release-hook tests, builds, documentation checks, isolated package installation and Chromium tests; then packs the ten packages. Only after success does a separate job publish those exact checked tarballs, in dependency order, and create a GitHub release with the tarballs attached. Artifacts are retained for 14 days. Stable versions use npm's `latest` tag; prereleases use `next`.
 
 When website deployment is configured, a final job calls the reusable website workflow after successful npm publication. Website failures do not roll back already published npm packages. See [Deployment](deployment.md#automated-website-releases) for setup and website-only retries.
 
@@ -65,7 +65,7 @@ npm run release:push
 
 If GitHub checks find a code defect, fix it on main, run local checks and make a new version. Never move a published release tag. For transient infrastructure or authentication failures, fix the cause and rerun the failed workflow jobs in GitHub. If the tarball artifact has expired, rerun the check job too.
 
-Publishing nine npm packages is not atomic. The publisher checks every target version before uploading and compares registry integrity hashes to the artifact manifest. A retry skips versions already published with identical bytes and continues the remaining packages. An existing version with different bytes stops the release; resolve it with a new version, never overwrite or unpublish it to force a retry. Registry lookup failures also stop publication before uploading.
+Publishing ten npm packages is not atomic. The publisher checks every target version before uploading and compares registry integrity hashes to the artifact manifest. A retry skips versions already published with identical bytes and continues the remaining packages. An existing version with different bytes stops the release; resolve it with a new version, never overwrite or unpublish it to force a retry. Registry lookup failures also stop publication before uploading.
 
 ## Inspect package contents
 
@@ -80,6 +80,7 @@ npm pack --workspace @ldforge/geo --dry-run
 npm pack --workspace @ldforge/network --dry-run
 npm pack --workspace @ldforge/timeline --dry-run
 npm pack --workspace @ldforge/pivot --dry-run
+npm pack --workspace @ldforge/tree --dry-run
 ```
 
 Review JavaScript, declarations, source maps, source, README, LICENSE, editor CSS and API documentation. `npm run test:packages` installs actual tarballs in an isolated consumer and checks their public entry points. Release tests use temporary Git repositories and never push this repository or publish to npm.
@@ -101,8 +102,29 @@ using the current tooling. It does not rebuild packages or move the tag. On
 success it creates the GitHub release and deploys the website, like a normal
 release. Artifacts must still be within their 14-day retention period.
 
-Add a separate trusted publisher for `retry-release.yml` on all nine packages,
+Add a separate trusted publisher for `retry-release.yml` on all ten packages,
 using the same GitHub owner and repository, leaving the environment empty and
 enabling **Allow npm publish** only. Keep the `release.yml` publisher in place;
 authorization for one workflow filename does not authorize the other. Configure
 this before running recovery; the recovery workflow also uses OIDC without an npm token.
+
+## First manual publication of @ldforge/tree
+
+After the feature PR is merged, publish just the new package at the current workspace version (`0.1.6` when introduced). Existing packages need no republishing. Use a clean main checkout and Node.js 24/npm 11:
+
+```sh
+git switch main
+git pull --ff-only origin main
+npm ci
+npx playwright install chromium
+npm run check
+npm pack --workspace @ldforge/tree --dry-run
+npm login --registry=https://registry.npmjs.org/
+npm whoami --registry=https://registry.npmjs.org/
+npm publish --workspace @ldforge/tree --access public --registry=https://registry.npmjs.org/
+npm view @ldforge/tree version --registry=https://registry.npmjs.org/
+```
+
+Complete the browser login and any npm 2FA challenge. The account must have permission to create public packages in `@ldforge`. Check the workspace version before publication; never overwrite an existing published version. Do not run `npm version` for this bootstrap: it pushes a release tag and starts automated publication of all packages before this new package's trusted publisher is configured.
+
+Once the package is visible, open [@ldforge/tree settings](https://www.npmjs.com/package/@ldforge/tree/access). Add GitHub Actions trusted publishers for owner `mightymax`, repository `ldforge`, first workflow `release.yml`, then `retry-release.yml`. Leave environment empty and enable **Allow npm publish**. Follow any activation instructions/deadline displayed by npm. See the [npm trusted publishing documentation](https://docs.npmjs.com/trusted-publishers/). After setup, future project releases use the ordinary root `npm version patch/minor/major` flow and include this tenth package automatically.
