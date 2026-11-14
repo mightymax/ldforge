@@ -12,20 +12,18 @@ This keeps compatible package combinations easy to identify and avoids five sepa
 
 The `ldforge` npm organization must own the package scope, and the publishing account must have write access to all five packages. The workflow publishes public packages.
 
-For the first publication, the packages do not yet exist and cannot have trusted publishers configured. Create an npm granular access token with the required package/scope write permissions and permission to publish from CI without an interactive 2FA challenge. Add it in GitHub under **Settings → Secrets and variables → Actions → New repository secret**, named `NPM_TOKEN`. Do not put tokens in source files or release commands. An expired or read-only token cannot publish.
+The packages already exist on npm. Both publication workflows authenticate exclusively through GitHub OIDC; no npm access token is configured in CI. Configure **Trusted publishing** in the npm settings of each of the five packages:
 
-After the first successful publication, configure **Trusted publishing** in the npm settings of each of the five packages:
+| Field                 | Value                                                               |
+| --------------------- | ------------------------------------------------------------------- |
+| Provider              | GitHub Actions                                                      |
+| Organization or user  | `mightymax`                                                         |
+| Repository            | `ldforge`                                                           |
+| Workflow filename     | `release.yml`                                                       |
+| Environment           | Leave empty; this workflow does not use an environment              |
+| Publishing permission | Enable **Allow npm publish**; leave **Allow npm dist-tag** disabled |
 
-| Field                 | Value                                                  |
-| --------------------- | ------------------------------------------------------ |
-| Provider              | GitHub Actions                                         |
-| Organization or user  | `mightymax`                                            |
-| Repository            | `ldforge`                                              |
-| Workflow filename     | `release.yml`                                          |
-| Environment           | Leave empty; this workflow does not use an environment |
-| Publishing permission | Allow publishing, rather than staging only             |
-
-Remove the GitHub `NPM_TOKEN` secret once every package has its trusted publisher. The workflow then authenticates through GitHub OIDC with short-lived credentials. It uses Node.js 24 and npm 11, with `id-token: write` only in the publishing job. Public GitHub repositories and public packages qualify for automatic provenance with trusted publishing. Follow the current [npm trusted publishing instructions](https://docs.npmjs.com/trusted-publishers/), including any activation deadline shown when configuring a publisher.
+Remove any old GitHub `NPM_TOKEN` secret. After a successful OIDC publication, revoke the old npm token on npmjs.com. The workflows authenticate through GitHub OIDC with short-lived credentials. It uses Node.js 24 and npm 11, with `id-token: write` only in the publishing job. Public GitHub repositories and public packages qualify for automatic provenance with trusted publishing. Follow the current [npm trusted publishing instructions](https://docs.npmjs.com/trusted-publishers/), including any activation deadline shown when configuring a publisher.
 
 ## Make a release
 
@@ -99,7 +97,8 @@ using the current tooling. It does not rebuild packages or move the tag. On
 success it creates the GitHub release and deploys the website, like a normal
 release. Artifacts must still be within their 14-day retention period.
 
-The recovery workflow can use the temporary `NPM_TOKEN` bootstrap secret. If
-using only Trusted Publishing, authorize `retry-release.yml` in the npm package's
-Trusted Publisher settings before running recovery; authorization for
-`release.yml` does not authorize a different workflow filename.
+Add a separate trusted publisher for `retry-release.yml` on all five packages,
+using the same GitHub owner and repository, leaving the environment empty and
+enabling **Allow npm publish** only. Keep the `release.yml` publisher in place;
+authorization for one workflow filename does not authorize the other. Configure
+this before running recovery; the recovery workflow also uses OIDC without an npm token.
