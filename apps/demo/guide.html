@@ -67,6 +67,7 @@
             <a href="#embed">Embed LDForge</a>
             <a href="#buttons">Add actions</a>
             <a href="#renderers">Render results</a>
+            <a href="#standalone-chart">Chart without an editor</a>
             <a href="#lifecycle">Connect your host</a>
             <a href="#workspace">Tabs and language</a>
             <a href="#yasgui">Migrate from Yasgui</a>
@@ -389,6 +390,91 @@ const countRenderer: ResultRendererPlugin = {
               the initial view. JSON view displays LDForge's normalized result
               model. For large results, limit your query or supply a paginated
               or virtualized renderer.
+            </p>
+          </section>
+          <section id="standalone-chart" class="guide-section">
+            <p class="eyebrow">RENDER WITHOUT AN EDITOR</p>
+            <h2>Show a chart without the query editor</h2>
+            <p>
+              Keep the query in your application code and render its result
+              directly into a page container. Result plugins work independently
+              of the editor: no editor, toolbar, tabs or editor stylesheet is
+              required. Install the executor and chart packages:
+            </p>
+            <pre><code>npm install @ldforge/core @ldforge/charts</code></pre>
+            <p>Add a container to your page:</p>
+            <pre><code>&lt;div id="chart"&gt;&lt;/div&gt;</code></pre>
+            <p>
+              Run this from your TypeScript entry point with a browser bundler.
+              Replace the endpoint URL with your own CORS-enabled SPARQL
+              endpoint:
+            </p>
+            <pre><code>import { createHttpExecutor } from '@ldforge/core';
+import { createChartRenderer } from '@ldforge/charts';
+
+const container = document.querySelector&lt;HTMLElement&gt;('#chart')!;
+const request = new AbortController();
+const renderer = createChartRenderer();
+let cleanup: void | (() =&gt; void);
+
+const query = `
+  SELECT ?chart_label ?chart_value WHERE {
+    VALUES (?chart_label ?chart_value) {
+      ("A" 10)
+      ("B" 20)
+    }
+  }
+`;
+const executor = createHttpExecutor({
+  endpoint: 'https://your-endpoint.example/sparql',
+});
+
+async function showChart(): Promise&lt;void&gt; {
+  container.textContent = 'Loading chart…';
+  try {
+    const result = await executor.execute({ query, signal: request.signal });
+    if (request.signal.aborted) return;
+    if (!renderer.supports(result)) {
+      throw new Error('The result does not contain chart bindings.');
+    }
+    cleanup = renderer.render(container, result, {
+      locale: 'en',
+      directives: {
+        chart: 'bar',
+        'chart-title': 'My chart',
+      },
+    });
+  } catch (error) {
+    if (!request.signal.aborted) {
+      container.textContent = error instanceof Error ? error.message : 'Query failed.';
+    }
+  }
+}
+
+void showChart();
+
+// Call when your host component unmounts, before removing the container.
+function destroy(): void {
+  request.abort();
+  cleanup?.();
+}</code></pre>
+            <p>
+              The chart expects <code>chart_label</code> and numeric
+              <code>chart_value</code> bindings, with optional
+              <code>chart_series</code>. Choose <code>bar</code>,
+              <code>line</code>, <code>pie</code> or <code>doughnut</code>. The
+              chart library loads lazily from the default CDN; see the
+              <a href="./plugins.html#charts">chart plugin documentation</a>
+              for self-hosted loading and binding requirements. Call
+              <code>destroy()</code> when leaving the page or unmounting your
+              component to cancel a pending query and release the chart.
+            </p>
+            <p>
+              The same approach works with other result plugins through
+              <code>supports()</code> and <code>render()</code>. Queries
+              executed in the browser are visible in developer tools. Execute
+              the query on your backend if it must remain private, then pass its
+              normalized result to the renderer.
             </p>
           </section>
           <section id="lifecycle" class="guide-section">
