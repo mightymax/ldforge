@@ -21,6 +21,7 @@ export default defineConfig({
         'timeline',
         'pivot',
         'tree',
+        'yasgui',
       ].map((name) => [
         `@ldforge/${name}`,
         fileURLToPath(

@@ -1,5 +1,5 @@
 import { EditorState } from '@codemirror/state';
-import { EditorView, lineNumbers } from '@codemirror/view';
+import { Decoration, EditorView, lineNumbers } from '@codemirror/view';
 import { HighlightStyle, syntaxHighlighting } from '@codemirror/language';
 import { sparqlLanguage } from '@ldforge/editor';
 import { javascript } from '@codemirror/lang-javascript';
@@ -28,23 +28,50 @@ export function mountCodeExamples(container: Element): () => void {
     const language =
       code?.className.match(/language-([\w-]+)/)?.[1] ??
       (/^(import|const|\/\/|type|interface)\b/m.test(text) ? 'ts' : 'text');
+    const diff = language === 'diff';
+    const copyText = diff
+      ? text
+          .split('\n')
+          .filter((line) => !line.startsWith('-'))
+          .map((line) => (/^[ +]/.test(line) ? line.slice(1) : line))
+          .join('\n')
+      : text;
+    const decorations = [];
+    let offset = 0;
+    if (diff)
+      for (const line of text.split('\n')) {
+        if (/^[+-]/.test(line))
+          decorations.push(
+            Decoration.line({
+              class: line.startsWith('+')
+                ? 'code-diff-added'
+                : 'code-diff-removed',
+            }).range(offset),
+          );
+        offset += line.length + 1;
+      }
     const wrapper = document.createElement('div');
     wrapper.className = 'code-example';
     const bar = document.createElement('div');
     bar.className = 'code-example-toolbar';
     const caption = document.createElement('span');
-    caption.textContent = ['ts', 'typescript'].includes(language)
-      ? 'TypeScript'
-      : ['js', 'javascript'].includes(language)
-        ? 'JavaScript'
-        : language.toUpperCase();
+    caption.textContent = diff
+      ? 'HTML diff'
+      : ['ts', 'typescript'].includes(language)
+        ? 'TypeScript'
+        : ['js', 'javascript'].includes(language)
+          ? 'JavaScript'
+          : language.toUpperCase();
     const copy = document.createElement('button');
     copy.type = 'button';
-    copy.textContent = 'Copy';
-    copy.setAttribute('aria-label', 'Copy code example');
+    copy.textContent = diff ? 'Copy HTML' : 'Copy';
+    copy.setAttribute(
+      'aria-label',
+      diff ? 'Copy migrated HTML' : 'Copy code example',
+    );
     copy.addEventListener('click', () => {
       void navigator.clipboard
-        .writeText(text)
+        .writeText(copyText)
         .then(() => {
           copy.textContent = 'Copied';
         })
@@ -68,6 +95,9 @@ export function mountCodeExamples(container: Element): () => void {
               'aria-label': `${caption.textContent} code example`,
             }),
             lineNumbers(),
+            ...(diff
+              ? [EditorView.decorations.of(Decoration.set(decorations))]
+              : []),
             ...(['ts', 'typescript', 'js', 'javascript'].includes(language)
               ? [
                   javascript({
