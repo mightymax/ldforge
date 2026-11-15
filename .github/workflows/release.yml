@@ -50,6 +50,8 @@ jobs:
           retention-days: 7
 
   publish:
+    # Keep checks/artifacts available when an initial recovery publication is needed.
+    if: vars.NPM_RELEASE_VIA_RETRY != 'true'
     name: Publish tested packages to npm
     needs: check
     runs-on: ubuntu-latest

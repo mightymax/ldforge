@@ -67,6 +67,28 @@ If GitHub checks find a code defect, fix it on main, run local checks and make a
 
 Publishing ten npm packages is not atomic. The publisher checks every target version before uploading and compares registry integrity hashes to the artifact manifest. A retry skips versions already published with identical bytes and continues the remaining packages. An existing version with different bytes stops the release; resolve it with a new version, never overwrite or unpublish it to force a retry. Registry lookup failures also stop publication before uploading.
 
+## Validate the recovery workflow's trusted publisher
+
+Each trusted publisher must publish successfully within its own activation window.
+Running the retry workflow against already-published artifacts skips every upload
+and does not validate an unused publisher.
+
+When a new publication through `retry-release.yml` is needed:
+
+1. Wait for any current release, including website deployment, to finish.
+2. Set the repository Actions variable `NPM_RELEASE_VIA_RETRY` to `true`.
+3. Make the next ordinary root release with `npm version patch`. The Release
+   workflow still verifies, tests and packs the exact tagged source; its normal
+   publishing job and dependent website job are skipped.
+4. Once the check job succeeds, dispatch `retry-release.yml` on `main` with the
+   new `release_tag` and the original Release run's `artifact_run_id`.
+5. Wait for recovery publication and website deployment to complete. Remove
+   `NPM_RELEASE_VIA_RETRY` so subsequent releases publish normally.
+
+Both workflows share the same concurrency group. Do not bypass version,
+source-commit or artifact-integrity checks, republish an existing version, or
+change a release tag to validate a publisher.
+
 ## Inspect package contents
 
 ```sh

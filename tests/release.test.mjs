@@ -14,6 +14,7 @@ import { join } from 'node:path';
 import { fileURLToPath, URL } from 'node:url';
 import process from 'node:process';
 import { test } from 'node:test';
+import { parse as parseYaml } from 'yaml';
 import {
   packagePaths,
   verifyVersions,
@@ -306,5 +307,42 @@ test('registry verification waits for visibility without republishing or weakeni
       sleep: async () => {},
     }),
     /not yet visible/,
+  );
+});
+
+test('recovery routing preserves release checks, artifacts and serialization', () => {
+  const release = parseYaml(
+    readFileSync(
+      new URL('../.github/workflows/release.yml', import.meta.url),
+      'utf8',
+    ),
+  );
+  const retry = parseYaml(
+    readFileSync(
+      new URL('../.github/workflows/retry-release.yml', import.meta.url),
+      'utf8',
+    ),
+  );
+  assert.equal(
+    release.jobs.check.if,
+    undefined,
+    'Recovery routing must not skip release checks',
+  );
+  assert(release.jobs.check.steps.some((step) => step.run === 'npm run check'));
+  assert(
+    release.jobs.check.steps.some(
+      (step) => step.run === 'npm run release:pack',
+    ),
+  );
+  assert.equal(release.jobs.publish.if, "vars.NPM_RELEASE_VIA_RETRY != 'true'");
+  assert.equal(release.jobs.publish.needs, 'check');
+  assert.equal(release.jobs.website.needs, 'publish');
+  assert.equal(release.concurrency.group, retry.concurrency.group);
+  assert.equal(release.concurrency['cancel-in-progress'], false);
+  assert.equal(retry.concurrency['cancel-in-progress'], false);
+  assert(
+    retry.jobs.publish.steps.some(
+      (step) => step.name === 'Verify original release passed its checks',
+    ),
   );
 });
