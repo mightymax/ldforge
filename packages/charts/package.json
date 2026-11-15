@@ -1,6 +1,6 @@
 {
   "name": "@ldforge/charts",
-  "version": "0.1.8",
+  "version": "0.1.9",
   "description": "Lazy-loaded Chart.js result renderer for LDForge",
   "type": "module",
   "license": "EUPL-1.2",
@@ -25,7 +25,7 @@
     "access": "public"
   },
   "dependencies": {
-    "@ldforge/core": "^0.1.8"
+    "@ldforge/core": "^0.1.9"
   },
   "repository": {
     "type": "git",

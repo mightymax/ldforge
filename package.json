@@ -65,7 +65,7 @@
   "overrides": {
     "minimatch": "^11.0.1"
   },
-  "version": "0.1.8",
+  "version": "0.1.9",
   "description": "Composable open-source SPARQL IDE and TypeScript libraries",
   "repository": {
     "type": "git",
