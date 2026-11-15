@@ -33,3 +33,12 @@
 .code-example .cm-editor {
   max-width: 100%;
 }
+
+.code-example .cm-line.code-diff-added {
+  background: #e4f3e8;
+  color: #18562d;
+}
+.code-example .cm-line.code-diff-removed {
+  background: #fce8e8;
+  color: #853030;
+}

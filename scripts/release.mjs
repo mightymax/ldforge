@@ -17,6 +17,7 @@ export const packagePaths = [
   'packages/pivot',
   'packages/tree',
   'packages/editor',
+  'packages/yasgui',
 ];
 const dependencyFields = [
   'dependencies',

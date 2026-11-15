@@ -193,3 +193,12 @@ visualization library. Try **Kunststromingen per collectie (draaitabel)** on the
 or read the [pivot contract and example](docs/renderers.md#pivot).
 
 `@ldforge/tree` adds accessible lazy hierarchy exploration for SKOS, class and organizational structures. Register `createTreeRenderer()` and select `# view=tree`; see the [tree binding contract and examples](docs/renderers.md#tree).
+
+## Migrating from Yasgui
+
+[`@ldforge/yasgui`](packages/yasgui/README.md) provides a separate compatibility
+module. Replace your Yasgui JavaScript and stylesheet imports while retaining
+`new Yasgui(element, options)`, common request options, tab methods and events.
+It includes a standalone browser bundle exposing `window.Yasgui` and a
+[script-tag example](examples/yasgui/index.html). See the module's compatibility
+matrix for supported methods and the boundaries around Yasqe/Yasr extensions.

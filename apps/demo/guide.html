@@ -59,93 +59,107 @@
           <a href="./plugins.html">Plugins</a>
         </nav>
       </header>
-      <section class="intro">
-        <p class="eyebrow">FROM DEMO TO YOUR APPLICATION</p>
-        <h1>Your project.<br /><span>Your SPARQL editor.</span></h1>
-        <p>
-          Start with a container and a query executor. Add the actions and
-          result views your application needs.
-        </p>
-      </section>
-      <nav class="guide-contents" aria-label="On this page">
-        <a href="#install">01 / CDN or npm</a><a href="#embed">02 / Embed</a
-        ><a href="#buttons">03 / Add actions</a
-        ><a href="#renderers">04 / Render results</a
-        ><a href="#lifecycle">05 / Connect your host</a>
-        <a href="#workspace">06 / Tabs and language</a>
-      </nav>
-      <section id="install" class="guide-section">
-        <p class="eyebrow">01 / INTEGRATE</p>
-        <h2>Choose how to load LDForge</h2>
-        <p>
-          Use <a href="#cdn">CDN imports</a> for a single static HTML page, or
-          <a href="#npm">npm with a bundler</a> for an existing application.
-          Both approaches use the same editor and plugin APIs.
-        </p>
-        <div id="cdn">
-          <h3>CDN: start with a single HTML file</h3>
-          <p>
-            <a href="./wikidata-cats.html">Try the live Wikidata cat grid</a>,
-            then download its HTML or
-            <a
-              href="https://github.com/mightymax/ldforge/blob/main/examples/wikidata-cats.html"
-              >copy the source</a
-            >
-            into your own static site. No npm, framework, API key or Node server
-            is required. Serve the file over HTTP(S).
+      <div class="api-layout">
+        <aside class="api-sidebar">
+          <p class="eyebrow">INTEGRATION GUIDE</p>
+          <nav id="guide-navigation" aria-label="Integration topics">
+            <a href="#install">CDN or npm</a>
+            <a href="#embed">Embed LDForge</a>
+            <a href="#buttons">Add actions</a>
+            <a href="#renderers">Render results</a>
+            <a href="#lifecycle">Connect your host</a>
+            <a href="#workspace">Tabs and language</a>
+            <a href="#yasgui">Migrate from Yasgui</a>
+          </nav>
+          <p class="api-note">
+            Your application.<br />The native LDForge interface.
           </p>
-          <p>
-            Three version-pinned esm.sh imports provide the HTTP executor,
-            editor and cards renderer. Load the editor stylesheet separately:
-          </p>
-          <pre><code>import { createHttpExecutor } from 'https://esm.sh/@ldforge/core@0.1.2?standalone';
+        </aside>
+        <article class="api-content guide-content">
+          <section class="intro">
+            <p class="eyebrow">FROM DEMO TO YOUR APPLICATION</p>
+            <h1>Your project.<br /><span>Your SPARQL editor.</span></h1>
+            <p>
+              Start with a container and a query executor. Add the actions and
+              result views your application needs.
+            </p>
+          </section>
+
+          <section id="install" class="guide-section">
+            <p class="eyebrow">01 / INTEGRATE</p>
+            <h2>Choose how to load LDForge</h2>
+            <p>
+              Use <a href="#cdn">CDN imports</a> for a single static HTML page,
+              or <a href="#npm">npm with a bundler</a> for an existing
+              application. Both approaches use the same editor and plugin APIs.
+            </p>
+            <div id="cdn">
+              <h3>CDN: start with a single HTML file</h3>
+              <p>
+                <a href="./wikidata-cats.html">Try the live Wikidata cat grid</a
+                >, then download its HTML or
+                <a
+                  href="https://github.com/mightymax/ldforge/blob/main/examples/wikidata-cats.html"
+                  >copy the source</a
+                >
+                into your own static site. No npm, framework, API key or Node
+                server is required. Serve the file over HTTP(S).
+              </p>
+              <p>
+                Three version-pinned esm.sh imports provide the HTTP executor,
+                editor and cards renderer. Load the editor stylesheet
+                separately:
+              </p>
+              <pre><code>import { createHttpExecutor } from 'https://esm.sh/@ldforge/core@0.1.2?standalone';
 import { createEditor } from 'https://esm.sh/@ldforge/editor@0.1.2?standalone';
 import { createCardsRenderer } from 'https://esm.sh/@ldforge/renderers@0.1.2?standalone';</code></pre>
-          <pre><code>&lt;link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@ldforge/editor@0.1.2/dist/styles.css" /&gt;</code></pre>
-          <p>
-            Use <code>?standalone</code> to bundle the editor’s dependencies
-            into one module: no import map is needed. Keep all LDForge URLs on
-            the same version. CSS is loaded separately from jsDelivr. The
-            example connects to
-            <code>https://query.wikidata.org/sparql</code> using GET and calls
-            <code>editor.run()</code> once on load. Remove that call to wait for
-            a click on Run query. Internet access is required.
-          </p>
-          <p>
-            The query selects twelve domestic cats with images. Its
-            <code># view=cards</code> header selects the card grid;
-            <code>card_title</code>, <code>card_text</code>,
-            <code>card_image</code>, <code>card_button</code> and
-            <code>card_button_url</code> map the result columns to each card.
-            Links to Wikidata let visitors find the original images and
-            licenses. The public endpoint may be busy; Run query retries the
-            request.
-          </p>
-        </div>
-        <h3 id="npm">npm: install in your application</h3>
-        <p>
-          LDForge packages provide ESM JavaScript and TypeScript declarations.
-          Install them in your own application:
-        </p>
-        <pre><code>npm install @ldforge/core @ldforge/editor @ldforge/renderers @ldforge/prefixes</code></pre>
-        <p>
-          Use a browser bundler with CSS imports, such as Vite. No framework is
-          required. The editor depends on core and the prefix catalog; the
-          renderer package supplies independent result views. See the
-          <a href="./api.html?page=configuration">configuration reference</a>
-          for every option and default.
-        </p>
-      </section>
-      <section id="embed" class="guide-section">
-        <p class="eyebrow">02 / EMBED</p>
-        <h2>Mount a working editor</h2>
-        <p>Add a container to your page or host component:</p>
-        <pre><code>&lt;div id="query-editor"&gt;&lt;/div&gt;</code></pre>
-        <p>
-          Then mount the editor from your TypeScript entry point. Replace the
-          example URL with your own SPARQL endpoint:
-        </p>
-        <pre><code>import { createHttpExecutor } from '@ldforge/core';
+              <pre><code>&lt;link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@ldforge/editor@0.1.2/dist/styles.css" /&gt;</code></pre>
+              <p>
+                Use <code>?standalone</code> to bundle the editor’s dependencies
+                into one module: no import map is needed. Keep all LDForge URLs
+                on the same version. CSS is loaded separately from jsDelivr. The
+                example connects to
+                <code>https://query.wikidata.org/sparql</code> using GET and
+                calls <code>editor.run()</code> once on load. Remove that call
+                to wait for a click on Run query. Internet access is required.
+              </p>
+              <p>
+                The query selects twelve domestic cats with images. Its
+                <code># view=cards</code> header selects the card grid;
+                <code>card_title</code>, <code>card_text</code>,
+                <code>card_image</code>, <code>card_button</code> and
+                <code>card_button_url</code> map the result columns to each
+                card. Links to Wikidata let visitors find the original images
+                and licenses. The public endpoint may be busy; Run query retries
+                the request.
+              </p>
+            </div>
+            <h3 id="npm">npm: install in your application</h3>
+            <p>
+              LDForge packages provide ESM JavaScript and TypeScript
+              declarations. Install them in your own application:
+            </p>
+            <pre><code>npm install @ldforge/core @ldforge/editor @ldforge/renderers @ldforge/prefixes</code></pre>
+            <p>
+              Use a browser bundler with CSS imports, such as Vite. No framework
+              is required. The editor depends on core and the prefix catalog;
+              the renderer package supplies independent result views. See the
+              <a href="./api.html?page=configuration"
+                >configuration reference</a
+              >
+              for every option and default.
+            </p>
+          </section>
+          <section id="embed" class="guide-section">
+            <p class="eyebrow">02 / EMBED</p>
+            <h2>Mount a working editor</h2>
+            <p>Add a container to your page or host component:</p>
+            <pre><code>&lt;div id="query-editor"&gt;&lt;/div&gt;</code></pre>
+            <p>
+              Then mount the editor from your TypeScript entry point. Replace
+              the example URL with your own SPARQL endpoint:
+            </p>
+            <pre><code>import { createHttpExecutor } from '@ldforge/core';
 import { createEditor } from '@ldforge/editor';
 import {
   createTableRenderer,
@@ -168,67 +182,68 @@ const editor = createEditor(container, {
     createJsonRenderer(),
   ],
 });</code></pre>
-        <p>
-          The default toolbar includes Run query and Cancel. Run with the button
-          or Ctrl/Cmd+Enter. SELECT produces bindings; ASK produces a boolean.
-          CONSTRUCT, DESCRIBE and SPARQL Update are not supported by this
-          initial HTTP adapter.
-        </p>
-        <div class="guide-note">
-          <strong>Connecting from a browser</strong>
-          <p>
-            Your endpoint must support the chosen method: direct POST with
-            <code>application/sparql-query</code>, or GET with a query
-            parameter. It must return SPARQL Results JSON and allow your
-            application's origin and extra headers through CORS. If it cannot,
-            route requests through your own backend. Private server credentials
-            belong on that backend.
-          </p>
-        </div>
-      </section>
-      <section class="guide-section">
-        <h2>Configure requests inside the IDE</h2>
-        <p>
-          Open the gear button in the demo's toolbar for endpoint settings.
-          Choose a saved endpoint, select GET or POST, and add header name/value
-          pairs such as Authorization with a Bearer token. Select Apply endpoint
-          to activate your changes. Endpoint URLs and methods are remembered;
-          header values stay in memory for this page only and are kept separate
-          per endpoint.
-        </p>
-        <p>For your own integration, configure the executor directly:</p>
-        <pre><code>const executor = createHttpExecutor({
+            <p>
+              The default toolbar includes Run query and Cancel. Run with the
+              button or Ctrl/Cmd+Enter. SELECT produces bindings; ASK produces a
+              boolean. CONSTRUCT, DESCRIBE and SPARQL Update are not supported
+              by this initial HTTP adapter.
+            </p>
+            <div class="guide-note">
+              <strong>Connecting from a browser</strong>
+              <p>
+                Your endpoint must support the chosen method: direct POST with
+                <code>application/sparql-query</code>, or GET with a query
+                parameter. It must return SPARQL Results JSON and allow your
+                application's origin and extra headers through CORS. If it
+                cannot, route requests through your own backend. Private server
+                credentials belong on that backend.
+              </p>
+            </div>
+          </section>
+          <section class="guide-section">
+            <h2>Configure requests inside the IDE</h2>
+            <p>
+              Open the gear button in the demo's toolbar for endpoint settings.
+              Choose a saved endpoint, select GET or POST, and add header
+              name/value pairs such as Authorization with a Bearer token. Select
+              Apply endpoint to activate your changes. Endpoint URLs and methods
+              are remembered; header values stay in memory for this page only
+              and are kept separate per endpoint.
+            </p>
+            <p>For your own integration, configure the executor directly:</p>
+            <pre><code>const executor = createHttpExecutor({
   endpoint: 'https://your-endpoint.example/sparql',
   method: 'GET', // Defaults to 'POST'.
   headers: { 'X-Project': 'catalogue' },
 });</code></pre>
-        <p>
-          Use the editor's <code>settings</code> option to register host-owned
-          settings panels. A settings plugin has an <code>id</code>, a
-          <code>label</code>, and a
-          <code>render(container, context)</code> function. Return cleanup when
-          needed. An optional
-          <code>updateLocale(container, context)</code> updates labels without
-          replacing inputs. The demo's <code>src/endpoint-settings.ts</code> is
-          a complete example. The library manages Accept and Content-Type;
-          authentication policy stays with the host.
-        </p>
-        <p>
-          The status below the query reports completion, for example
-          <code>3 results in 124 ms</code>. Durations scale to seconds, minutes
-          or hours. This measures execution and result parsing, before
-          rendering.
-        </p>
-      </section>
-      <section class="guide-section">
-        <h2>Configure the IDE and control individual tabs</h2>
-        <p>
-          The right-side icon group contains Prefixes, Format query and
-          Settings. Hide individual built-in controls through the controls
-          object. Project buttons appear in a separate group; hiding a tool does
-          not disable its API.
-        </p>
-        <pre><code>// In createEditor options:
+            <p>
+              Use the editor's <code>settings</code> option to register
+              host-owned settings panels. A settings plugin has an
+              <code>id</code>, a <code>label</code>, and a
+              <code>render(container, context)</code> function. Return cleanup
+              when needed. An optional
+              <code>updateLocale(container, context)</code> updates labels
+              without replacing inputs. The demo's
+              <code>src/endpoint-settings.ts</code> is a complete example. The
+              library manages Accept and Content-Type; authentication policy
+              stays with the host.
+            </p>
+            <p>
+              The status below the query reports completion, for example
+              <code>3 results in 124 ms</code>. Durations scale to seconds,
+              minutes or hours. This measures execution and result parsing,
+              before rendering.
+            </p>
+          </section>
+          <section class="guide-section">
+            <h2>Configure the IDE and control individual tabs</h2>
+            <p>
+              The right-side icon group contains Prefixes, Format query and
+              Settings. Hide individual built-in controls through the controls
+              object. Project buttons appear in a separate group; hiding a tool
+              does not disable its API.
+            </p>
+            <pre><code>// In createEditor options:
 // controls: { prefixes: true, format: true, settings: true, closeTab: false }
 
 const tabs = editor.getTabs();
@@ -241,38 +256,39 @@ const other = tabs.addTab({
 });
 await other.formatQuery();
 tabs.getByName('People')?.activate();</code></pre>
-        <p>
-          Queries are formatted locally, with the formatter loaded on first use.
-          Invalid text stays intact. Inactive tabs can be edited without opening
-          another editor. Read the <a href="./api.html?page=editor">Editor</a>,
-          <a href="./api.html?page=tabs">TabCollection</a> and
-          <a href="./api.html?page=tab">QueryTabHandle</a> references for return
-          values, callbacks and error behavior.
-        </p>
-        <p>
-          The demo restores your last applied endpoint and method on refresh. It
-          does not automatically execute a query or store authentication header
-          values.
-        </p>
-      </section>
-      <section class="guide-section" id="language-support">
-        <h2>SPARQL-aware editing and prefixes</h2>
-        <p>
-          Press Ctrl+Space for suggestions. The editor uses a Lezer syntax tree
-          to recognize SERVICE, FILTER and triple positions. Predicates are
-          suggested only in predicate positions, including property paths and
-          semicolon shorthand. Variable suggestions use previous syntactic names
-          in the visible query scope. Comments, strings and IRI contents are
-          excluded.
-        </p>
-        <p>
-          Selecting a predicate such as rdfs:label inserts its missing PREFIX
-          automatically in the same undoable edit. Use the Prefixes button in
-          the toolbar to search common namespaces by prefix or namespace URI and
-          add them directly. Existing aliases are reused; conflicting names get
-          a free suffix.
-        </p>
-        <pre><code>import { prefixes, prefixEntries, searchPrefixes } from '@ldforge/prefixes';
+            <p>
+              Queries are formatted locally, with the formatter loaded on first
+              use. Invalid text stays intact. Inactive tabs can be edited
+              without opening another editor. Read the
+              <a href="./api.html?page=editor">Editor</a>,
+              <a href="./api.html?page=tabs">TabCollection</a> and
+              <a href="./api.html?page=tab">QueryTabHandle</a> references for
+              return values, callbacks and error behavior.
+            </p>
+            <p>
+              The demo restores your last applied endpoint and method on
+              refresh. It does not automatically execute a query or store
+              authentication header values.
+            </p>
+          </section>
+          <section class="guide-section" id="language-support">
+            <h2>SPARQL-aware editing and prefixes</h2>
+            <p>
+              Press Ctrl+Space for suggestions. The editor uses a Lezer syntax
+              tree to recognize SERVICE, FILTER and triple positions. Predicates
+              are suggested only in predicate positions, including property
+              paths and semicolon shorthand. Variable suggestions use previous
+              syntactic names in the visible query scope. Comments, strings and
+              IRI contents are excluded.
+            </p>
+            <p>
+              Selecting a predicate such as rdfs:label inserts its missing
+              PREFIX automatically in the same undoable edit. Use the Prefixes
+              button in the toolbar to search common namespaces by prefix or
+              namespace URI and add them directly. Existing aliases are reused;
+              conflicting names get a free suffix.
+            </p>
+            <pre><code>import { prefixes, prefixEntries, searchPrefixes } from '@ldforge/prefixes';
 
 searchPrefixes('prov');
 // In createEditor options:
@@ -283,34 +299,35 @@ searchPrefixes('prov');
 //     { iri: 'https://example.org/name', description: 'Resource name' },
 //   ],
 // }</code></pre>
-        <p>
-          The standalone prefix package offers a compact catalog of 32 mappings
-          and an extended catalog of 3,623 mappings, without labels. Neither
-          variant has dependencies or network calls. Import from
-          @ldforge/prefixes/compact or @ldforge/prefixes/extended and pass its
-          prefixes map to the editor. Compact does not load extended data. Omit
-          predicates for the small built-in RDF vocabulary, or provide your own.
-          Syntax errors are marked at parser recovery ranges; known undeclared
-          prefixes offer a quick fix. This checks local syntax and prefix
-          declarations, not whether an endpoint supports or can successfully
-          execute a query.
-        </p>
-        <p>
-          Group related toolbar plugins with a <code>group</code> identifier,
-          such as <code>group: 'examples'</code>. The IDE combines these into
-          compact button groups. Tab actions appear on hover or keyboard focus;
-          double-clicking a tab name still starts renaming.
-        </p>
-      </section>
-      <section id="buttons" class="guide-section">
-        <p class="eyebrow">03 / ADD ACTIONS</p>
-        <h2>Bring your own buttons</h2>
-        <p>
-          A button plugin receives a typed editor context. Supplying
-          <code>buttons</code> replaces the toolbar, so include the built-in
-          factories to keep Run and Cancel. Add this to your editor options:
-        </p>
-        <pre><code>import { createRunButton, createCancelButton } from '@ldforge/editor';
+            <p>
+              The standalone prefix package offers a compact catalog of 32
+              mappings and an extended catalog of 3,623 mappings, without
+              labels. Neither variant has dependencies or network calls. Import
+              from @ldforge/prefixes/compact or @ldforge/prefixes/extended and
+              pass its prefixes map to the editor. Compact does not load
+              extended data. Omit predicates for the small built-in RDF
+              vocabulary, or provide your own. Syntax errors are marked at
+              parser recovery ranges; known undeclared prefixes offer a quick
+              fix. This checks local syntax and prefix declarations, not whether
+              an endpoint supports or can successfully execute a query.
+            </p>
+            <p>
+              Group related toolbar plugins with a
+              <code>group</code> identifier, such as
+              <code>group: 'examples'</code>. The IDE combines these into
+              compact button groups. Tab actions appear on hover or keyboard
+              focus; double-clicking a tab name still starts renaming.
+            </p>
+          </section>
+          <section id="buttons" class="guide-section">
+            <p class="eyebrow">03 / ADD ACTIONS</p>
+            <h2>Bring your own buttons</h2>
+            <p>
+              A button plugin receives a typed editor context. Supplying
+              <code>buttons</code> replaces the toolbar, so include the built-in
+              factories to keep Run and Cancel. Add this to your editor options:
+            </p>
+            <pre><code>import { createRunButton, createCancelButton } from '@ldforge/editor';
 import type { ButtonPlugin } from '@ldforge/core';
 
 const loadExample: ButtonPlugin = {
@@ -324,23 +341,23 @@ const loadExample: ButtonPlugin = {
 
 // In createEditor(container, { ... }):
 // buttons: [createRunButton(), createCancelButton(), loadExample]</code></pre>
-        <p>
-          Use <code>getQuery()</code>, <code>setQuery()</code>,
-          <code>getState()</code>, <code>run()</code> and
-          <code>cancel()</code> in your action. Actions may return promises;
-          rejected actions are shown in the status message. Give each button a
-          unique, non-empty identifier.
-        </p>
-      </section>
-      <section id="renderers" class="guide-section">
-        <p class="eyebrow">04 / RENDER RESULTS</p>
-        <h2>Choose how results are presented</h2>
-        <p>
-          Renderers are separate from the editor. Each plugin declares which
-          results it supports. Register your own view alongside the built-in
-          views:
-        </p>
-        <pre><code>import type { ResultRendererPlugin } from '@ldforge/core';
+            <p>
+              Use <code>getQuery()</code>, <code>setQuery()</code>,
+              <code>getState()</code>, <code>run()</code> and
+              <code>cancel()</code> in your action. Actions may return promises;
+              rejected actions are shown in the status message. Give each button
+              a unique, non-empty identifier.
+            </p>
+          </section>
+          <section id="renderers" class="guide-section">
+            <p class="eyebrow">04 / RENDER RESULTS</p>
+            <h2>Choose how results are presented</h2>
+            <p>
+              Renderers are separate from the editor. Each plugin declares which
+              results it supports. Register your own view alongside the built-in
+              views:
+            </p>
+            <pre><code>import type { ResultRendererPlugin } from '@ldforge/core';
 
 const countRenderer: ResultRendererPlugin = {
   id: 'my-project.count',
@@ -357,32 +374,32 @@ const countRenderer: ResultRendererPlugin = {
 
 // In createEditor(container, { ... }):
 // renderers: [countRenderer, createTableRenderer(), createJsonRenderer()]</code></pre>
-        <p>
-          Bindings contain ordered variable names and rows of RDF terms; unbound
-          variables are absent from a row. Boolean results contain a
-          <code>value</code>. Use <code>textContent</code> for RDF values.
-          Return a cleanup function when allocating listeners, charts or
-          framework components; it runs before the next render and on
-          destruction.
-        </p>
-        <p>
-          The result tabs only offer supported views. Renderers can supply an
-          optional icon factory; CSV download exports the full result
-          independently of the selected tab. Registration order determines the
-          initial view. JSON view displays LDForge's normalized result model.
-          For large results, limit your query or supply a paginated or
-          virtualized renderer.
-        </p>
-      </section>
-      <section id="lifecycle" class="guide-section">
-        <p class="eyebrow">05 / CONNECT YOUR HOST</p>
-        <h2>Own the transport and lifecycle</h2>
-        <p>
-          For a custom backend, implement <code>QueryExecutor</code> and pass it
-          as <code>executor</code>. This example assumes your backend accepts
-          JSON and responds with SPARQL Results JSON:
-        </p>
-        <pre><code>import { parseSparqlResults } from '@ldforge/core';
+            <p>
+              Bindings contain ordered variable names and rows of RDF terms;
+              unbound variables are absent from a row. Boolean results contain a
+              <code>value</code>. Use <code>textContent</code> for RDF values.
+              Return a cleanup function when allocating listeners, charts or
+              framework components; it runs before the next render and on
+              destruction.
+            </p>
+            <p>
+              The result tabs only offer supported views. Renderers can supply
+              an optional icon factory; CSV download exports the full result
+              independently of the selected tab. Registration order determines
+              the initial view. JSON view displays LDForge's normalized result
+              model. For large results, limit your query or supply a paginated
+              or virtualized renderer.
+            </p>
+          </section>
+          <section id="lifecycle" class="guide-section">
+            <p class="eyebrow">05 / CONNECT YOUR HOST</p>
+            <h2>Own the transport and lifecycle</h2>
+            <p>
+              For a custom backend, implement <code>QueryExecutor</code> and
+              pass it as <code>executor</code>. This example assumes your
+              backend accepts JSON and responds with SPARQL Results JSON:
+            </p>
+            <pre><code>import { parseSparqlResults } from '@ldforge/core';
 import type { QueryExecutor } from '@ldforge/core';
 
 const executor: QueryExecutor = {
@@ -397,12 +414,12 @@ const executor: QueryExecutor = {
     return parseSparqlResults(await response.json());
   },
 };</code></pre>
-        <p>
-          Forward the abort signal. LDForge cancels superseded queries and
-          ignores stale replies. The host manages authentication and endpoint
-          policy.
-        </p>
-        <pre><code>// Synchronize edits with your host through a createEditor option:
+            <p>
+              Forward the abort signal. LDForge cancels superseded queries and
+              ignores stale replies. The host manages authentication and
+              endpoint policy.
+            </p>
+            <pre><code>// Synchronize edits with your host through a createEditor option:
 // onQueryChange: (query) =&gt; { /* update your host state */ }
 
 editor.getQuery();
@@ -412,35 +429,36 @@ editor.cancel();
 
 // On component unmount, before removing the container:
 editor.destroy();</code></pre>
-        <p>
-          In React, Vue or another framework, mount the editor after the
-          container exists and call <code>destroy()</code> in the component's
-          cleanup hook. Each mount is independent. Plugin registration is static
-          per mount; recreate the editor when changing the plugin set.
-        </p>
-        <p>Customize the appearance with scoped CSS variables:</p>
-        <pre><code>.ldforge {
+            <p>
+              In React, Vue or another framework, mount the editor after the
+              container exists and call <code>destroy()</code> in the
+              component's cleanup hook. Each mount is independent. Plugin
+              registration is static per mount; recreate the editor when
+              changing the plugin set.
+            </p>
+            <p>Customize the appearance with scoped CSS variables:</p>
+            <pre><code>.ldforge {
   --ldforge-accent: #075e55;
   --ldforge-border: #d6dedd;
 }</code></pre>
-      </section>
-      <section id="workspace" class="guide-section">
-        <p class="eyebrow">06 / TABS AND LANGUAGE</p>
-        <h2>Several queries, one editor</h2>
-        <p>
-          Use + to add a query tab. Double-click its name or use the pencil
-          button to rename it. Enter or leaving the field saves the name; Escape
-          cancels. The demo saves query text, titles and the active tab to
-          localStorage while editing and switching tabs.
-        </p>
-        <p>
-          LDForge keeps one CodeMirror view and one active editor state.
-          Inactive tabs contain plain text only. Switching cancels pending
-          execution, clears the previous result and resets undo history, so undo
-          cannot cross query boundaries. Your host owns persistence through
-          these options:
-        </p>
-        <pre><code>import { parseQueryWorkspace } from '@ldforge/editor';
+          </section>
+          <section id="workspace" class="guide-section">
+            <p class="eyebrow">06 / TABS AND LANGUAGE</p>
+            <h2>Several queries, one editor</h2>
+            <p>
+              Use + to add a query tab. Double-click its name or use the pencil
+              button to rename it. Enter or leaving the field saves the name;
+              Escape cancels. The demo saves query text, titles and the active
+              tab to localStorage while editing and switching tabs.
+            </p>
+            <p>
+              LDForge keeps one CodeMirror view and one active editor state.
+              Inactive tabs contain plain text only. Switching cancels pending
+              execution, clears the previous result and resets undo history, so
+              undo cannot cross query boundaries. Your host owns persistence
+              through these options:
+            </p>
+            <pre><code>import { parseQueryWorkspace } from '@ldforge/editor';
 import type { QueryWorkspace } from '@ldforge/editor';
 
 function restoreWorkspace(): QueryWorkspace | undefined {
@@ -464,49 +482,144 @@ function saveWorkspace(workspace: QueryWorkspace) {
 // Pass the restored value as workspace when present, and use:
 // onWorkspaceChange: saveWorkspace
 // Read the current snapshot with editor.getWorkspace().</code></pre>
-        <h2>English and Dutch, chosen by your users</h2>
-        <p>
-          The IDE follows the browser's first supported language and falls back
-          to English. A project setting overrides browser detection, and a user
-          choice under the gear button overrides the project. Choosing the
-          default restores the project/browser preference. The demo remembers
-          the user's choice. This integration guide and the demo's surrounding
-          introduction remain in English.
-        </p>
-        <pre><code>// In createEditor(container, { ... }):
+            <h2>English and Dutch, chosen by your users</h2>
+            <p>
+              The IDE follows the browser's first supported language and falls
+              back to English. A project setting overrides browser detection,
+              and a user choice under the gear button overrides the project.
+              Choosing the default restores the project/browser preference. The
+              demo remembers the user's choice. This integration guide and the
+              demo's surrounding introduction remain in English.
+            </p>
+            <pre><code>// In createEditor(container, { ... }):
 // locale: 'auto',       // Or 'en' / 'nl' as the project default.
 // userLocale: 'nl',     // Optional restored user override.
 // onLocaleChange: (preference) =&gt; { /* persist in your host */ }
 
 editor.setLocale('nl');
 editor.setLocale('auto'); // Restore the project/browser default.</code></pre>
-        <p>
-          Plugin labels accept a string or an object such as
-          <code>{ en: 'My action', nl: 'Mijn actie' }</code>. Renderer plugins
-          receive the active locale as their optional third argument. Language
-          changes preserve query text and settings drafts. RDF values and SPARQL
-          code are not translated.
-        </p>
-      </section>
-      <section class="guide-section">
-        <h2>Explore the complete API</h2>
-        <p>
-          The <a href="./api.html">API reference</a> documents configuration
-          defaults, every built-in control, the editor handle, live tab
-          collections, per-tab methods, prefixes, plugins and transport. Start
-          with <a href="./api.html?page=configuration">Configuration</a> or
-          <a href="./api.html?page=tab">QueryTabHandle</a>.
-        </p>
-      </section>
-      <aside class="guide-ending">
-        <h2>Ready to try it?</h2>
-        <p>
-          Explore the working examples in the demo. The repository also includes
-          architecture, plugin and testing documentation in <code>docs/</code>.
-          LDForge is licensed under EUPL-1.2.
-        </p>
-        <a href="./">Back to the demo →</a>
-      </aside>
+            <p>
+              Plugin labels accept a string or an object such as
+              <code>{ en: 'My action', nl: 'Mijn actie' }</code>. Renderer
+              plugins receive the active locale as their optional third
+              argument. Language changes preserve query text and settings
+              drafts. RDF values and SPARQL code are not translated.
+            </p>
+          </section>
+          <section id="yasgui" class="guide-section">
+            <p class="eyebrow">07 / MIGRATE</p>
+            <h2>Migrate from Yasgui</h2>
+            <p>
+              Load <code>@ldforge/yasgui</code> in place of Yasgui. Keep your
+              container, constructor and common query calls. Your users get the
+              native LDForge interface.
+            </p>
+            <h3>Self-hosted files</h3>
+            <p>
+              For a simple HTML embed, copy <code>dist/yasgui.min.js</code> and
+              <code>dist/yasgui.css</code> from the built compatibility package
+              into <code>vendor/ldforge/</code>. Only the two asset paths
+              change:
+            </p>
+            <pre><code class="language-diff"> &lt;!doctype html&gt;
+ &lt;html lang="en"&gt;
+ &lt;head&gt;
+   &lt;meta charset="utf-8"&gt;
+-  &lt;link rel="stylesheet" href="./vendor/yasgui.min.css"&gt;
++  &lt;link rel="stylesheet" href="./vendor/ldforge/yasgui.css"&gt;
+ &lt;/head&gt;
+ &lt;body&gt;
+   &lt;div id="editor"&gt;&lt;/div&gt;
+-  &lt;script src="./vendor/yasgui.min.js"&gt;&lt;/script&gt;
++  &lt;script src="./vendor/ldforge/yasgui.min.js"&gt;&lt;/script&gt;
+   &lt;script&gt;
+     const editor = new Yasgui(document.getElementById('editor'), {
+       requestConfig: { endpoint: 'https://dbpedia.org/sparql' },
+       yasqe: { value: 'SELECT * WHERE { ?s ?p ?o } LIMIT 10' },
+     });
+   &lt;/script&gt;
+ &lt;/body&gt;
+ &lt;/html&gt;</code></pre>
+            <p class="guide-diff-legend">
+              <span>− Remove</span> <span>+ Add</span> · Copy HTML copies the
+              new version.
+            </p>
+            <div id="yasgui-cdn">
+              <h3>CDN: replace the URLs</h3>
+              <p>
+                Already loading Yasgui from a CDN? Replace just the stylesheet
+                and script URLs. The constructor and endpoint configuration stay
+                the same. No bundler or local asset copies are needed.
+              </p>
+              <p class="guide-note">
+                <code>@ldforge/yasgui</code> is not published on npm yet, so the
+                LDForge CDN URLs below will work after publication. They show
+                the current workspace version, <code>0.1.7</code>; use the
+                published release version when migrating.
+              </p>
+              <pre><code class="language-diff"> &lt;!doctype html&gt;
+ &lt;html lang="en"&gt;
+ &lt;head&gt;
+   &lt;meta charset="utf-8"&gt;
+-  &lt;link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@triply/yasgui@4.2.28/build/yasgui.min.css"&gt;
++  &lt;link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@ldforge/yasgui@0.1.7/dist/yasgui.css"&gt;
+ &lt;/head&gt;
+ &lt;body&gt;
+   &lt;div id="editor"&gt;&lt;/div&gt;
+-  &lt;script src="https://cdn.jsdelivr.net/npm/@triply/yasgui@4.2.28/build/yasgui.min.js"&gt;&lt;/script&gt;
++  &lt;script src="https://cdn.jsdelivr.net/npm/@ldforge/yasgui@0.1.7/dist/yasgui.min.js"&gt;&lt;/script&gt;
+   &lt;script&gt;
+     const editor = new Yasgui(document.getElementById('editor'), {
+       requestConfig: { endpoint: 'https://dbpedia.org/sparql' },
+       yasqe: { value: 'SELECT * WHERE { ?s ?p ?o } LIMIT 10' },
+     });
+   &lt;/script&gt;
+ &lt;/body&gt;
+ &lt;/html&gt;</code></pre>
+              <p class="guide-diff-legend">
+                <span>− Remove</span> <span>+ Add</span> · Copy HTML copies the
+                new version.
+              </p>
+            </div>
+            <p>
+              With a bundler, replace your JavaScript import with
+              <code>import Yasgui from '@ldforge/yasgui'</code> and your
+              stylesheet import with
+              <code>import '@ldforge/yasgui/styles.css'</code>.
+            </p>
+            <p>
+              This module supports common constructor options, request settings,
+              tab methods and events. Yasr plugins and CodeMirror 5 extensions
+              need migration. See the
+              <a
+                href="https://github.com/mightymax/ldforge/tree/feat/yasgui-compat/packages/yasgui#readme"
+                >compatibility reference</a
+              >
+              for the supported API and differences.
+            </p>
+          </section>
+          <section class="guide-section">
+            <h2>Explore the complete API</h2>
+            <p>
+              The <a href="./api.html">API reference</a> documents configuration
+              defaults, every built-in control, the editor handle, live tab
+              collections, per-tab methods, prefixes, plugins and transport.
+              Start with
+              <a href="./api.html?page=configuration">Configuration</a> or
+              <a href="./api.html?page=tab">QueryTabHandle</a>.
+            </p>
+          </section>
+          <aside class="guide-ending">
+            <h2>Ready to try it?</h2>
+            <p>
+              Explore the working examples in the demo. The repository also
+              includes architecture, plugin and testing documentation in
+              <code>docs/</code>. LDForge is licensed under EUPL-1.2.
+            </p>
+            <a href="./">Back to the demo →</a>
+          </aside>
+        </article>
+      </div>
     </main>
     <script type="module" src="/src/guide.ts"></script>
   </body>

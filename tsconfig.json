@@ -14,7 +14,8 @@
       "@ldforge/network": ["packages/network/src/index.ts"],
       "@ldforge/timeline": ["packages/timeline/src/index.ts"],
       "@ldforge/pivot": ["packages/pivot/src/index.ts"],
-      "@ldforge/tree": ["packages/tree/src/index.ts"]
+      "@ldforge/tree": ["packages/tree/src/index.ts"],
+      "@ldforge/yasgui": ["packages/yasgui/src/index.ts"]
     },
     "types": ["node", "vite/client"]
   },

@@ -21,6 +21,7 @@ try {
     'timeline',
     'pivot',
     'tree',
+    'yasgui',
   ].map((name) => {
     const [archive] = JSON.parse(
       execFileSync(
@@ -44,6 +45,10 @@ try {
       'dist/index.d.ts',
     ])
       assert(files.includes(path), `${name} is missing ${path}`);
+    if (name === 'yasgui') {
+      assert(files.includes('dist/yasgui.min.js'));
+      assert(files.includes('dist/yasgui.css'));
+    }
     if (name === 'editor') {
       assert(files.includes('dist/styles.css'));
       assert(files.includes('docs/api/configuration.md'));
@@ -73,6 +78,9 @@ try {
     import { createPivotRenderer } from '@ldforge/pivot';
     import { createTreeRenderer } from '@ldforge/tree';
     import { createChartRenderer } from '@ldforge/charts';
+    import Yasgui from '@ldforge/yasgui';
+    assert.equal(typeof Yasgui, 'function');
+    assert(existsSync(new URL(import.meta.resolve('@ldforge/yasgui/styles.css'))));
     import { createEditor, formatSparql } from '@ldforge/editor';
     import { prefixes, searchPrefixes } from '@ldforge/prefixes';
     import { prefixes as compact } from '@ldforge/prefixes/compact';
@@ -105,6 +113,13 @@ try {
   writeFileSync(
     join(directory, 'consumer.ts'),
     `
+    import Yasgui from '@ldforge/yasgui';
+    const compat = new Yasgui(document.createElement('div'), {
+      requestConfig: { endpoint: () => 'https://example.org/sparql', method: 'GET' },
+      persistenceId: null,
+    });
+    compat.getTab()?.getYasqe().setValue('ASK {}');
+    compat.destroy();
     import { createEditor } from '@ldforge/editor';
     import { createHttpExecutor } from '@ldforge/core';
     import { createTableRenderer, createCardsRenderer } from '@ldforge/renderers';
@@ -150,7 +165,7 @@ try {
     { cwd: directory, stdio: 'inherit' },
   );
   process.stdout.write(
-    'All ten packages install, resolve and typecheck in an isolated consumer.\n',
+    'All eleven packages install, resolve and typecheck in an isolated consumer.\n',
   );
 } finally {
   rmSync(directory, { recursive: true, force: true });

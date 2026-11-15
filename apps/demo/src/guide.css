@@ -1,0 +1,23 @@
+.guide-content .intro {
+  padding-top: 0;
+}
+.guide-content .guide-section {
+  max-width: none;
+}
+.guide .api-sidebar nav a[aria-current='location'] {
+  background: #e4ecdf;
+  color: #183c35;
+  font-weight: 650;
+}
+.guide-diff-legend {
+  font-size: 12px;
+}
+.guide-diff-legend span {
+  margin-right: 12px;
+}
+.guide-diff-legend span:first-child {
+  color: #8b3434;
+}
+.guide-diff-legend span:nth-child(2) {
+  color: #20623b;
+}

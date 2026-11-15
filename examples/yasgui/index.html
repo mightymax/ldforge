@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Yasgui API, powered by LDForge</title>
+    <link rel="stylesheet" href="../../packages/yasgui/dist/yasgui.css" />
+  </head>
+  <body>
+    <h1>Yasgui API, powered by LDForge</h1>
+    <div id="yasgui"></div>
+    <script src="../../packages/yasgui/dist/yasgui.min.js"></script>
+    <script>
+      const yasgui = new Yasgui(document.getElementById('yasgui'), {
+        requestConfig: { endpoint: 'https://dbpedia.org/sparql' },
+        yasqe: { value: 'SELECT * WHERE { ?s ?p ?o } LIMIT 10' },
+        persistenceId: null,
+      });
+      yasgui.addTab(false, {
+        name: 'Ask',
+        yasqe: { value: 'ASK { ?s ?p ?o }' },
+      });
+    </script>
+  </body>
+</html>

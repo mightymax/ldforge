@@ -1,0 +1,47 @@
+{
+  "name": "@ldforge/yasgui",
+  "version": "0.1.7",
+  "description": "Yasgui-compatible facade for the LDForge SPARQL IDE",
+  "type": "module",
+  "license": "EUPL-1.2",
+  "files": [
+    "dist",
+    "src",
+    "README.md",
+    "LICENSE"
+  ],
+  "sideEffects": [
+    "**/*.css"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./styles.css": "./dist/yasgui.css"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json && vite build --config vite.config.ts",
+    "preversion": "node ../../scripts/release.mjs reject-workspace"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "dependencies": {
+    "@ldforge/core": "^0.1.7",
+    "@ldforge/editor": "^0.1.7",
+    "@ldforge/renderers": "^0.1.7",
+    "@codemirror/state": "^6.7.6"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mightymax/ldforge.git",
+    "directory": "packages/yasgui"
+  },
+  "homepage": "https://github.com/mightymax/ldforge/tree/main/packages/yasgui#readme",
+  "bugs": {
+    "url": "https://github.com/mightymax/ldforge/issues"
+  },
+  "unpkg": "dist/yasgui.min.js",
+  "jsdelivr": "dist/yasgui.min.js"
+}
