@@ -165,10 +165,23 @@ export function createTabApi(adapter: TabAdapter): {
           EditorState.create({ doc: original }),
         ).filter((entry) => entry.prefix === prefix);
         if (!declarations.length) return;
-        // Delete only syntax node ranges, retaining comments and whitespace.
+        // A standalone declaration owns its line ending. Keep comments and
+        // other statements on shared lines intact.
         let query = original;
-        for (const { from, to } of declarations.reverse())
+        for (const declaration of declarations.reverse()) {
+          let { from, to } = declaration;
+          const lineStart = original.lastIndexOf('\n', from - 1) + 1;
+          const newline = original.indexOf('\n', to);
+          const lineEnd = newline < 0 ? original.length : newline;
+          if (
+            /^[ \t]*$/.test(original.slice(lineStart, from)) &&
+            /^[ \t\r]*$/.test(original.slice(to, lineEnd))
+          ) {
+            from = lineStart;
+            to = newline < 0 ? lineEnd : newline + 1;
+          }
           query = query.slice(0, from) + query.slice(to);
+        }
         adapter.setQuery(id, query);
       },
       addPrefix(prefix: string, namespace?: string) {

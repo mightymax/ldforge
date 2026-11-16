@@ -68,8 +68,10 @@ the snapshot; removal deletes all declarations of that alias. The empty string
 addresses the default prefix. Namespaces are returned as written inside the IRI
 brackets, without resolving BASE or decoding escapes.
 
-Removal retains surrounding whitespace, comments, unrelated declarations and the
-query body. Uses of the removed alias are left intact, so the query may need a
+Removal deletes the whole line, including its line ending, when a declaration
+is alone on that line. On shared lines it removes only the declaration, retaining
+comments and other statements. Existing blank separator lines and the query body
+are preserved. Uses of the removed alias are left intact, so the query may need a
 replacement declaration before execution. Active edits participate in undo/redo
 and emit the normal query/workspace callbacks. Inactive tab edits emit only the
 workspace callback and never select the tab. As with other tab edits, inactive

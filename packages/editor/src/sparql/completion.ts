@@ -37,6 +37,11 @@ export function prefixEdit(
         at = Math.max(at, node.to);
     },
   });
+  // Insert after the declaration's line ending (and any trailing comment),
+  // rather than before it and leaving an extra blank line on every insertion.
+  const lineEnd = source.indexOf('\n', at);
+  if (lineEnd >= 0 && /^[ \t]*(?:#[^\n]*)?$/.test(source.slice(at, lineEnd)))
+    at = lineEnd + 1;
   return {
     from: at,
     insert: `${at > 0 && state.sliceDoc(at - 1, at) !== '\n' ? '\n' : ''}PREFIX ${prefix}: <${iri}>\n`,

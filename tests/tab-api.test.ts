@@ -252,6 +252,30 @@ describe('declared prefix API', () => {
     });
   });
 
+  it('does not accumulate blank lines when toggling prefixes on active or inactive tabs', () => {
+    const query =
+      'PREFIX kept: <https://kept/> # keep this comment\n\nSELECT * WHERE { ?s ?p ?o }';
+    const { editor } = mount({ query });
+    const first = editor.getTabs().getActive();
+    for (let i = 0; i < 3; i++) {
+      first.addPrefix('ex', 'https://example.org/');
+      expect(first.getQuery()).toBe(
+        'PREFIX kept: <https://kept/> # keep this comment\nPREFIX ex: <https://example.org/>\n\nSELECT * WHERE { ?s ?p ?o }',
+      );
+      first.removePrefix('ex');
+      expect(first.getQuery()).toBe(query);
+    }
+    editor.getTabs().addTab({ query: 'ASK {}' });
+    first.addPrefix('ex', 'https://example.org/');
+    first.removePrefix('ex');
+    expect(first.getQuery()).toBe(query);
+    for (let i = 0; i < 3; i++) {
+      editor.addPrefix('ex', 'https://example.org/');
+      editor.removePrefix('ex');
+      expect(editor.getQuery()).toBe('ASK {}');
+    }
+  });
+
   it('supports undo/redo and callbacks for removal, addition, manual edits and tab switches', () => {
     const onQueryChange = vi.fn();
     const onWorkspaceChange = vi.fn();
