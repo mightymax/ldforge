@@ -26,12 +26,8 @@ test('plugin wizard previews registered renderer options, preserves query/CSS an
     exact: false,
   });
   await expect(dialog).toBeVisible();
-  const renderers = dialog.getByRole('combobox', {
-    name: 'Renderer',
-    exact: true,
-  });
-  await expect(renderers.locator('option')).toHaveCount(10);
-  await renderers.selectOption('charts');
+  await expect(dialog.getByRole('radio')).toHaveCount(10);
+  await dialog.getByRole('radio', { name: 'Charts', exact: true }).check();
   await dialog.getByRole('button', { name: 'Next', exact: true }).click();
   await dialog
     .getByRole('combobox', { name: 'Chart type', exact: true })
@@ -76,4 +72,49 @@ test('plugin wizard previews registered renderer options, preserves query/CSS an
   expect(bounds?.x).toBeGreaterThanOrEqual(0);
   expect((bounds?.x ?? 0) + (bounds?.width ?? 0)).toBeLessThanOrEqual(390);
   await dialog.getByRole('button', { name: 'Close', exact: true }).click();
+});
+
+test('every registered renderer can be configured and previewed', async ({
+  page,
+}) => {
+  await page.goto('/');
+  const line = page.locator('.cm-content .cm-line').first();
+  const content = page.locator('.cm-content').first();
+  const topInset = await line.evaluate((element) => {
+    const parent = element.closest('.cm-content');
+    if (!parent) throw new Error('Missing editor content');
+    return (
+      element.getBoundingClientRect().top - parent.getBoundingClientRect().top
+    );
+  });
+  expect(topInset).toBeLessThanOrEqual(4);
+  await expect(content).toBeVisible();
+  for (const id of [
+    'table',
+    'cards',
+    'charts',
+    'geo',
+    'network',
+    'timeline',
+    'pivot',
+    'tree',
+    'boolean',
+    'json',
+  ]) {
+    await page
+      .getByRole('button', { name: 'Plugin wizard', exact: true })
+      .click();
+    const dialog = page.getByRole('dialog');
+    await dialog.locator(`input[type=radio][value="${id}"]`).check();
+    await dialog.getByRole('button', { name: 'Next', exact: true }).click();
+    await expect(dialog.locator('[aria-current="step"]')).toContainText(
+      'Choose options',
+    );
+    await dialog.getByRole('button', { name: 'Next', exact: true }).click();
+    await expect(
+      dialog.getByRole('textbox', { name: 'Generated header' }),
+    ).toHaveValue(new RegExp(`^# view=${id}`));
+    await expect(dialog.getByRole('alert')).toBeHidden();
+    await dialog.getByRole('button', { name: 'Close', exact: true }).click();
+  }
 });

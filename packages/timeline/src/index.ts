@@ -78,6 +78,10 @@ export function createTimelineRenderer(
   return {
     id: 'timeline',
     wizard: {
+      description: {
+        en: 'Display dated events and intervals on an interactive timeline.',
+        nl: 'Toon gebeurtenissen en periodes op een interactieve tijdlijn.',
+      },
       bindings: [
         {
           variable: 'timelineLabel',

@@ -8,6 +8,7 @@ export interface EditorControls {
   readonly prefixFolding?: boolean;
   readonly format?: boolean;
   readonly rendererWizard?: boolean;
+  readonly share?: boolean;
   readonly loadingIndicator?: boolean;
   readonly settings?: boolean;
   readonly language?: boolean;
@@ -29,6 +30,7 @@ export function resolveControls(
     prefixFolding: true,
     format: true,
     rendererWizard: true,
+    share: true,
     loadingIndicator: true,
     settings: true,
     language: true,

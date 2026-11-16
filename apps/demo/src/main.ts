@@ -315,15 +315,17 @@ const connection = createEndpointSettings(fixtureExecutor, (label) => {
 });
 const mount = document.querySelector<HTMLElement>('#editor');
 if (!mount) throw new Error('Editor mount point is missing.');
+const sharedQuery = new URL(location.href).searchParams.get('query');
 const restoredWorkspace = readQueryWorkspace();
 const restoredFontSize = readUserFontSize();
 const editor = createEditor(mount, {
   ...(restoredWorkspace ? { workspace: restoredWorkspace } : {}),
   onWorkspaceChange: saveQueryWorkspace,
-  query: selectQuery,
+  query: sharedQuery ?? selectQuery,
   prefixesCollapsed: true,
   sparql: { prefixes: extendedPrefixes },
   executor: connection.executor,
+  shareEndpoint: () => connection.getEndpoint(),
   settings: [connection.plugin],
   userLocale: readUserLocale(),
   ...(restoredFontSize !== undefined ? { fontSize: restoredFontSize } : {}),
@@ -348,6 +350,19 @@ const editor = createEditor(mount, {
     documentationUrl: `./plugins.html#${renderer.id}`,
   })),
 });
+
+if (sharedQuery !== null && restoredWorkspace) {
+  const existing = editor
+    .getTabs()
+    .find((tab) => tab.getQuery() === sharedQuery);
+  if (existing) existing.activate();
+  else
+    editor.getTabs().addTab({
+      name: editor.getLocale() === 'nl' ? 'Gedeelde query' : 'Shared query',
+      query: sharedQuery,
+      activate: true,
+    });
+}
 
 function loadExampleQuery(query: string, endpoint: string | null): void {
   connection.setEndpoint(endpoint ?? '', 'GET');

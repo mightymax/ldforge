@@ -68,6 +68,10 @@ export function createNetworkRenderer(
   return {
     id: 'network',
     wizard: {
+      description: {
+        en: 'Explore resources and their relationships as an interactive graph.',
+        nl: 'Verken resources en hun relaties in een interactief netwerk.',
+      },
       bindings: [
         {
           variable: 'source',

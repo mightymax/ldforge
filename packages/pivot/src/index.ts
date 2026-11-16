@@ -85,6 +85,10 @@ export function createPivotRenderer(
   return {
     id: 'pivot',
     wizard: {
+      description: {
+        en: 'Group and summarize numeric results in a pivot table.',
+        nl: 'Groepeer en vat numerieke resultaten samen in een draaitabel.',
+      },
       bindings: [
         {
           variable: 'pivotRow',

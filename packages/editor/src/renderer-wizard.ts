@@ -46,6 +46,10 @@ const messages = {
     noContract: 'This renderer does not declare a binding contract.',
     changed: 'The active query changed. Reopen the wizard to apply a header.',
     step: 'Step',
+    hint: 'Choose how to display your query results.',
+    bindings: 'Query variables',
+    required: 'Required',
+    optional: 'Optional',
   },
   nl: {
     title: 'Plugin wizard',
@@ -65,6 +69,10 @@ const messages = {
     changed:
       'De actieve query is gewijzigd. Open de wizard opnieuw om een header toe te passen.',
     step: 'Stap',
+    hint: 'Kies hoe je de resultaten van je query wilt weergeven.',
+    bindings: 'Queryvariabelen',
+    required: 'Verplicht',
+    optional: 'Optioneel',
   },
 };
 export function createRendererWizard(host: Host) {
@@ -92,14 +100,24 @@ export function createRendererWizard(host: Host) {
   dialog.id = `${heading.id}-dialog`;
   button.setAttribute('aria-controls', dialog.id);
   dialog.setAttribute('aria-labelledby', heading.id);
+  const progress = doc.createElement('ol');
+  progress.className = 'ldforge-wizard-progress';
   const content = doc.createElement('div');
+  content.className = 'ldforge-wizard-content';
   const footer = doc.createElement('div');
   footer.className = 'ldforge-wizard-actions';
   const error = doc.createElement('p');
   error.setAttribute('role', 'alert');
-  dialog.append(heading, content, error, footer);
+  dialog.append(heading, progress, content, error, footer);
   function config(): RendererHeaderConfig {
     return { rendererId, options: values, includeBindings };
+  }
+  function focusStep() {
+    const target =
+      content.querySelector<HTMLElement>('input[type=radio]:checked') ??
+      content.querySelector<HTMLElement>('select,input,textarea,button') ??
+      footer.querySelector<HTMLElement>('button');
+    target?.focus();
   }
   function close() {
     if (!opened) return;
@@ -159,7 +177,7 @@ export function createRendererWizard(host: Host) {
     open() {
       host.assertAlive();
       if (opened) {
-        dialog.querySelector<HTMLElement>('select,input,button')?.focus();
+        focusStep();
         return;
       }
       host.onOpen();
@@ -194,13 +212,24 @@ export function createRendererWizard(host: Host) {
       draw();
       if (typeof dialog.showModal === 'function') dialog.showModal();
       else dialog.setAttribute('open', '');
-      dialog.querySelector<HTMLElement>('select,input,button')?.focus();
+      focusStep();
     },
   });
   function draw() {
     const locale = host.getLocale();
     const text = messages[locale];
-    heading.textContent = `${text.title} · ${text.step} ${step + 1}/3`;
+    heading.textContent = text.title;
+    progress.setAttribute('aria-label', text.step);
+    progress.replaceChildren();
+    [text.choose, text.options, text.preview].forEach((label, index) => {
+      const item = doc.createElement('li');
+      if (index === step) item.setAttribute('aria-current', 'step');
+      item.dataset.complete = String(index < step);
+      const number = doc.createElement('span');
+      number.textContent = String(index + 1);
+      item.append(number, label);
+      progress.append(item);
+    });
     button.title = text.title;
     button.setAttribute('aria-label', text.title);
     content.replaceChildren();
@@ -217,6 +246,9 @@ export function createRendererWizard(host: Host) {
       control.type = 'button';
       control.textContent = label;
       control.addEventListener('click', run);
+      if (label === text.close) control.className = 'ldforge-wizard-close';
+      if (label === text.next || label === text.apply)
+        control.className = 'ldforge-wizard-primary';
       footer.append(control);
       return control;
     }
@@ -228,23 +260,47 @@ export function createRendererWizard(host: Host) {
       return;
     }
     if (step === 0) {
-      const label = doc.createElement('label');
-      label.textContent = text.renderer;
-      const select = doc.createElement('select');
-      select.setAttribute('aria-label', text.renderer);
-      for (const item of renderers)
-        select.append(new Option(localize(item.label, locale), item.id));
-      select.value = rendererId;
-      select.addEventListener('change', () => {
-        rendererId = select.value;
-        values = {};
-        for (const option of renderers.find((item) => item.id === rendererId)
-          ?.wizard?.options ?? [])
-          values[option.key] =
-            option.defaultValue ?? option.choices?.[0]?.value ?? '';
-      });
-      label.append(select);
-      content.append(label);
+      const hint = doc.createElement('p');
+      hint.className = 'ldforge-wizard-hint';
+      hint.textContent = text.hint;
+      const choices = doc.createElement('div');
+      choices.className = 'ldforge-wizard-renderers';
+      choices.setAttribute('role', 'radiogroup');
+      choices.setAttribute('aria-label', text.renderer);
+      for (const item of renderers) {
+        const card = doc.createElement('label');
+        card.className = 'ldforge-wizard-renderer';
+        const input = doc.createElement('input');
+        input.type = 'radio';
+        input.name = `${dialog.id}-renderer`;
+        input.value = item.id;
+        input.checked = rendererId === item.id;
+        input.setAttribute('aria-label', localize(item.label, locale));
+        input.addEventListener('change', () => {
+          rendererId = item.id;
+          values = {};
+          for (const option of item.wizard?.options ?? [])
+            values[option.key] =
+              option.defaultValue ?? option.choices?.[0]?.value ?? '';
+        });
+        const icon = doc.createElement('span');
+        icon.className = 'ldforge-wizard-renderer-icon';
+        icon.setAttribute('aria-hidden', 'true');
+        if (item.icon) icon.append(item.icon(doc));
+        const body = doc.createElement('span');
+        const name = doc.createElement('strong');
+        name.textContent = localize(item.label, locale);
+        body.append(name);
+        if (item.wizard?.description) {
+          const description = doc.createElement('span');
+          description.className = 'ldforge-wizard-renderer-description';
+          description.textContent = localize(item.wizard.description, locale);
+          body.append(description);
+        }
+        card.append(input, icon, body);
+        choices.append(card);
+      }
+      content.append(hint, choices);
     }
     if (step === 1) {
       if (renderer.wizard?.description) {
@@ -289,6 +345,29 @@ export function createRendererWizard(host: Host) {
         label.append(input);
         content.append(label);
       }
+      if (renderer.wizard?.bindings.length) {
+        const contract = doc.createElement('section');
+        contract.className = 'ldforge-wizard-bindings';
+        const heading = doc.createElement('h4');
+        heading.textContent = text.bindings;
+        const list = doc.createElement('dl');
+        for (const binding of renderer.wizard.bindings) {
+          const row = doc.createElement('div');
+          const name = doc.createElement('dt');
+          const code = doc.createElement('code');
+          code.textContent = `?${binding.variable}`;
+          const badge = doc.createElement('span');
+          badge.textContent = binding.required ? text.required : text.optional;
+          badge.dataset.required = String(binding.required);
+          name.append(code, badge);
+          const description = doc.createElement('dd');
+          description.textContent = localize(binding.description, locale);
+          row.append(name, description);
+          list.append(row);
+        }
+        contract.append(heading, list);
+        content.append(contract);
+      }
     }
     if (step === 2) {
       const label = doc.createElement('label');
@@ -328,14 +407,16 @@ export function createRendererWizard(host: Host) {
       action(text.back, () => {
         step--;
         draw();
-        dialog.querySelector<HTMLElement>('select,input,button')?.focus();
+        focusStep();
       });
     if (step < 2)
       action(text.next, () => {
         step++;
         draw();
         dialog
-          .querySelector<HTMLElement>('select,input,textarea,button')
+          .querySelector<HTMLElement>(
+            'input:checked,select,input,textarea,button',
+          )
           ?.focus();
       });
     else
@@ -365,8 +446,16 @@ export function createRendererWizard(host: Host) {
     }
     if (event.key === 'Tab') {
       const items = [
-        ...dialog.querySelectorAll<HTMLElement>('select,input,textarea,button'),
-      ].filter((item) => !item.hasAttribute('disabled'));
+        ...dialog.querySelectorAll<HTMLElement>(
+          'input:checked,select,input,textarea,button',
+        ),
+      ].filter(
+        (item) =>
+          !item.hasAttribute('disabled') &&
+          (!(item instanceof HTMLInputElement) ||
+            item.type !== 'radio' ||
+            item.checked),
+      );
       const first = items[0],
         last = items.at(-1);
       if (event.shiftKey && doc.activeElement === first) {

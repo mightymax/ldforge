@@ -40,6 +40,7 @@ Every property is optional and defaults to `true`.
 | `prefixes`              | Prefix search icon and its entry point.                                                                                     |
 | `fontSize`              | Query text-size field in settings; API remains available when hidden.                                                       |
 | `loadingIndicator`      | Spinner in results while a query runs; defaults to true.                                                                    |
+| `share`                 | Clipboard share-link icon in the right toolbar. Defaults to true; sharing APIs remain available when hidden.                |
 | `rendererWizard`        | Plugin wizard icon; defaults to true. API remains available when hidden.                                                    |
 | `format`                | Format-query icon.                                                                                                          |
 | `settings`              | Gear icon and settings plugin mounting. Hides access to the language selector too.                                          |
@@ -49,7 +50,7 @@ Every property is optional and defaults to `true`.
 | `renameTab`             | Rename icon and double-click renaming.                                                                                      |
 | `closeTab`              | Tab close buttons.                                                                                                          |
 
-The core tools group is ordered **Prefixes → Format query → Plugin wizard → Settings**, with icons, localized accessible names and tooltips. Run/Stop is separate from custom project actions. Custom plugin buttons use their `group` identifier; a project cannot accidentally merge its buttons into the core action group just by using the same group name.
+The core tools group is ordered **Prefixes → Format query → Plugin wizard → Copy share link → Settings**, with icons, localized accessible names and tooltips. Run/Stop is separate from custom project actions. Custom plugin buttons use their `group` identifier; a project cannot accidentally merge its buttons into the core action group just by using the same group name.
 
 ```ts
 // Only hide these controls; all public methods remain available.
@@ -144,3 +145,7 @@ These affect presentation only; running queries and the stop action remain activ
 Prefix inspection/removal needs no configuration. `getPrefixes()` reads query
 declarations, independently of the `sparql.prefixes` completion catalog (including
 when that catalog is disabled). See [ForgeEditor](editor.md#inspecting-and-removing-prefixes).
+
+`shareBaseUrl` optionally sets the absolute recipient page URL. By default sharing uses the current page URL, removes ordinary page fragments, preserves hash-based application routes, preserves its other parameters and replaces `query` with the encoded query. Hosts should read that parameter when initializing their editor; the demo opens the shared query without automatically executing it and preserves existing saved tabs.
+
+`shareEndpoint` accepts an endpoint URL or a callback returning the current applied endpoint. When sharing, this is added as `# sparql-endpoint=…` if the query does not already declare one. The demo reads its active connection at copy time. Authentication headers are not part of the shared URL.

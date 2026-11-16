@@ -220,6 +220,10 @@ export function createGeoRenderer(
   return {
     id: 'geo',
     wizard: {
+      description: {
+        en: 'Explore geographic results on maps, heatmaps and in 3D.',
+        nl: 'Verken geografische resultaten op kaarten, heatmaps en in 3D.',
+      },
       bindings: [
         {
           variable: 'geometry',

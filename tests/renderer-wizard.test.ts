@@ -189,11 +189,14 @@ describe('plugin wizard API and dialog', () => {
     wizard.open();
     const dialog = node.querySelector('dialog');
     if (!dialog) throw Error('Missing dialog');
-    const select = dialog.querySelector('select');
-    if (!select) throw Error('Missing renderer chooser');
-    expect(select.options.length).toBe(4);
-    select.value = 'charts';
-    select.dispatchEvent(new Event('change'));
+    const choices = dialog.querySelectorAll<HTMLInputElement>('[type=radio]');
+    expect(choices.length).toBe(4);
+    const chartChoice = dialog.querySelector<HTMLInputElement>(
+      '[type=radio][value=charts]',
+    );
+    if (!chartChoice) throw Error('Missing chart choice');
+    chartChoice.checked = true;
+    chartChoice.dispatchEvent(new Event('change'));
     click(dialog, 'Next');
     const chart = dialog.querySelector<HTMLSelectElement>(
       '[aria-label="Chart type"]',

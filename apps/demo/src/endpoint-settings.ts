@@ -14,11 +14,13 @@ export function createEndpointSettings(
   onEndpointChange?: (label: string) => void,
 ): {
   executor: QueryExecutor;
+  getEndpoint(): string;
   plugin: SettingsPlugin;
   /** Demo-owned example actions can configure the same visible endpoint panel. */
   setEndpoint(endpoint: string, method?: 'GET' | 'POST'): void;
 } {
   let executor = fixtureExecutor;
+  let activeEndpoint = '';
   let updateLabels = () => {};
   let configureEndpoint:
     | ((
@@ -28,6 +30,7 @@ export function createEndpointSettings(
       ) => void)
     | undefined;
   return {
+    getEndpoint: () => activeEndpoint,
     setEndpoint(endpoint, method = 'GET') {
       if (!configureEndpoint)
         throw new Error('Endpoint settings are not mounted.');
@@ -68,7 +71,6 @@ export function createEndpointSettings(
           key: EndpointMessage,
           values?: Readonly<Record<string, string>>,
         ) => endpointText(context.getLocale(), key, values);
-        let activeEndpoint = '';
         let activeMethod = 'POST';
         let storageAvailable = true;
         let errorMessage: string | undefined;

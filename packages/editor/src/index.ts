@@ -1,4 +1,10 @@
 import {
+  createShareControl,
+  createShareLink,
+  queryWithRenderer,
+  queryWithEndpoint,
+} from './share.js';
+import {
   createFontSizeControl,
   DEFAULT_FONT_SIZE,
   validateFontSize,
@@ -103,6 +109,10 @@ export type {
 export interface EditorOptions {
   readonly executor: QueryExecutor;
   readonly query?: string;
+  /** Absolute recipient page URL. Defaults to the current page URL. */
+  readonly shareBaseUrl?: string;
+  /** Applied connection endpoint to include when the query has none. Read at share time. */
+  readonly shareEndpoint?: string | (() => string | undefined);
   /** Initially collapse PREFIX declarations on each tab. Defaults to false. */
   readonly prefixesCollapsed?: boolean;
   /** Built-in UI visibility; all flags default to true. False hides all built-in controls. */
@@ -141,6 +151,10 @@ export interface ForgeEditor extends EditorContext {
   /** Registered renderers only; does not load their external visual libraries. */
   getRenderers(): readonly ResultRendererPlugin[];
   getRendererWizard(): RendererWizardApi;
+  /** Share URL for the active query, including its selected renderer. Does not edit. */
+  getShareLink(): string;
+  /** Copy the share URL and persist its renderer header as one undoable edit. */
+  copyShareLink(): Promise<string>;
   getFontSize(): number;
   setFontSize(size: number): void;
   isLoadingIndicatorEnabled(): boolean;
@@ -350,6 +364,20 @@ export function createEditor(
   let executedDirectives = parseQueryViewDirectives('');
   let applyPreferredView = false;
 
+  function sharingQuery(): string {
+    const query = context.getQuery();
+    const declared = parseQueryViewDirectives(query).view;
+    const rendererId =
+      controller.state.status === 'success'
+        ? selectedRenderer
+        : (declared ?? renderers.list()[0]?.id);
+    const endpoint =
+      typeof options.shareEndpoint === 'function'
+        ? options.shareEndpoint()
+        : options.shareEndpoint;
+    return queryWithEndpoint(queryWithRenderer(query, rendererId), endpoint);
+  }
+
   function assertAlive(): void {
     if (disposed) throw new Error('Editor has been destroyed.');
   }
@@ -399,6 +427,39 @@ export function createEditor(
       assertAlive();
       return rendererWizard.api;
     },
+    getShareLink() {
+      assertAlive();
+      return createShareLink(
+        options.shareBaseUrl ?? doc.location.href,
+        sharingQuery(),
+      );
+    },
+    async copyShareLink() {
+      assertAlive();
+      const original = context.getQuery();
+      const tabId = queryTabs.snapshot().activeId;
+      const query = sharingQuery();
+      const link = createShareLink(
+        options.shareBaseUrl ?? doc.location.href,
+        query,
+      );
+      const clipboard = doc.defaultView?.navigator.clipboard;
+      if (!clipboard)
+        throw new Error(
+          locale === 'nl'
+            ? 'Klembord is niet beschikbaar.'
+            : 'Clipboard is not available.',
+        );
+      await clipboard.writeText(link);
+      if (
+        !disposed &&
+        tabId === queryTabs.snapshot().activeId &&
+        context.getQuery() === original &&
+        query !== original
+      )
+        context.setQuery(query);
+      return link;
+    },
     getToolBar() {
       assertAlive();
       return toolbarView.api;
@@ -444,6 +505,7 @@ export function createEditor(
     focus: () => view.focus(),
     destroy() {
       if (disposed) return;
+      shareControl.destroy();
       rendererWizard.destroy();
       toolbarView.destroy();
       disposed = true;
@@ -677,6 +739,17 @@ export function createEditor(
       prefixPicker.close();
       settingsPanel.hidden = true;
       toggle.setAttribute('aria-expanded', 'false');
+    },
+  });
+  const shareControl = createShareControl({
+    tools,
+    visible: controls.share,
+    getLocale: () => locale,
+    copy: () => context.copyShareLink(),
+    onError(error) {
+      status.textContent = translate(locale, 'actionFailed', {
+        message: error instanceof Error ? error.message : String(error),
+      });
     },
   });
   root.insertBefore(prefixPicker.panel, tabBar);
@@ -928,6 +1001,7 @@ export function createEditor(
   function refreshLocale(): void {
     fontSizeControl.refresh();
     rendererWizard.refreshLocale();
+    shareControl.refreshLocale();
     prefixPicker.refreshLocale();
     tools.setAttribute('aria-label', translate(locale, 'coreTools'));
     customActions.setAttribute('aria-label', translate(locale, 'extraActions'));

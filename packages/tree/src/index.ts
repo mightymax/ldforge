@@ -17,6 +17,10 @@ export function createTreeRenderer(
     documentationUrl: 'https://ldforge.nl/plugins.html#tree',
     icon: createSvgIcon(['M4 3v14h5M4 7h5M13 5h7v4h-7zM13 15h7v4h-7z']),
     wizard: {
+      description: {
+        en: 'Browse hierarchical data in an expandable tree.',
+        nl: 'Verken hiërarchische gegevens in een uitklapbare boom.',
+      },
       bindings: [
         {
           variable: 'tree_id',
