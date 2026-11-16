@@ -3,12 +3,12 @@ name: Release
 on:
   push:
     tags:
-      - 'v*'
+      - 'release-*'
 
 permissions:
   contents: read
 
-# Release one version at a time; never interrupt a publication already in progress.
+# Release one batch at a time; never interrupt a publication already in progress.
 concurrency:
   group: ldforge-release
   cancel-in-progress: false
@@ -27,9 +27,9 @@ jobs:
         with:
           node-version: '24'
           package-manager-cache: false
+      - run: npm ci
       - name: Verify release tag, versions and main ancestry
         run: node scripts/release.mjs verify-tag
-      - run: npm ci
       - run: npx playwright install --with-deps chromium
       - run: npm run check
       - name: Pack tested release artifacts
@@ -74,6 +74,7 @@ jobs:
         with:
           name: npm-release-${{ github.ref_name }}
           path: release-artifacts/
+      - run: npm ci --ignore-scripts
       - run: node scripts/release.mjs verify-tag
       - name: Publish exact tested tarballs in dependency order
         run: node scripts/release.mjs publish
@@ -83,8 +84,8 @@ jobs:
           RELEASE_TAG: ${{ github.ref_name }}
         run: |
           if ! gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
-            RELEASE_BASE="${RELEASE_TAG%%+*}"
-            if [[ "$RELEASE_BASE" == *-* ]]; then
+            PRERELEASE=$(node --input-type=module -e 'import fs from "node:fs"; console.log(JSON.parse(fs.readFileSync(`.releases/${process.env.RELEASE_TAG}.json`)).prerelease)')
+            if [[ "$PRERELEASE" == true ]]; then
               gh release create "$RELEASE_TAG" --verify-tag --generate-notes --title "$RELEASE_TAG" --prerelease
             else
               gh release create "$RELEASE_TAG" --verify-tag --generate-notes --title "$RELEASE_TAG"

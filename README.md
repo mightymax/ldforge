@@ -180,7 +180,7 @@ Existing action groups remain adjacent buttons by default. Configure `toolbar.gr
 
 The built demo is static HTML/CSS/JavaScript. Use the [deployment guide](docs/deployment.md) for container builds, Kubernetes/Helm, Argo CD and optional per-installation analytics. Public defaults contain no tracking ID; local operator values belong under the gitignored `.local/` directory or in a private GitOps repository.
 
-After one-time GitOps setup, `npm version patch` can also deploy the website after publishing npm. Deploy only the site with `gh workflow run website.yml --ref main -f source_ref=main`; no npm version or release tag is created. See [automated website releases](docs/deployment.md#automated-website-releases).
+After one-time GitOps setup, `npm run release` can also deploy the website after selectively publishing the planned npm packages. Deploy only the site with `gh workflow run website.yml --ref main -f source_ref=main`; no npm version or release tag is created. See [automated website releases](docs/deployment.md#automated-website-releases).
 
 ### Network and timeline renderers
 
@@ -208,3 +208,19 @@ module. Replace your Yasgui JavaScript and stylesheet imports while retaining
 It includes a standalone browser bundle exposing `window.Yasgui` and a
 [script-tag example](examples/yasgui/index.html). See the module's compatibility
 matrix for supported methods and the boundaries around Yasqe/Yasr extensions.
+
+## Independent package releases
+
+Commit package changes with a `.changeset/*.md` description (`npm run changeset`).
+Inspect the read-only package/version plan with `npm run release:plan`. On clean
+main, `npm run release:prepare` creates a local version/changelog commit and batch
+and package tags; `npm run release:push` atomically pushes them to start CI
+publication. `npm run release` combines preparation and push. These last commands
+start real releases; planning, builds and tests do not publish.
+
+Only affected packages and necessary dependents are published. The standalone
+Yasgui bundle is included automatically for changes in its embedded packages.
+Root/workspace `npm version` is blocked. All versions remain at their existing
+published values until a planned release is prepared. See [Publishing](docs/publishing.md)
+for prereleases, minimum-version compatibility checks, website-only deployment
+and recovery of both new batches and historical releases.

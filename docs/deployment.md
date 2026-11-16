@@ -200,8 +200,9 @@ The workflow uses its `GITHUB_TOKEN` with `packages: write` to publish to GHCR. 
 Both flows use the same workflow:
 
 ```sh
-# Full package release from clean main: publish npm, then deploy the website.
-npm version patch
+# Planned package release from clean main: selective npm publication, then website.
+# Commit changesets and inspect npm run release:plan first.
+npm run release
 
 # Website only, after committing and pushing source to main:
 gh workflow run website.yml --ref main -f source_ref=main
