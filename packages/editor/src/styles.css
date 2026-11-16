@@ -13,6 +13,17 @@
 .ldforge input {
   accent-color: var(--ldforge-accent);
 }
+/* Table filters belong to the embedded editor, not the demo's global form CSS. */
+.ldforge .ldforge-table input[type='search'],
+.ldforge .ldforge-table-controls input[type='search'] {
+  border: 1px solid var(--ldforge-border);
+  border-radius: 6px;
+  padding: 10px 12px;
+  font: inherit;
+  font-size: 13px;
+  color: inherit;
+  background: var(--ldforge-surface, #fff);
+}
 .ldforge *,
 .ldforge *::before,
 .ldforge *::after {
