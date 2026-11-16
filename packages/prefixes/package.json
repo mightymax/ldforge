@@ -1,6 +1,6 @@
 {
   "name": "@ldforge/prefixes",
-  "version": "0.1.9",
+  "version": "0.1.10",
   "description": "Compact and extended RDF/SPARQL prefix catalogs with namespace search",
   "type": "module",
   "license": "EUPL-1.2",

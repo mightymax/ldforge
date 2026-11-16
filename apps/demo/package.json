@@ -13,16 +13,16 @@
     "@codemirror/language": "^6.13.1",
     "@codemirror/state": "^6.7.6",
     "@codemirror/view": "^6.43.15",
-    "@ldforge/core": "^0.1.9",
-    "@ldforge/editor": "^0.1.9",
-    "@ldforge/renderers": "^0.1.9",
+    "@ldforge/core": "^0.1.10",
+    "@ldforge/editor": "^0.1.10",
+    "@ldforge/renderers": "^0.1.10",
     "@lezer/highlight": "^1.2.5",
-    "@ldforge/charts": "^0.1.9",
-    "@ldforge/geo": "^0.1.9",
-    "@ldforge/network": "^0.1.9",
-    "@ldforge/timeline": "^0.1.9",
-    "@ldforge/pivot": "^0.1.9",
-    "@ldforge/prefixes": "^0.1.9",
-    "@ldforge/tree": "^0.1.9"
+    "@ldforge/charts": "^0.1.10",
+    "@ldforge/geo": "^0.1.10",
+    "@ldforge/network": "^0.1.10",
+    "@ldforge/timeline": "^0.1.10",
+    "@ldforge/pivot": "^0.1.10",
+    "@ldforge/prefixes": "^0.1.10",
+    "@ldforge/tree": "^0.1.10"
   }
 }
