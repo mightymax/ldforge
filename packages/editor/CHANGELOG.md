@@ -1,5 +1,16 @@
 # @ldforge/editor
 
+## 1.2.0
+
+### Minor Changes
+
+- 6c49ebc: Add an icon-only keyboard-shortcut overview in the right toolbar. The localized modal automatically shows Mac or Windows/Linux combinations, supports Escape and focus return, and can be hidden with controls.keyboardHelp. Document the new control and toolbar order.
+
+### Patch Changes
+
+- 6c49ebc: Show tables at full height by default instead of inside a capped result panel. Add scroll: true and per-query table-scroll/table-height configuration, with Plugin wizard controls, to opt into a bounded viewport and large-result virtualization. Restore shared result-panel sizing when leaving the table. Update the renderer guide and packaged editor API documentation with defaults, validation, accessibility and performance considerations.
+- 6c49ebc: Show the active platform's query-execution shortcut in Run tooltips (Command on Mac/iOS, Control on Windows/Linux), matching existing CodeMirror Mod bindings. Document keyboard shortcuts, focus scope, operating-system conflicts and host keymap extensions.
+
 ## 1.1.0
 
 ### Minor Changes

@@ -1,0 +1,85 @@
+{
+  "schemaVersion": 2,
+  "releaseTag": "release-20261116-130125-3a00468",
+  "baseCommit": "3a004689d6e5321ed52543852cd399c8092d081b",
+  "changesets": [
+    {
+      "releases": [
+        { "name": "@ldforge/renderers", "type": "minor" },
+        { "name": "@ldforge/editor", "type": "patch" }
+      ],
+      "summary": "Show tables at full height by default instead of inside a capped result panel. Add scroll: true and per-query table-scroll/table-height configuration, with Plugin wizard controls, to opt into a bounded viewport and large-result virtualization. Restore shared result-panel sizing when leaving the table. Update the renderer guide and packaged editor API documentation with defaults, validation, accessibility and performance considerations.",
+      "id": "full-height-table"
+    },
+    {
+      "releases": [{ "name": "@ldforge/geo", "type": "minor" }],
+      "summary": "Add renderPopup for trusted host popup DOM in Leaflet and MapLibre maps. Hosts can provide lists and action buttons, or return undefined to retain the safe default popup.",
+      "id": "geo-host-popup-actions"
+    },
+    {
+      "releases": [{ "name": "@ldforge/editor", "type": "minor" }],
+      "summary": "Add an icon-only keyboard-shortcut overview in the right toolbar. The localized modal automatically shows Mac or Windows/Linux combinations, supports Escape and focus return, and can be hidden with controls.keyboardHelp. Document the new control and toolbar order.",
+      "id": "keyboard-help-dialog"
+    },
+    {
+      "releases": [{ "name": "@ldforge/editor", "type": "patch" }],
+      "summary": "Show the active platform's query-execution shortcut in Run tooltips (Command on Mac/iOS, Control on Windows/Linux), matching existing CodeMirror Mod bindings. Document keyboard shortcuts, focus scope, operating-system conflicts and host keymap extensions.",
+      "id": "platform-keyboard-hints"
+    },
+    {
+      "id": "ldforge-bundle-955869ca2fe4",
+      "summary": "Rebuild the standalone Yasgui browser bundle with @ldforge/renderers@1.1.0, @ldforge/editor@1.2.0.",
+      "releases": [{ "name": "@ldforge/yasgui", "type": "minor" }]
+    }
+  ],
+  "releases": [
+    {
+      "name": "@ldforge/renderers",
+      "type": "minor",
+      "oldVersion": "1.0.0",
+      "changesets": ["full-height-table"],
+      "newVersion": "1.1.0",
+      "reasons": [
+        "full-height-table: Show tables at full height by default instead of inside a capped result panel. Add scroll: true and per-query table-scroll/table-height configuration, with Plugin wizard controls, to opt into a bounded viewport and large-result virtualization. Restore shared result-panel sizing when leaving the table. Update the renderer guide and packaged editor API documentation with defaults, validation, accessibility and performance considerations."
+      ]
+    },
+    {
+      "name": "@ldforge/geo",
+      "type": "minor",
+      "oldVersion": "1.0.0",
+      "changesets": ["geo-host-popup-actions"],
+      "newVersion": "1.1.0",
+      "reasons": [
+        "geo-host-popup-actions: Add renderPopup for trusted host popup DOM in Leaflet and MapLibre maps. Hosts can provide lists and action buttons, or return undefined to retain the safe default popup."
+      ]
+    },
+    {
+      "name": "@ldforge/editor",
+      "type": "minor",
+      "oldVersion": "1.1.0",
+      "changesets": [
+        "full-height-table",
+        "keyboard-help-dialog",
+        "platform-keyboard-hints"
+      ],
+      "newVersion": "1.2.0",
+      "reasons": [
+        "full-height-table: Show tables at full height by default instead of inside a capped result panel. Add scroll: true and per-query table-scroll/table-height configuration, with Plugin wizard controls, to opt into a bounded viewport and large-result virtualization. Restore shared result-panel sizing when leaving the table. Update the renderer guide and packaged editor API documentation with defaults, validation, accessibility and performance considerations.",
+        "keyboard-help-dialog: Add an icon-only keyboard-shortcut overview in the right toolbar. The localized modal automatically shows Mac or Windows/Linux combinations, supports Escape and focus return, and can be hidden with controls.keyboardHelp. Document the new control and toolbar order.",
+        "platform-keyboard-hints: Show the active platform's query-execution shortcut in Run tooltips (Command on Mac/iOS, Control on Windows/Linux), matching existing CodeMirror Mod bindings. Document keyboard shortcuts, focus scope, operating-system conflicts and host keymap extensions."
+      ]
+    },
+    {
+      "name": "@ldforge/yasgui",
+      "type": "minor",
+      "oldVersion": "1.1.0",
+      "changesets": ["ldforge-bundle-955869ca2fe4"],
+      "newVersion": "1.2.0",
+      "reasons": [
+        "ldforge-bundle-955869ca2fe4: Rebuild the standalone Yasgui browser bundle with @ldforge/renderers@1.1.0, @ldforge/editor@1.2.0.",
+        "Embedded bundle changes: @ldforge/renderers, @ldforge/editor"
+      ]
+    }
+  ],
+  "prerelease": false
+}
