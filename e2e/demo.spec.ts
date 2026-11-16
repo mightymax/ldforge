@@ -396,14 +396,20 @@ test('groups icon-only core tools on the right and formats without loading a glo
 }) => {
   await page.goto('/');
   const tools = page.getByRole('group', { name: 'Editor tools', exact: true });
-  await expect(tools.getByRole('button')).toHaveCount(4);
+  await expect(tools.getByRole('button')).toHaveCount(5);
   expect(
     await tools
       .getByRole('button')
       .evaluateAll((buttons) =>
         buttons.map((button) => button.getAttribute('aria-label')),
       ),
-  ).toEqual(['Prefixes', 'Format query', 'Plugin wizard', 'IDE settings']);
+  ).toEqual([
+    'Prefixes',
+    'Format query',
+    'Plugin wizard',
+    'Copy share link',
+    'IDE settings',
+  ]);
   expect(
     await tools
       .getByRole('button')

@@ -257,12 +257,12 @@ export function createTimelineRenderer(
               return { id, content };
             });
             const style = doc.createElement('style');
-            style.textContent = `.ldforge-timeline .vis-item { border-color:#90b5ab; background:#e0eeea; color:#183c35; border-radius:4px; }
+            style.textContent = `.ldforge-timeline .vis-item { border-color:var(--ldforge-border-strong, #90b5ab); background:var(--ldforge-hover, #e0eeea); color:var(--ldforge-text, #183c35); border-radius:4px; }
 .ldforge-timeline .vis-item a { color:inherit; text-decoration:none; }
 .ldforge-timeline .vis-item a:hover { text-decoration:underline; }
-.ldforge-timeline .vis-item.vis-selected { background:#087f73; border-color:#075e55; color:#fff; }
-.ldforge-timeline .vis-labelset .vis-label, .ldforge-timeline .vis-time-axis .vis-text { color:#405c57; }
-.ldforge-timeline .vis-timeline { border-color:#d4dfdd; }`;
+.ldforge-timeline .vis-item.vis-selected { background:var(--ldforge-accent-fill, #087f73); border-color:var(--ldforge-accent,#075e55); color:var(--ldforge-on-accent,#fff); }
+.ldforge-timeline .vis-labelset .vis-label, .ldforge-timeline .vis-time-axis .vis-text { color:var(--ldforge-muted, #405c57); }
+.ldforge-timeline .vis-timeline { border-color:var(--ldforge-border, #d4dfdd); }`;
             controls.append(style);
             timeline = new (Constructor as TimelineConstructor)(
               frame,

@@ -368,11 +368,11 @@ export function createGeoRenderer(
       style.textContent = `
 .ldforge-geo-header { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; margin-bottom:12px; }
 .ldforge-geo-header h3 { margin:0; }
-.ldforge-geo-modes { display:inline-flex; flex-wrap:wrap; gap:3px; padding:3px; border:1px solid #d4dfdd; border-radius:9px; background:#f1f5f4; }
-.ldforge-geo-modes button { appearance:none; border:0; border-radius:6px; background:transparent; color:#405c57; padding:7px 12px; font:500 13px/1.3 system-ui,sans-serif; cursor:pointer; }
-.ldforge-geo-modes button[aria-pressed="true"] { background:#fff; color:#183d35; box-shadow:0 1px 3px #183d3526; }
-.ldforge-geo-modes button:hover:not(:disabled) { background:#e4eeeb; }
-.ldforge-geo-modes button:focus-visible { outline:2px solid #087f73; outline-offset:2px; }
+.ldforge-geo-modes { display:inline-flex; flex-wrap:wrap; gap:3px; padding:3px; border:1px solid var(--ldforge-border, #d4dfdd); border-radius:9px; background:var(--ldforge-surface-tinted, #f1f5f4); }
+.ldforge-geo-modes button { appearance:none; border:0; border-radius:6px; background:transparent; color:var(--ldforge-muted, #405c57); padding:7px 12px; font:500 13px/1.3 system-ui,sans-serif; cursor:pointer; }
+.ldforge-geo-modes button[aria-pressed="true"] { background:#fff; color:var(--ldforge-text, #183d35); box-shadow:0 1px 3px var(--ldforge-shadow, #183d3526); }
+.ldforge-geo-modes button:hover:not(:disabled) { background:var(--ldforge-hover, #e4eeeb); }
+.ldforge-geo-modes button:focus-visible { outline:2px solid var(--ldforge-focus, #087f73); outline-offset:2px; }
 .ldforge-geo-modes button:disabled { opacity:.55; cursor:wait; }
 `;
       header.append(heading, modes);

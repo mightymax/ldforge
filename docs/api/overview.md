@@ -38,6 +38,7 @@ const editor = createEditor(container, {
   }),
   query: 'select * where { ?s ?p ?o } limit 10',
   locale: 'auto',
+  themeMainColor: '#1a80b9',
   controls: { prefixes: true, format: true, settings: true, download: true },
   sparql: { prefixes },
   renderers: [
@@ -84,6 +85,8 @@ if (first) {
   first.rename('My first query');
   first.addPrefix('sdo', 'https://schema.org/');
   first.addPrefix('dct');
+  editor.setThemeMainColor('#1a80b9');
+  console.log(editor.getThemeMainColor());
   console.log(editor.getPrefixes(), first.getPrefixes());
   first.removePrefix('dct');
   editor.removePrefix('unused');

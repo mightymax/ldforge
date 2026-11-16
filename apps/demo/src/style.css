@@ -1,6 +1,6 @@
 :root {
   font-family: Inter, system-ui, sans-serif;
-  color: #183c35;
+  color: var(--ldforge-text, #183c35);
   background: #f4f5ef;
   font-synthesis: none;
 }
@@ -27,7 +27,7 @@ header {
   display: flex;
   align-items: center;
   gap: 0;
-  color: #183c35;
+  color: var(--ldforge-text, #183c35);
   font-size: 26px;
   letter-spacing: -1px;
   font-weight: 800;
@@ -87,7 +87,7 @@ h1 span {
 }
 input,
 .connection-row button {
-  border: 1px solid #c9d4ca;
+  border: 1px solid var(--ldforge-border, #c9d4ca);
   padding: 10px 12px;
   border-radius: 6px;
   font: inherit;
@@ -100,11 +100,11 @@ input {
 }
 .connection-row button {
   cursor: pointer;
-  color: #183c35;
+  color: var(--ldforge-text, #183c35);
 }
 #connection-status {
   font-size: 12px;
-  color: #526b5d;
+  color: var(--ldforge-muted, #526b5d);
   line-height: 1.5;
 }
 footer {
@@ -164,12 +164,12 @@ header nav {
   font-size: 13px;
 }
 header nav a {
-  color: #526b5d;
+  color: var(--ldforge-muted, #526b5d);
   text-decoration: none;
   padding: 6px 0;
 }
 header nav a[aria-current='page'] {
-  color: #183c35;
+  color: var(--ldforge-text, #183c35);
   border-bottom: 2px solid #075e55;
 }
 header nav a:hover {
@@ -266,7 +266,7 @@ a:focus-visible {
 }
 #endpoint-history-help {
   font-size: 12px;
-  color: #526b5d;
+  color: var(--ldforge-muted, #526b5d);
   line-height: 1.5;
   margin: 8px 0 16px;
 }
@@ -276,7 +276,7 @@ a:focus-visible {
 }
 #connection fieldset {
   min-width: 0;
-  border: 1px solid #c9d4ca;
+  border: 1px solid var(--ldforge-border, #c9d4ca);
   border-radius: 6px;
   margin: 16px 0;
   padding: 16px;
@@ -294,7 +294,7 @@ a:focus-visible {
 .settings-help {
   font-size: 12px;
   line-height: 1.6;
-  color: #526b5d;
+  color: var(--ldforge-muted, #526b5d);
 }
 .headers-heading {
   display: flex;
@@ -338,7 +338,7 @@ header nav {
 header nav .repository-link {
   padding-left: 16px;
   border-left: 1px solid #d9dfd5;
-  color: #183c35;
+  color: var(--ldforge-text, #183c35);
   font-weight: 600;
 }
 .site-imprint {

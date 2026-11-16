@@ -94,7 +94,8 @@ export function createTableRenderer(
       detailRow.className = 'ldforge-table-detail';
       const detailCell = detailRow.insertCell();
       detailCell.colSpan = Math.max(1, data.variables.length);
-      detailCell.style.cssText = 'padding:0 12px 12px;background:#f5f8f6';
+      detailCell.style.cssText =
+        'padding:0 12px 12px;background:var(--ldforge-surface-tinted, #f5f8f6)';
       const inspector = createResourceInspector(container, {
         locale,
         onClose(restoreFocus) {
