@@ -51,6 +51,13 @@ jobs:
         run: |
           cp ".releases/$RELEASE_TAG.json" "$RUNNER_TEMP/original-release-record.json"
           npx prettier --write ".releases/$RELEASE_TAG.json"
+      - name: Use current browser test harness for recovery
+        if: github.event_name == 'workflow_dispatch'
+        env:
+          RECOVERY_TOOLING_SHA: ${{ github.sha }}
+        run: |
+          cp e2e/demo.spec.ts "$RUNNER_TEMP/original-demo.spec.ts"
+          git show "$RECOVERY_TOOLING_SHA:e2e/demo.spec.ts" > e2e/demo.spec.ts
       - run: npx playwright install --with-deps chromium
       - run: npm run check
       - name: Restore exact tagged metadata before packing
@@ -58,6 +65,9 @@ jobs:
         run: |
           if [[ -f "$RUNNER_TEMP/original-release-record.json" ]]; then
             cp "$RUNNER_TEMP/original-release-record.json" ".releases/$RELEASE_TAG.json"
+          fi
+          if [[ -f "$RUNNER_TEMP/original-demo.spec.ts" ]]; then
+            cp "$RUNNER_TEMP/original-demo.spec.ts" e2e/demo.spec.ts
           fi
       - name: Pack tested release artifacts
         run: npm run release:pack

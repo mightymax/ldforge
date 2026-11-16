@@ -1252,6 +1252,7 @@ test('resizes the query editor by dragging and keyboard, retaining height after 
   });
   await query.fill('SELECT * WHERE { ?s ?p ?o }');
   const handle = page.getByRole('separator', { name: 'Resize query editor' });
+  await handle.scrollIntoViewIfNeeded();
   const before = await query.boundingBox();
   const grip = await handle.boundingBox();
   if (!before || !grip) throw new Error('Missing editor geometry');

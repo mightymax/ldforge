@@ -184,7 +184,8 @@ produced, fix the tooling on main and manually dispatch the **Release** workflow
 from main with the existing `release_tag`. It checks out and verifies that exact
 tag, reruns all checks and packs its original source before publishing. Recovery
 normalizes generated release-record formatting during checks and restores the
-exact tagged bytes before packing; package source is unchanged. Tags and versions
+exact tagged bytes before packing. It also uses the current demo browser test
+harness, restoring the original tests before packing; package source is unchanged. Tags and versions
 are never moved or bumped for this recovery. The website uses the verified source
 commit as well.
 
