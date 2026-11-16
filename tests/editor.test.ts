@@ -507,3 +507,60 @@ it('keeps query headers ahead of inserted prefixes and after formatting', async 
     css: 'max-width=100px;',
   });
 });
+
+it.each(['en', 'nl'] as const)(
+  'explains unsupported requested views and missing bindings (%s)',
+  async (locale) => {
+    const { host, editor } = mount({
+      locale,
+      query:
+        '# view=geo\nSELECT ?subject ?predicate ?object WHERE { ?subject ?predicate ?object } LIMIT 25',
+      executor: {
+        execute: async () => ({
+          kind: 'bindings',
+          variables: ['subject', 'predicate', 'object'],
+          bindings: [],
+        }),
+      },
+      renderers: [
+        createJsonRenderer(),
+        {
+          id: 'geo',
+          label: { en: 'Map', nl: 'Kaart' },
+          wizard: {
+            bindings: [
+              { variable: 'geometry', required: true, description: 'WKT' },
+              { variable: 'geometryLabel', description: 'Label' },
+            ],
+          },
+          supports: (result) =>
+            result.kind === 'bindings' && result.variables.includes('geometry'),
+          render: vi.fn(),
+        },
+      ],
+    });
+    await editor.run();
+    const warning = host.querySelector<HTMLElement>(
+      '.ldforge-renderer-warning',
+    );
+    if (!warning) throw new Error('Missing renderer warning element');
+    expect(warning.hidden).toBe(false);
+    expect(warning.textContent).toContain(locale === 'nl' ? 'Kaart' : 'Map');
+    expect(warning.textContent).toContain('?geometry.');
+    expect(warning.textContent).not.toContain('?geometryLabel');
+    expect(
+      host
+        .querySelector('[data-renderer-id="json"]')
+        ?.getAttribute('aria-selected'),
+    ).toBe('true');
+    editor.setQuery('# view=unknown\nASK {}');
+    await editor.run();
+    expect(warning.hidden).toBe(false);
+    expect(warning.textContent).toContain('unknown');
+    expect(warning.textContent).not.toContain('?geometry');
+    editor.setQuery('# view=json\nASK {}');
+    await editor.run();
+    expect(warning.hidden).toBe(true);
+    expect(warning.textContent).toBe('');
+  },
+);

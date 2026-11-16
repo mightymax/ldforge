@@ -78,6 +78,10 @@ const en = {
   emptyQuery: 'Enter a SPARQL query.',
   httpError: 'SPARQL endpoint returned HTTP {status}.',
   actionFailed: 'Action failed: {message}',
+  rendererUnsupported:
+    'The requested view “{renderer}” cannot display these query results.',
+  rendererUnavailable: 'The requested view “{renderer}” is not registered.',
+  rendererMissingBindings: 'Missing required bindings: {bindings}.',
   rendererFailed: 'Renderer failed: {message}',
   settingsFailed: 'Settings failed: {message}',
   noRenderer: 'No renderer supports this result. Register a result renderer.',
@@ -153,6 +157,11 @@ const nl: Record<keyof typeof en, string> = {
   emptyQuery: 'Voer een SPARQL-query in.',
   httpError: 'Het SPARQL-endpoint gaf HTTP {status} terug.',
   actionFailed: 'Actie mislukt: {message}',
+  rendererUnsupported:
+    'De gevraagde weergave “{renderer}” kan deze queryresultaten niet tonen.',
+  rendererUnavailable:
+    'De gevraagde weergave “{renderer}” is niet geregistreerd.',
+  rendererMissingBindings: 'Ontbrekende verplichte bindings: {bindings}.',
   rendererFailed: 'Resultaatweergave mislukt: {message}',
   settingsFailed: 'Instellingen mislukt: {message}',
   noRenderer:

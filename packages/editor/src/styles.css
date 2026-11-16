@@ -1073,3 +1073,27 @@
     animation: none;
   }
 }
+
+.ldforge-renderer-warning {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.625rem;
+  padding: 0.75rem 0.875rem;
+  margin: 0.75rem;
+  border: 1px solid var(--ldforge-border, #d6dedd);
+  border-radius: 6px;
+  background: var(--ldforge-surface-tinted, #f5f8f7);
+  color: var(--ldforge-text, #182e2b);
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+.ldforge-renderer-warning[hidden] {
+  display: none;
+}
+.ldforge-renderer-warning > .ldforge-icon {
+  flex: 0 0 auto;
+  width: 1.125rem;
+  height: 1.125rem;
+  margin-top: 0.1rem;
+  color: var(--ldforge-warning-icon, #936719);
+}

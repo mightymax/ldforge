@@ -286,6 +286,16 @@ export function createEditor(
   status.setAttribute('aria-live', 'polite');
   const resultToolbar = doc.createElement('div');
   resultToolbar.className = 'ldforge-result-toolbar';
+  const rendererWarning = doc.createElement('div');
+  rendererWarning.className = 'ldforge-renderer-warning';
+  rendererWarning.setAttribute('role', 'status');
+  rendererWarning.hidden = true;
+  appendIcon(
+    rendererWarning,
+    createSvgIcon(['M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18', 'M12 7v6m0 3v.01']),
+  );
+  const rendererWarningText = doc.createElement('span');
+  rendererWarning.append(rendererWarningText);
   const resultTabs = doc.createElement('div');
   resultTabs.className = 'ldforge-result-tabs';
   resultTabs.setAttribute('role', 'tablist');
@@ -362,6 +372,7 @@ export function createEditor(
     tabBar,
     editorHost,
     resultToolbar,
+    rendererWarning,
     output,
   );
   container.append(root);
@@ -795,6 +806,8 @@ export function createEditor(
     try {
       previousCleanup?.();
       output.replaceChildren();
+      rendererWarning.hidden = true;
+      rendererWarningText.textContent = '';
       resultTabs.replaceChildren();
       resultTabs.hidden = true;
       rendererDocs.hidden = true;
@@ -810,6 +823,41 @@ export function createEditor(
       const available = renderers
         .list()
         .filter((renderer) => renderer.supports(state.result));
+      const requestedView = executedDirectives.view;
+      if (
+        requestedView &&
+        !available.some((plugin) => plugin.id === requestedView)
+      ) {
+        const requested = renderers
+          .list()
+          .find((plugin) => plugin.id === requestedView);
+        const missing =
+          requested?.wizard?.bindings.filter(
+            (binding) =>
+              binding.required &&
+              (state.result.kind !== 'bindings' ||
+                !state.result.variables.includes(binding.variable)),
+          ) ?? [];
+        rendererWarningText.textContent = translate(
+          locale,
+          requested ? 'rendererUnsupported' : 'rendererUnavailable',
+          {
+            renderer: requested
+              ? localize(requested.label, locale)
+              : requestedView,
+          },
+        );
+        if (missing.length) {
+          rendererWarningText.textContent +=
+            ' ' +
+            translate(locale, 'rendererMissingBindings', {
+              bindings: missing
+                .map((binding) => `?${binding.variable}`)
+                .join(', '),
+            });
+        }
+        rendererWarning.hidden = false;
+      }
       if (applyPreferredView) {
         if (available.some((plugin) => plugin.id === executedDirectives.view))
           selectedRenderer = executedDirectives.view;
