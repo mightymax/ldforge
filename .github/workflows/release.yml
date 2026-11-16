@@ -42,7 +42,7 @@ jobs:
           package-manager-cache: false
       - run: npm ci
       - name: Verify release tag, versions and main ancestry
-        run: node scripts/release.mjs verify-tag "$RELEASE_TAG"
+        run: GITHUB_REF_NAME="$RELEASE_TAG" node scripts/release.mjs verify-tag "$RELEASE_TAG"
       - name: Record verified source commit
         id: source
         run: echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
@@ -103,7 +103,7 @@ jobs:
           name: npm-release-${{ inputs.release_tag || github.ref_name }}
           path: release-artifacts/
       - run: npm ci --ignore-scripts
-      - run: node scripts/release.mjs verify-tag "$RELEASE_TAG"
+      - run: GITHUB_REF_NAME="$RELEASE_TAG" node scripts/release.mjs verify-tag "$RELEASE_TAG"
       - name: Publish exact tested tarballs in dependency order
         run: node scripts/release.mjs publish
       - name: Create GitHub release

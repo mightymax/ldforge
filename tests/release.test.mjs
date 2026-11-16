@@ -295,6 +295,17 @@ test('prepare is local, publishes only planned artifacts and atomically pushes a
       '^1.1.0',
     );
     assert.equal(git(project.root, 'status', '--porcelain'), '');
+    const explicitTag = spawnSync(
+      process.execPath,
+      ['scripts/release.mjs', 'verify-tag', record.releaseTag],
+      {
+        cwd: project.root,
+        encoding: 'utf8',
+        env: { ...process.env, GITHUB_REF_NAME: 'main' },
+      },
+    );
+    // Tag verification also checks that the tagged commit is on origin/main.
+    assert.match(explicitTag.stderr, /origin\/main history/);
     const manifest = packRelease(project.root);
     assert.equal(manifest.schemaVersion, 2);
     assert.deepEqual(

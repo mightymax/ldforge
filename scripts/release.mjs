@@ -677,7 +677,7 @@ if (
       process.stdout.write(`Pushed ${pushRelease(rootDirectory)}.\n`);
     else if (action === 'verify-tag')
       process.stdout.write(
-        `Verified ${verifyTag(rootDirectory, process.env.GITHUB_REF_NAME ?? process.argv[3])}.\n`,
+        `Verified ${verifyTag(rootDirectory, process.argv[3] ?? process.env.GITHUB_REF_NAME)}.\n`,
       );
     else if (action === 'pack') {
       packRelease(rootDirectory);
