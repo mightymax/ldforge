@@ -1,13 +1,20 @@
+/** Trusted host DOM factory; result literals are never executable markup. */
+export type GeoPopupRenderer = (
+  document: Document,
+  properties: GeoPopupProperties,
+) => HTMLElement | undefined;
+export interface GeoPopupProperties {
+  label?: unknown;
+  height?: unknown;
+  image?: unknown;
+  description?: unknown;
+  link?: unknown;
+}
+
 /** Build identical safe, compact popup content for Leaflet and MapLibre. */
 export function createGeoPopup(
   doc: Document,
-  properties: {
-    label?: unknown;
-    height?: unknown;
-    image?: unknown;
-    description?: unknown;
-    link?: unknown;
-  } = {},
+  properties: GeoPopupProperties = {},
   onContentChange?: () => void,
 ): HTMLElement {
   function httpUrl(value: unknown): string | undefined {

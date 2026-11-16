@@ -14,7 +14,11 @@ export interface TableRendererOptions {
   readonly showRdfDetails?: boolean;
   /** Optional endpoint-backed resource lookup; local graph triples work without it. */
   readonly loadResource?: ResourceLoader;
+  /** Constrain the table to a vertical scroll viewport. Defaults to false. */
+  readonly scroll?: boolean;
+  /** Virtualize above this row count, only in scroll mode. Defaults to 500. */
   readonly virtualizeThreshold?: number;
+  /** Scroll viewport height in pixels, at least 120. Defaults to 480. */
   readonly viewportHeight?: number;
   /** Percentages in result-variable order; must be positive and total 100. */
   readonly columnWidths?: readonly number[];
@@ -26,6 +30,11 @@ export function createTableRenderer(
     throw new Error(
       'columnWidths must contain positive percentages totaling 100.',
     );
+  if (
+    options.viewportHeight !== undefined &&
+    (!Number.isFinite(options.viewportHeight) || options.viewportHeight <= 0)
+  )
+    throw new Error('viewportHeight must be a positive finite number.');
   const detailPreferences = new WeakMap<HTMLElement, boolean>();
   return {
     id: 'table',
@@ -35,6 +44,31 @@ export function createTableRenderer(
         nl: 'Voor SELECT-bindings of RDF-graafresultaten.',
       },
       options: [
+        {
+          key: 'table-scroll',
+          label: { en: 'Vertical scrolling', nl: 'Verticaal scrollen' },
+          type: 'select',
+          defaultValue: String(options.scroll ?? false),
+          choices: [
+            {
+              value: 'false',
+              label: { en: 'Full table', nl: 'Volledige tabel' },
+            },
+            {
+              value: 'true',
+              label: { en: 'Scroll viewport', nl: 'Scrollvenster' },
+            },
+          ],
+        },
+        {
+          key: 'table-height',
+          label: {
+            en: 'Scroll viewport height (px)',
+            nl: 'Hoogte scrollvenster (px)',
+          },
+          type: 'text',
+          defaultValue: String(options.viewportHeight ?? 480),
+        },
         {
           key: 'columns',
           aliases: ['colums'],
@@ -182,12 +216,29 @@ export function createTableRenderer(
       controls.append(search, detailsToggle);
       const viewport = doc.createElement('div');
       viewport.className = 'ldforge-table-viewport';
+      const scrollValue = context?.directives?.['table-scroll'];
+      const invalidScroll =
+        scrollValue !== undefined && !['true', 'false'].includes(scrollValue);
+      const scroll =
+        invalidScroll || scrollValue === undefined
+          ? (options.scroll ?? false)
+          : scrollValue === 'true';
+      const heightValue = context?.directives?.['table-height'];
+      const invalidHeight =
+        heightValue !== undefined &&
+        (!Number.isFinite(Number(heightValue)) || Number(heightValue) <= 0);
+      const height = Math.max(
+        120,
+        heightValue === undefined || invalidHeight
+          ? (options.viewportHeight ?? 480)
+          : Number(heightValue),
+      );
       const virtual =
-        data.bindings.length > (options.virtualizeThreshold ?? 500);
-      const height = Math.max(120, options.viewportHeight ?? 480);
-      if (virtual) {
+        scroll && data.bindings.length > (options.virtualizeThreshold ?? 500);
+      viewport.style.overflowX = 'auto';
+      if (scroll) {
         viewport.style.maxHeight = `${height}px`;
-        viewport.style.overflow = 'auto';
+        viewport.style.overflowY = 'auto';
         viewport.style.overflowAnchor = 'none';
         viewport.tabIndex = 0;
         viewport.setAttribute(
@@ -195,6 +246,12 @@ export function createTableRenderer(
           locale === 'nl' ? 'Resultaten' : 'Results',
         );
       }
+      // The editor's shared result panel has a height cap for other renderers.
+      // The table owns its viewport, avoiding a second nested vertical scrollbar.
+      const previousMaxHeight = container.style.maxHeight;
+      const previousOverflow = container.style.overflow;
+      container.style.maxHeight = 'none';
+      container.style.overflow = 'visible';
       viewport.append(table);
       const header = table.createTHead().insertRow();
       const filters: HTMLInputElement[] = [];
@@ -463,6 +520,7 @@ export function createTableRenderer(
       search.oninput = () => refresh();
       if (virtual) viewport.onscroll = () => draw();
       refresh();
+      const warnings: HTMLElement[] = [];
       if (invalid) {
         const warning = doc.createElement('p');
         warning.setAttribute('role', 'alert');
@@ -470,9 +528,21 @@ export function createTableRenderer(
           locale === 'nl'
             ? 'Ongeldige kolombreedtes: gebruik één positief percentage per kolom, samen 100%. Gelijke breedtes worden gebruikt.'
             : 'Invalid column widths: use one positive percentage per column, totaling 100%. Equal widths are used.';
-        container.replaceChildren(warning, controls, viewport);
-      } else container.replaceChildren(controls, viewport);
+        warnings.push(warning);
+      }
+      if (invalidScroll || invalidHeight) {
+        const warning = doc.createElement('p');
+        warning.setAttribute('role', 'alert');
+        warning.textContent =
+          locale === 'nl'
+            ? 'Ongeldige tabelinstelling: gebruik table-scroll=true of false en een positieve table-height. De API-standaard wordt gebruikt.'
+            : 'Invalid table setting: use table-scroll=true or false and a positive table-height. The API default is used.';
+        warnings.push(warning);
+      }
+      container.replaceChildren(...warnings, controls, viewport);
       return () => {
+        container.style.maxHeight = previousMaxHeight;
+        container.style.overflow = previousOverflow;
         viewport.onscroll = null;
         observer?.disconnect();
         inspector.destroy();

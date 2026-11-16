@@ -1,4 +1,6 @@
 import { createGeoPopup } from './popup.js';
+import type { GeoPopupRenderer } from './popup.js';
+export type { GeoPopupRenderer, GeoPopupProperties } from './popup.js';
 import { createThreeDMap, hasExtrusions } from './three-dimensional.js';
 export type {
   ThreeDLibrary,
@@ -77,6 +79,8 @@ export const DEFAULT_THREE_D_LIBRARY_URL =
 export const DEFAULT_THREE_D_STYLESHEET_URL =
   'https://cdn.jsdelivr.net/npm/maplibre-gl@6.18.0/dist/maplibre-gl.css';
 export interface GeoRendererOptions {
+  /** Host popup DOM for 2D and 3D; undefined falls back to the built-in popup. */
+  readonly renderPopup?: GeoPopupRenderer;
   readonly threeDLibraryUrl?: string;
   readonly loadThreeDLibrary?: () => Promise<unknown>;
   readonly threeDStylesheetUrl?: string | false;
@@ -437,9 +441,10 @@ export function createGeoRenderer(
                   );
                 } else
                   layer.bindPopup(
-                    createGeoPopup(doc, feature.properties, () =>
-                      layer.getPopup?.()?.update(),
-                    ),
+                    options.renderPopup?.(doc, feature.properties) ??
+                      createGeoPopup(doc, feature.properties, () =>
+                        layer.getPopup?.()?.update(),
+                      ),
                   );
               },
             },

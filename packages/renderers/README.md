@@ -30,8 +30,16 @@ works. Use one positive percentage per column, totaling 100; query values overri
 host defaults. Invalid query widths show a warning and fall back to equal widths.
 The Plugin wizard exposes the option for registered table renderers.
 
-The table includes column sorting, global and per-column filters, and virtual scrolling
-above 500 rows. URI buttons open a reusable resource inspector. Pass
+The table shows all loaded rows at full height by default, including long values,
+without a nested vertical scrollbar. Sorting and global/per-column filters work in
+both modes. Opt into a bounded table with
+`createTableRenderer({ scroll: true, viewportHeight: 480 })`, or per query with
+`# view=table; table-scroll=true; table-height=480`. The Plugin wizard exposes both
+options. In scroll mode only, results above `virtualizeThreshold` (default 500)
+use virtual scrolling. `table-scroll=false` overrides a host scroll default.
+`viewportHeight` must be a positive finite number (minimum 120 pixels); invalid
+query options show a warning and fall back to host defaults. Full-height mode
+renders every row, so use scroll mode or a query LIMIT for very large results. URI buttons open a reusable resource inspector. Pass
 `loadResource: createResourceLoader(executor)` for endpoint-backed properties; graph
 results can use their own triples. See the [table guide](../../docs/renderers.md#table)
 for options, lifecycle, accessibility and limitations.

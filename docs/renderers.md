@@ -685,13 +685,40 @@ mutated. Search all columns or combine case-insensitive per-column substring fil
 The caption reports the filtered and original counts. These operations use only the
 loaded result; they do not fetch additional endpoint pages or alter CSV downloads.
 
-Above 500 rows, the table uses a scroll viewport with a bounded number of rendered
-rows and spacer rows. Rows have a fixed height; long values are truncated visually.
-Small results retain wrapping. Configure `virtualizeThreshold` and `viewportHeight`
-(default 480 pixels) in `TableRendererOptions`. Every loaded row remains searchable
-and sortable, but only visible rows are present in the accessibility tree. For a full
-text value, open a URI in the inspector or use JSON/CSV. All bindings stay in memory;
-endpoint-side LIMIT remains useful for very large queries.
+By default the table displays **all loaded rows at full height**, with wrapped
+values and no inner vertical scrollbar. The editor result-panel height cap does
+not apply to tables. Horizontal overflow remains contained. Other renderer views
+keep their own sizing; leaving the table restores the shared panel's styles.
+
+Opt into a bounded, vertically scrolling table with the API:
+
+```ts
+createTableRenderer({
+  scroll: true, // Default: false (full table).
+  viewportHeight: 480, // Pixels; positive finite number, minimum 120.
+  virtualizeThreshold: 500, // Only applies when scroll is true.
+});
+```
+
+Or configure the active query, including through the Plugin wizard:
+
+```sparql
+# view=table; table-scroll=true; table-height=480
+SELECT ?s ?p ?o WHERE { ?s ?p ?o } LIMIT 1000
+```
+
+`table-scroll=true|false` overrides the host's `scroll` default; `table-height`
+overrides `viewportHeight` and only constrains the table in scroll mode. Invalid
+query options show a warning and fall back to host defaults. Heights below 120
+pixels are clamped to 120. Use `table-scroll=false` to expand a table even if the
+host enables scrolling by default.
+
+In scroll mode, results above `virtualizeThreshold` use a bounded number of DOM
+rows and spacer rows. Virtualized rows have a fixed height and visually truncate
+long values. All loaded rows remain searchable and sortable, but only rendered
+rows appear in the accessibility tree. Open URI details or use JSON/CSV for full
+values. Full-height mode does not virtualize; for very large results, opt into
+scroll mode or limit the query. All bindings remain in memory in either mode.
 
 ### Resource inspector
 

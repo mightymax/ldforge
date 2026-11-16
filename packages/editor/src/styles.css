@@ -1306,3 +1306,53 @@
     height: 20px;
   }
 }
+
+.ldforge-keyboard-help {
+  width: min(92vw, 560px);
+  max-height: 85vh;
+  margin: auto;
+  padding: 24px;
+  border: 1px solid var(--ldforge-border, #d6dedd);
+  border-radius: 12px;
+  background: var(--ldforge-surface, #fff);
+  color: var(--ldforge-text, #182e2b);
+  font: inherit;
+}
+.ldforge-keyboard-help::backdrop {
+  background: var(--ldforge-backdrop, #0006);
+}
+.ldforge-keyboard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+.ldforge-keyboard-header h2 {
+  margin: 0;
+  font-size: 20px;
+}
+.ldforge-keyboard-help dl {
+  margin: 0;
+}
+.ldforge-keyboard-help dl > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 9px 0;
+  border-bottom: 1px solid var(--ldforge-border, #d6dedd);
+}
+.ldforge-keyboard-help dd {
+  margin: 0;
+  text-align: right;
+}
+.ldforge-keyboard-help kbd {
+  font:
+    13px/1.5 ui-monospace,
+    monospace;
+}
+.ldforge-keyboard-help p {
+  margin: 16px 0 0;
+  font-size: 13px;
+  color: var(--ldforge-muted, #405c57);
+}

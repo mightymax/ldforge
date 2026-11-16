@@ -125,3 +125,32 @@ replaces the defaults; unknown plugin IDs are rejected. See the
 [API guide](docs/api/editor.md#result-plugin-visibility).
 
 Variable completion searches the entire query, so typing `?` in `SELECT` also suggests variables used later in `WHERE`. It respects subquery projections and ignores variables inside comments, strings and IRIs. Type a variable name to filter the suggestions; use Ctrl+Space to request completion explicitly.
+
+## Keyboard shortcuts
+
+CodeMirror automatically adapts its `Mod` bindings to the keyboard platform:
+Command on macOS/iOS, Control on Windows/Linux. The Run tooltip shows only the
+platform's shortcut (`⌘Enter` or `Ctrl+Enter`), in the current editor language.
+No manual Mac mode is required.
+
+| Action                 | Windows/Linux                    | Mac           |
+| ---------------------- | -------------------------------- | ------------- |
+| Execute the query      | Ctrl+Enter                       | ⌘Enter        |
+| Completion suggestions | Ctrl+Space                       | Control+Space |
+| Undo                   | Ctrl+Z                           | ⌘Z            |
+| Redo                   | Ctrl+Y (Linux also Ctrl+Shift+Z) | ⌘Shift+Z      |
+| Fold at cursor         | Ctrl+Shift+[                     | ⌘Option+[     |
+| Unfold at cursor       | Ctrl+Shift+]                     | ⌘Option+]     |
+
+These editor shortcuts apply while the query editor has focus. They are not
+global browser shortcuts; the browser or operating system can reserve a key
+combination (for example Control+Space for input-source switching on a Mac).
+Menus support arrows, Enter and Escape; query/result tabs support arrow-key
+navigation. There are no additional global QLever-style bindings for formatting,
+opening examples or cancelling a query. Hosts can add CodeMirror keymaps through
+`EditorOptions.extensions`, with explicit precedence where needed.
+
+The keyboard icon in the right toolbar opens this shortcut overview, localized
+and adapted to the current keyboard platform. Escape or Close returns focus to
+the icon. Hide the entry point with `controls: { keyboardHelp: false }` without
+disabling any shortcuts.
