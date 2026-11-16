@@ -450,11 +450,17 @@ editor.hidePlugin('geo');</code></pre>
               CodeMirror editor with highlighting and a copy button that briefly
               confirms success. It shows LDForge's normalized result model. CSV
               download exports the full result independently of the selected
-              view. The share icon copies a query link, including the active
-              renderer and applied endpoint without authentication headers.
-              Registration order determines the initial supported view. For
-              large results, limit your query or supply a paginated or
-              virtualized renderer.
+              view. The Table view's <strong>RDF details</strong> toggle shows
+              URI notation, quoted literals, and smaller superscript language
+              tags and datatypes in the active theme's muted color. Exact
+              endpoint lexical values, filtering, sorting and scroll position
+              are preserved. Set
+              <code>createTableRenderer({ showRdfDetails: true })</code> to
+              start with details visible. The share icon copies a query link,
+              including the active renderer and applied endpoint without
+              authentication headers. Registration order determines the initial
+              supported view. For large results, limit your query or supply a
+              paginated or virtualized renderer.
             </p>
           </section>
           <section id="standalone-chart" class="guide-section">

@@ -39,3 +39,20 @@ for options, lifecycle, accessibility and limitations.
 ## JSON view
 
 JSON uses a read-only CodeMirror editor with JSON syntax highlighting and line numbers. Its copy button copies the complete normalized result, briefly showing a checkmark and confirmation after success. Clipboard failures appear beside the button. The renderer destroys its editor and clears feedback timers during cleanup.
+
+## RDF details in Table
+
+The **RDF details** (**RDF-details**) toggle switches between lexical values and
+RDF notation: `<https://example.org>`, `_:b1`, `"Hallo wereld"@nl`, and
+`"42"^^xsd:integer`. Language tags and datatypes appear in smaller superscript,
+using the theme's muted text color. Standard XML Schema and RDF datatypes use
+`xsd:` and `rdf:`; other datatype IRIs are shown in full. Plain literals are quoted,
+and unbound cells stay empty. Endpoint lexical values are retained exactly,
+including large integers, floating-point notation and timezone text.
+
+Use `createTableRenderer({ showRdfDetails: true })` to start in this mode.
+The default is false. A user's toggle choice is retained per result container for
+that renderer instance, including subsequent results and view switches. It does
+not affect another editor using the same plugin object. Switching keeps filters,
+sorting, virtual scroll position and resource inspection. Filtering, sorting and
+CSV exports continue to use original lexical values; this is presentation only.

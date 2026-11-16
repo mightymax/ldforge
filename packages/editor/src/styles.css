@@ -509,9 +509,12 @@
   min-width: 38px;
   background: var(--ldforge-surface, #fff);
 }
+/* The share tool also adds an accessible status span between the buttons. */
+.ldforge-core-tools > button ~ button {
+  border-left: 1px solid var(--ldforge-border);
+}
 .ldforge-core-tools > .ldforge-settings-toggle {
   margin-left: 0;
-  border: 0;
   border-radius: 0;
 }
 .ldforge-tabs[hidden],

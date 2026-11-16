@@ -1,3 +1,4 @@
+import { formatRdfTerm } from './rdf-term.js';
 import { parseColumnWidths, validColumnWidths } from './table-widths.js';
 import {
   translate,
@@ -9,6 +10,8 @@ import type { ResultRendererPlugin, Binding } from '@ldforge/core';
 import { createResourceInspector } from './resource-inspector.js';
 import type { ResourceLoader } from './resource-inspector.js';
 export interface TableRendererOptions {
+  /** Initially show RDF notation, language tags and datatypes. Defaults to false. */
+  readonly showRdfDetails?: boolean;
   /** Optional endpoint-backed resource lookup; local graph triples work without it. */
   readonly loadResource?: ResourceLoader;
   readonly virtualizeThreshold?: number;
@@ -23,6 +26,7 @@ export function createTableRenderer(
     throw new Error(
       'columnWidths must contain positive percentages totaling 100.',
     );
+  const detailPreferences = new WeakMap<HTMLElement, boolean>();
   return {
     id: 'table',
     wizard: {
@@ -86,6 +90,8 @@ export function createTableRenderer(
         { count: new Intl.NumberFormat(locale).format(result.bindings.length) },
       );
       const data = result;
+      let showRdfDetails =
+        detailPreferences.get(container) ?? options.showRdfDetails ?? false;
       let expanded: Binding | undefined;
       let expandedVariable: string | undefined;
       let detailHeight = 0;
@@ -135,7 +141,45 @@ export function createTableRenderer(
       search.placeholder =
         locale === 'nl' ? 'Zoeken in alle kolommen' : 'Search all columns';
       search.setAttribute('aria-label', search.placeholder);
-      controls.append(search);
+      const detailsToggle = doc.createElement('button');
+      detailsToggle.type = 'button';
+      detailsToggle.className = 'ldforge-table-rdf-details';
+      detailsToggle.textContent =
+        locale === 'nl' ? 'RDF-details' : 'RDF details';
+      detailsToggle.title =
+        locale === 'nl'
+          ? 'Toon RDF-notatie, taallabels en datatypes'
+          : 'Show RDF notation, language tags and datatypes';
+      detailsToggle.style.cssText =
+        'display:inline-flex;align-items:center;gap:6px;flex:0 0 auto';
+      const detailsIcon = createSvgIcon([
+        'm8 6-6 6 6 6M16 6l6 6-6 6M14 3l-4 18',
+      ])(doc);
+      detailsIcon.setAttribute('aria-hidden', 'true');
+      detailsToggle.prepend(detailsIcon);
+      function updateDetailsToggle(): void {
+        detailsToggle.setAttribute('aria-pressed', String(showRdfDetails));
+        detailsToggle.title =
+          locale === 'nl'
+            ? `${showRdfDetails ? 'Verberg' : 'Toon'} RDF-notatie, taallabels en datatypes`
+            : `${showRdfDetails ? 'Hide' : 'Show'} RDF notation, language tags and datatypes`;
+        table.dataset.rdfDetails = String(showRdfDetails);
+        detailsToggle.style.background = showRdfDetails
+          ? 'var(--ldforge-hover, #edf4f1)'
+          : '';
+        detailsToggle.style.color = showRdfDetails
+          ? 'var(--ldforge-accent-text, #075e55)'
+          : '';
+      }
+      detailsToggle.addEventListener('click', () => {
+        showRdfDetails = !showRdfDetails;
+        detailPreferences.set(container, showRdfDetails);
+        updateDetailsToggle();
+        lastRange = '';
+        draw();
+      });
+      updateDetailsToggle();
+      controls.append(search, detailsToggle);
       const viewport = doc.createElement('div');
       viewport.className = 'ldforge-table-viewport';
       const virtual =
@@ -250,8 +294,29 @@ export function createTableRenderer(
             cell.style.whiteSpace = 'pre-wrap';
             const term = binding[variable];
             const value = doc.createElement('span');
-            value.textContent = term?.value ?? '';
-            if (term) value.title = term.value;
+            value.className = 'ldforge-table-term';
+            value.textContent = showRdfDetails
+              ? formatRdfTerm(term)
+              : (term?.value ?? '');
+            if (term)
+              value.title = showRdfDetails ? formatRdfTerm(term) : term.value;
+            if (showRdfDetails) {
+              value.style.fontFamily = 'ui-monospace, monospace';
+              if (term?.type === 'literal' || term?.type === 'typed-literal') {
+                const lexical = JSON.stringify(term.value);
+                const suffix = formatRdfTerm(term).slice(lexical.length);
+                value.textContent = lexical;
+                if (suffix) {
+                  const metadata = doc.createElement('sup');
+                  metadata.className = 'ldforge-table-term-metadata';
+                  metadata.textContent = suffix;
+                  metadata.style.cssText =
+                    'color:var(--ldforge-muted, #65756f);font-size:0.75em;line-height:0;vertical-align:super';
+                  metadata.title = term['xml:lang'] ?? term.datatype ?? '';
+                  value.append(metadata);
+                }
+              }
+            }
             if (virtual) {
               cell.style.cssText +=
                 ';height:36px;box-sizing:border-box;padding:5px 12px;line-height:25px';

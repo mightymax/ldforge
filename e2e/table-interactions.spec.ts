@@ -31,6 +31,19 @@ test('virtual table reaches the final row and filters and sorts all loaded rows'
       element.scrollHeight - element.scrollTop - element.clientHeight,
   );
   expect(overflow).toBeLessThan(40);
+  const scrollBefore = await viewport.evaluate((element) => element.scrollTop);
+  const detailsToggle = page.getByRole('button', {
+    name: 'RDF details',
+    exact: true,
+  });
+  await detailsToggle.click();
+  await expect(
+    page.getByRole('cell', { name: '"9999"', exact: true }),
+  ).toBeVisible();
+  expect(await viewport.evaluate((element) => element.scrollTop)).toBe(
+    scrollBefore,
+  );
+  await detailsToggle.click();
   const heading = page.getByRole('columnheader');
   const filter = page.getByRole('searchbox', {
     name: 'Filter value',

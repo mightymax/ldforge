@@ -417,6 +417,15 @@ test('groups icon-only core tools on the right and formats without loading a glo
   await page.goto('/');
   const tools = page.getByRole('group', { name: 'Editor tools', exact: true });
   await expect(tools.getByRole('button')).toHaveCount(5);
+  const gear = tools.getByRole('button', { name: 'IDE settings', exact: true });
+  await expect(gear).toHaveCSS('border-left-width', '1px');
+  await expect(gear).toHaveCSS('border-left-style', 'solid');
+  await expect(gear).toHaveCSS(
+    'border-left-color',
+    await tools
+      .getByRole('button', { name: 'Copy share link', exact: true })
+      .evaluate((element) => getComputedStyle(element).borderLeftColor),
+  );
   expect(
     await tools
       .getByRole('button')

@@ -34,7 +34,7 @@ type QueryResult =
 
 `Binding` maps variable names without sigils to `BindingTerm`. Unbound variables are absent. A term has readonly `type` (uri, bnode, literal or typed-literal), `value: string`, optional `datatype: string`, and optional `'xml:lang': string`.
 
-`@ldforge/renderers` exports `createTableRenderer()`, `createCardsRenderer(options?)`, `createBooleanRenderer()`, and `createJsonRenderer()`. JSON shows the normalized result model in a read-only CodeMirror editor with syntax highlighting and a copy button with confirmation; it does not show the endpoint's raw response. Table cells use text, and boolean/table captions follow editor locale.
+`@ldforge/renderers` exports `createTableRenderer()`, `createCardsRenderer(options?)`, `createBooleanRenderer()`, and `createJsonRenderer()`. JSON shows the normalized result model in a read-only CodeMirror editor with syntax highlighting and a copy button with confirmation; it does not show the endpoint's raw response. Table cells use text, and boolean/table captions follow editor locale. Its RDF details toggle adds URI/blank-node notation, literal quoting and themed superscript datatype/language metadata without converting endpoint lexical values. Configure the initial mode with `createTableRenderer({ showRdfDetails: true })`; the default is false. See the [Table guide](../../docs/renderers.md#rdf-details).
 
 ## RDF graph execution
 

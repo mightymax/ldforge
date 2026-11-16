@@ -748,6 +748,34 @@ order. Invalid host percentages throw at construction; a column-count mismatch
 falls back to equal widths at render time with a warning. Query widths override
 host defaults. No arbitrary CSS values are accepted as widths.
 
+### RDF details
+
+Table defaults to readable lexical values. The **RDF details** (**RDF-details**)
+toggle adds RDF notation: `<https://example.org>` for IRIs, `_:b1` for blank nodes,
+`"Hallo wereld"@nl` for language-tagged literals, and `"42"^^xsd:integer` for typed
+literals. Plain literals are quoted and unbound cells remain empty. Datatypes and
+language tags use smaller superscript in the active theme's muted color; the full
+original datatype IRI is available in the tooltip. XML Schema and RDF datatype
+IRIs are abbreviated as `xsd:` and `rdf:`; other datatype IRIs are shown in full.
+These display prefixes are predefined and do not depend on query prefix declarations.
+
+```ts
+createTableRenderer({ showRdfDetails: true }); // Default: false.
+```
+
+The exact lexical string, datatype and language from the endpoint are preserved;
+no numeric/date conversion is performed. For example, a long integer remains
+`"9223372036854775807"^^xsd:long`, and a float remains `"3.14"^^xsd:float` if those
+are the endpoint's returned terms. The table cannot recover values or datatypes
+that an endpoint has already converted. Quotes, newlines and backslashes are escaped
+for display; RDF text is never interpreted as HTML.
+
+The toggle choice is retained per result container for the renderer instance,
+including rerenders and view switches. Other editor instances remain independent.
+Changing it preserves filters, sort order, virtual scrolling and expanded resource
+information. Filters, sorting, CSV downloads and the result model continue using
+the original lexical values.
+
 ### Local DESCRIBE example
 
 The demo's **DESCRIBE-voorbeeld** explicitly selects local example data (no
