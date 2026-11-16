@@ -182,3 +182,73 @@ if (declared.ex !== undefined) tab.removePrefix('ex');
 else tab.addPrefix('ex', 'https://example.org/');
 console.log(editor.getPrefixes()); // Current active query declarations.
 ```
+
+## Theme colors
+
+`EditorOptions.themeMainColor?: string` sets an instance's main color. Supply an
+opaque hex color (`#RGB` or `#RRGGBB`); names, alpha colors, CSS expressions and
+other formats throw `TypeError`. Validation occurs before mounting, and invalid
+runtime changes leave the current theme intact. No additional dependencies load.
+
+```ts
+const editor = createEditor(container, {
+  executor,
+  themeMainColor: '#1a80b9',
+});
+editor.setThemeMainColor('#743ca6');
+console.log(editor.getThemeMainColor()); // Last configured value, or undefined.
+editor.setThemeMainColor(); // Restore the existing stylesheet/host CSS theme.
+```
+
+`getThemeMainColor(): string | undefined` and
+`setThemeMainColor(color?: string): void` throw after destruction. Changing a
+theme never changes query text, history, execution, or persistence callbacks.
+Hosts own persistence. Multiple editors can use different colors on one page.
+
+With no option, the existing green styling is retained. A supplied color derives
+light surfaces, borders, hover/selected backgrounds, focus and text colors on the
+editor root. Filled actions use the exact main color and whichever of black or
+white has the higher contrast (at least 4.5:1). Accent text is darkened separately
+for readability on light surfaces. This is a light UI theme; syntax colors,
+semantic error/warning colors and visualization data palettes remain independent.
+Host-authored result CSS and external visualization widgets may supply their own
+colors.
+
+### Shared CSS variables
+
+Renderer/settings plugins mounted inside the editor inherit these variables,
+including in the modal wizard. They update automatically after a runtime change.
+
+| Variable                                               | Purpose                                                                                     |
+| ------------------------------------------------------ | ------------------------------------------------------------------------------------------- |
+| `--ldforge-accent`                                     | Exact main color; filled actions and accents. Default `#075e55`.                            |
+| `--ldforge-accent-fill`                                | Main color for secondary filled controls; falls back to legacy component greens when unset. |
+| `--ldforge-on-accent`                                  | Black or white foreground on the main color.                                                |
+| `--ldforge-accent-text`                                | Readable accent text on light surfaces.                                                     |
+| `--ldforge-text`, `--ldforge-muted`                    | Main and secondary UI text.                                                                 |
+| `--ldforge-surface`                                    | White base surface.                                                                         |
+| `--ldforge-surface-subtle`, `--ldforge-surface-tinted` | Coordinated light surfaces.                                                                 |
+| `--ldforge-hover`, `--ldforge-selected`                | Hover and selection surfaces.                                                               |
+| `--ldforge-border`, `--ldforge-border-strong`          | Regular and emphasized borders. Default regular border `#d6dedd`.                           |
+| `--ldforge-focus`                                      | Focus outline on light surfaces.                                                            |
+| `--ldforge-shadow`, `--ldforge-backdrop`               | Translucent shadow/backdrop colors.                                                         |
+
+The configuration writes tokens inline on the `.ldforge` root. Reset removes
+these inline tokens and restores CSS overrides/defaults. Without a configured
+theme, tokens other than the existing accent and border may be unset: use
+fallbacks to retain your plugin's current appearance, for example:
+
+```css
+.my-settings-panel {
+  color: var(--ldforge-text, #182e2b);
+  background: var(--ldforge-surface-tinted, #f2f6f4);
+  border: 1px solid var(--ldforge-border, #d6dedd);
+}
+.my-settings-panel a {
+  color: var(--ldforge-accent-text, var(--ldforge-accent, #075e55));
+}
+```
+
+A manual override of only `--ldforge-accent` remains supported but does not derive
+the complete palette; use `themeMainColor` for coordinated colors. Plugin content
+ported outside the editor root must explicitly inherit/copy these variables.

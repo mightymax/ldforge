@@ -80,3 +80,8 @@ The gear panel offers query-text size controls (10–24 px, default/reset **12 p
 Only CodeMirror text changes; toolbar/settings/results fonts stay unchanged. Use
 `fontSize`/`onFontSizeChange` and `getFontSize()`/`setFontSize(size)` in hosts. The
 demo persists the choice in localStorage. `controls.fontSize: false` hides the field.
+
+Configure `themeMainColor: "#1a80b9"` for a coordinated instance theme, or call
+`editor.setThemeMainColor(color)` at runtime (omit the argument to reset). Opaque
+`#RGB`/`#RRGGBB` colors are supported. Plugins inherit the documented
+[theme CSS variables](../../docs/api/editor.md#theme-colors).

@@ -157,10 +157,10 @@ export function mountLazyView(
   Object.assign(frame.style, {
     height: '420px',
     position: 'relative',
-    border: '1px solid #d4dfdd',
+    border: '1px solid var(--ldforge-border, #d4dfdd)',
     borderRadius: '8px',
     overflow: 'hidden',
-    background: '#f8faf7',
+    background: 'var(--ldforge-surface-subtle, #f8faf7)',
   });
   const status = doc.createElement('p');
   status.setAttribute('role', 'status');

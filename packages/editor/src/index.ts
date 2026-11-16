@@ -1,3 +1,4 @@
+import { applyTheme, themeTokens } from './theme.js';
 import {
   createShareControl,
   createShareLink,
@@ -130,6 +131,8 @@ export interface EditorOptions {
   readonly onLocaleChange?: (preference: LocalePreference) => void;
   /** CodeMirror query text size only, 10–24px. */
   readonly fontSize?: number;
+  /** Instance accent as an opaque #RGB or #RRGGBB color. Omit for the default theme. */
+  readonly themeMainColor?: string;
   readonly onFontSizeChange?: (size: number) => void;
   /** Omit to use the combined Run/Stop button; provide an array to replace the toolbar. */
   readonly buttons?: readonly ButtonPlugin[];
@@ -155,6 +158,9 @@ export interface ForgeEditor extends EditorContext {
   getShareLink(): string;
   /** Copy the share URL and persist its renderer header as one undoable edit. */
   copyShareLink(): Promise<string>;
+  getThemeMainColor(): string | undefined;
+  /** Undefined restores the default theme. */
+  setThemeMainColor(color?: string): void;
   getFontSize(): number;
   setFontSize(size: number): void;
   isLoadingIndicatorEnabled(): boolean;
@@ -218,6 +224,8 @@ export function createEditor(
   container: HTMLElement,
   options: EditorOptions,
 ): ForgeEditor {
+  let themeMainColor = options.themeMainColor;
+  let tokens = themeTokens(themeMainColor);
   let fontSize = options.fontSize ?? DEFAULT_FONT_SIZE;
   validateFontSize(fontSize);
   const controls = resolveControls(options.controls);
@@ -248,6 +256,7 @@ export function createEditor(
   const doc = container.ownerDocument;
   const root = doc.createElement('section');
   root.className = 'ldforge';
+  applyTheme(root, {}, tokens);
   root.setAttribute('aria-label', 'SPARQL editor');
   const toolbar = doc.createElement('div');
   toolbar.className = 'ldforge-toolbar';
@@ -395,6 +404,17 @@ export function createEditor(
     togglePrefixes() {
       context.setPrefixesCollapsed(!context.arePrefixesCollapsed());
       return context.arePrefixesCollapsed();
+    },
+    getThemeMainColor() {
+      assertAlive();
+      return themeMainColor;
+    },
+    setThemeMainColor(color) {
+      assertAlive();
+      const next = themeTokens(color);
+      applyTheme(root, tokens, next);
+      tokens = next;
+      themeMainColor = color;
     },
     getFontSize() {
       assertAlive();

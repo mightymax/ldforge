@@ -4,11 +4,14 @@
   font:
     0.9375rem/1.5 system-ui,
     sans-serif;
-  color: #182e2b;
-  background: #fff;
+  color: var(--ldforge-text, #182e2b);
+  background: var(--ldforge-surface, #fff);
   border: 1px solid var(--ldforge-border);
   border-radius: 12px;
   overflow: hidden;
+}
+.ldforge input {
+  accent-color: var(--ldforge-accent);
 }
 .ldforge *,
 .ldforge *::before,
@@ -29,7 +32,7 @@
   border: 1px solid var(--ldforge-border);
   border-radius: 6px;
   padding: 6px 12px;
-  background: #fff;
+  background: var(--ldforge-surface, #fff);
   color: inherit;
 }
 .ldforge-button-group {
@@ -51,7 +54,7 @@
 }
 .ldforge-button-group[data-button-group='query'] > button:first-child {
   background: var(--ldforge-accent);
-  color: #fff;
+  color: var(--ldforge-on-accent, #fff);
 }
 
 .ldforge-button-group > button:hover:not(:disabled) {
@@ -64,7 +67,7 @@
   opacity: 0.5;
 }
 .ldforge :focus-visible {
-  outline: 3px solid #528eeb;
+  outline: 3px solid var(--ldforge-focus, #528eeb);
   outline-offset: 2px;
 }
 .ldforge .cm-editor {
@@ -79,7 +82,7 @@
   padding: 4px 0;
 }
 .ldforge .cm-gutters {
-  background: #f5f8f7;
+  background: var(--ldforge-surface-tinted, #f5f8f7);
   border-right: 1px solid var(--ldforge-border);
 }
 /* Compact result controls share one quiet bar, distinct from query tabs. */
@@ -90,7 +93,7 @@
   min-height: 49px;
   padding: 0 12px;
   border-block: 1px solid var(--ldforge-border);
-  background: #fafcfb;
+  background: var(--ldforge-surface-subtle, #fafcfb);
 }
 .ldforge-result-tabs {
   display: flex;
@@ -108,18 +111,18 @@
   border: 0;
   border-radius: 0;
   background: transparent;
-  color: #65756f;
+  color: var(--ldforge-muted, #65756f);
   font-size: 12px;
   white-space: nowrap;
   box-shadow: inset 0 -2px transparent;
 }
 .ldforge-result-tabs > button[aria-selected='true'] {
-  color: var(--ldforge-accent);
+  color: var(--ldforge-accent-text, var(--ldforge-accent));
   box-shadow: inset 0 -2px var(--ldforge-accent);
   font-weight: 600;
 }
 .ldforge-result-tabs > button:hover {
-  background: #edf4f1;
+  background: var(--ldforge-hover, #edf4f1);
 }
 .ldforge-result-tabs > button:focus-visible {
   outline-offset: -3px;
@@ -142,7 +145,7 @@
 }
 .ldforge-renderer-docs:hover,
 .ldforge-result-download:hover {
-  background: #edf4f1;
+  background: var(--ldforge-hover, #edf4f1);
 }
 .ldforge-icon {
   width: 17px;
@@ -218,16 +221,16 @@
 .ldforge th {
   position: sticky;
   top: -12px;
-  background: #f2f6f4;
+  background: var(--ldforge-surface-tinted, #f2f6f4);
   font-size: 12px;
   font-weight: 600;
-  color: #526662;
+  color: var(--ldforge-muted, #526662);
 }
 .ldforge tbody tr:nth-child(even) {
-  background: #fafcfb;
+  background: var(--ldforge-surface-subtle, #fafcfb);
 }
 .ldforge tbody tr:hover {
-  background: #f0f6f3;
+  background: var(--ldforge-surface-tinted, #f0f6f3);
 }
 .ldforge-results td {
   font-size: 13px;
@@ -238,21 +241,21 @@
   gap: 8px;
   margin: 8px 0 0;
   padding: 8px 14px;
-  background: #edf4f1;
+  background: var(--ldforge-hover, #edf4f1);
   border-radius: 8px;
   font-weight: 600;
-  color: var(--ldforge-accent);
+  color: var(--ldforge-accent-text, var(--ldforge-accent));
 }
 .ldforge-boolean[data-value='false'] {
-  background: #f2f4f3;
-  color: #65756f;
+  background: var(--ldforge-surface-tinted, #f2f4f3);
+  color: var(--ldforge-muted, #65756f);
 }
 .ldforge-results pre {
   margin: 0;
   padding: 14px 16px;
-  border: 1px solid #e6ece9;
+  border: 1px solid var(--ldforge-border, #e6ece9);
   border-radius: 8px;
-  background: #fafcfb;
+  background: var(--ldforge-surface-subtle, #fafcfb);
   font-size: 12px;
 }
 .ldforge pre {
@@ -265,13 +268,13 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  background: #fff;
+  background: var(--ldforge-surface, #fff);
   color: inherit;
   border-color: var(--ldforge-border);
 }
 .ldforge-settings {
   padding: 16px;
-  background: #f5f8f7;
+  background: var(--ldforge-surface-tinted, #f5f8f7);
   border-bottom: 1px solid var(--ldforge-border);
 }
 .ldforge-settings[hidden] {
@@ -296,7 +299,7 @@
 
 .ldforge-status {
   font-size: 12px;
-  color: #526662;
+  color: var(--ldforge-muted, #526662);
   font-variant-numeric: tabular-nums;
 }
 
@@ -309,7 +312,7 @@
 }
 .ldforge-language-help {
   font-size: 12px;
-  color: #526662;
+  color: var(--ldforge-muted, #526662);
   margin: 8px 0 24px;
 }
 
@@ -319,7 +322,7 @@
   gap: 6px;
   padding: 8px 12px 0;
   border-bottom: 1px solid var(--ldforge-border);
-  background: #f5f8f7;
+  background: var(--ldforge-surface-tinted, #f5f8f7);
 }
 .ldforge-tablist {
   display: flex;
@@ -332,18 +335,18 @@
   align-items: center;
   flex-shrink: 0;
   border-radius: 7px 7px 0 0;
-  color: #65756f;
+  color: var(--ldforge-muted, #65756f);
 }
 .ldforge-tab[data-active='true'] {
-  background: #fff;
-  color: var(--ldforge-accent);
+  background: var(--ldforge-surface, #fff);
+  color: var(--ldforge-accent-text, var(--ldforge-accent));
   box-shadow: inset 0 -2px var(--ldforge-accent);
 }
 .ldforge-tab:hover {
-  background: #edf2ef;
+  background: var(--ldforge-hover, #edf2ef);
 }
 .ldforge-tab[data-active='true']:hover {
-  background: #fff;
+  background: var(--ldforge-surface, #fff);
 }
 .ldforge-tab button {
   border: 0;
@@ -365,7 +368,7 @@
 .ldforge-tab .ldforge-tab-close {
   padding: 6px;
   width: 25px;
-  color: #6f7f77;
+  color: var(--ldforge-muted, #6f7f77);
   opacity: 0;
   pointer-events: auto;
 }
@@ -394,7 +397,7 @@
   border: 0;
   background: transparent;
   padding: 3px 10px;
-  color: #65756f;
+  color: var(--ldforge-muted, #65756f);
   font-size: 19px;
 }
 .ldforge-tab input.ldforge-tab-name {
@@ -411,7 +414,7 @@
 .ldforge-prefix-picker {
   padding: 16px;
   border-bottom: 1px solid var(--ldforge-border);
-  background: #f5f8f7;
+  background: var(--ldforge-surface-tinted, #f5f8f7);
 }
 .ldforge-prefix-picker[hidden] {
   display: none;
@@ -449,7 +452,7 @@
   background: transparent;
 }
 .ldforge-prefix-picker li button:hover {
-  background: #e8efeb;
+  background: var(--ldforge-hover, #e8efeb);
 }
 .ldforge-prefix-picker li strong {
   width: 85px;
@@ -460,13 +463,13 @@
   font:
     11px ui-monospace,
     monospace;
-  color: #63776d;
+  color: var(--ldforge-muted, #63776d);
   overflow-wrap: anywhere;
   min-width: 0;
 }
 .ldforge-prefix-picker p {
   font-size: 12px;
-  color: #63776d;
+  color: var(--ldforge-muted, #63776d);
   margin: 12px 0 0;
 }
 
@@ -503,7 +506,7 @@
   justify-content: center;
   padding: 7px 10px;
   min-width: 38px;
-  background: #fff;
+  background: var(--ldforge-surface, #fff);
 }
 .ldforge-core-tools > .ldforge-settings-toggle {
   margin-left: 0;
@@ -517,7 +520,7 @@
 }
 
 .ldforge-renderer-docs {
-  color: #65756f;
+  color: var(--ldforge-muted, #65756f);
   border-radius: 6px;
 }
 
@@ -534,16 +537,16 @@
   overflow: hidden;
   border: 1px solid var(--ldforge-border);
   border-radius: 10px;
-  background: #fff;
-  color: #182e2b;
-  box-shadow: 0 2px 6px #183c3506;
+  background: var(--ldforge-surface, #fff);
+  color: var(--ldforge-text, #182e2b);
+  box-shadow: 0 2px 6px var(--ldforge-shadow, #183c3506);
 }
 .ldforge-card > img {
   display: block;
   width: 100%;
   aspect-ratio: 16 / 10;
   object-fit: cover;
-  background: #edf4f1;
+  background: var(--ldforge-hover, #edf4f1);
 }
 .ldforge-card-body {
   display: flex;
@@ -573,14 +576,14 @@
   padding: 6px 11px;
   border: 1px solid var(--ldforge-border);
   border-radius: 6px;
-  background: #f2f7f4;
-  color: var(--ldforge-accent);
+  background: var(--ldforge-surface-tinted, #f2f7f4);
+  color: var(--ldforge-accent-text, var(--ldforge-accent));
   font-size: 12px;
   font-weight: 600;
   text-decoration: none;
 }
 .ldforge-card-button:hover {
-  background: #e5f0ea;
+  background: var(--ldforge-hover, #e5f0ea);
 }
 
 .ldforge-chart > h3 {
@@ -590,7 +593,7 @@
 }
 .ldforge-chart > p {
   font-size: 12px;
-  color: #526662;
+  color: var(--ldforge-muted, #526662);
 }
 .ldforge-chart details {
   margin-top: 16px;
@@ -600,7 +603,7 @@
 }
 .ldforge-chart summary {
   cursor: pointer;
-  color: var(--ldforge-accent);
+  color: var(--ldforge-accent-text, var(--ldforge-accent));
   margin-bottom: 12px;
 }
 
@@ -633,9 +636,9 @@
   z-index: 1000;
   border: 1px solid var(--ldforge-border);
   border-radius: 9px;
-  background: #fff;
-  color: #182e2b;
-  box-shadow: 0 8px 28px #183c3526;
+  background: var(--ldforge-surface, #fff);
+  color: var(--ldforge-text, #182e2b);
+  box-shadow: 0 8px 28px var(--ldforge-shadow, #183c3526);
   overflow: auto;
   overscroll-behavior: contain;
   box-sizing: border-box;
@@ -657,7 +660,7 @@
 }
 .ldforge-toolbar-menu > button:hover:not(:disabled),
 .ldforge-toolbar-menu > button:focus-visible {
-  background: #edf4f1;
+  background: var(--ldforge-hover, #edf4f1);
   outline-offset: -2px;
 }
 .ldforge-toolbar-menu[hidden],
@@ -683,12 +686,12 @@
   padding: 24px;
   border: 1px solid var(--ldforge-border, #d4dfdd);
   border-radius: 12px;
-  color: #183c35;
-  background: #fff;
-  box-shadow: 0 16px 60px #183c3533;
+  color: var(--ldforge-text, #183c35);
+  background: var(--ldforge-surface, #fff);
+  box-shadow: 0 16px 60px var(--ldforge-shadow, #183c3533);
 }
 .ldforge-renderer-wizard::backdrop {
-  background: #183c3555;
+  background: var(--ldforge-backdrop, #183c3555);
 }
 .ldforge-renderer-wizard h2 {
   font-size: 18px;
@@ -709,7 +712,7 @@
   box-sizing: border-box;
   max-width: 100%;
   padding: 8px;
-  border: 1px solid #c5d6cd;
+  border: 1px solid var(--ldforge-border, #c5d6cd);
   border-radius: 5px;
   font: inherit;
 }
@@ -732,10 +735,10 @@
 }
 .ldforge-wizard-actions button {
   padding: 8px 12px;
-  border: 1px solid #c5d6cd;
+  border: 1px solid var(--ldforge-border, #c5d6cd);
   border-radius: 5px;
-  background: #f0f6f2;
-  color: #183c35;
+  background: var(--ldforge-surface-tinted, #f0f6f2);
+  color: var(--ldforge-text, #183c35);
   cursor: pointer;
 }
 .ldforge-renderer-wizard [role='alert']:empty {
@@ -753,15 +756,15 @@
   align-items: center;
   justify-content: center;
   gap: 12px;
-  color: #405c57;
+  color: var(--ldforge-muted, #405c57);
   font-size: 13px;
 }
 .ldforge-spinner {
   display: inline-block;
   width: 28px;
   height: 28px;
-  border: 3px solid #cde0d8;
-  border-top-color: #087f73;
+  border: 3px solid var(--ldforge-border, #cde0d8);
+  border-top-color: var(--ldforge-accent-fill, #087f73);
   border-radius: 50%;
   animation: ldforge-spin 0.8s linear infinite;
 }
@@ -791,39 +794,39 @@
   min-height: 38px;
   max-width: 100%;
   padding: 8px 34px 8px 12px;
-  border: 1px solid #bfd0c6;
+  border: 1px solid var(--ldforge-border, #bfd0c6);
   border-radius: 8px;
-  background-color: #f7faf6;
+  background-color: var(--ldforge-surface-subtle, #f7faf6);
   background-image:
-    linear-gradient(45deg, transparent 50%, #537460 50%),
-    linear-gradient(135deg, #537460 50%, transparent 50%);
+    linear-gradient(45deg, transparent 50%, var(--ldforge-muted, #537460) 50%),
+    linear-gradient(135deg, var(--ldforge-muted, #537460) 50%, transparent 50%);
   background-position:
     calc(100% - 18px) 50%,
     calc(100% - 14px) 50%;
   background-size: 4px 4px;
   background-repeat: no-repeat;
-  color: #183c35;
+  color: var(--ldforge-text, #183c35);
   cursor: pointer;
   transition:
     border-color 120ms ease,
     background-color 120ms ease;
 }
 .ldforge-settings select:not([multiple]):hover:not(:disabled) {
-  border-color: #7e9e8b;
-  background-color: #f0f6ef;
+  border-color: var(--ldforge-border-strong, #7e9e8b);
+  background-color: var(--ldforge-surface-tinted, #f0f6ef);
 }
 .ldforge-settings select:focus-visible {
-  outline: 2px solid #087f73;
+  outline: 2px solid var(--ldforge-focus, #087f73);
   outline-offset: 2px;
-  border-color: #087f73;
+  border-color: var(--ldforge-accent-fill, #087f73);
 }
 .ldforge-settings select:disabled {
   cursor: default;
   opacity: 0.55;
 }
 .ldforge-settings option {
-  background: #fff;
-  color: #183c35;
+  background: var(--ldforge-surface, #fff);
+  color: var(--ldforge-text, #183c35);
 }
 .ldforge-font-size select {
   min-width: 100px;
@@ -872,7 +875,7 @@
   gap: 8px;
   flex: 1;
   font-size: 12px;
-  color: #65776f;
+  color: var(--ldforge-muted, #65776f);
 }
 .ldforge-wizard-progress li > span {
   display: grid;
@@ -881,20 +884,20 @@
   width: 26px;
   height: 26px;
   border-radius: 50%;
-  background: #eef3f0;
+  background: var(--ldforge-hover, #eef3f0);
   font-weight: 600;
 }
 .ldforge-wizard-progress [aria-current='step'] {
-  color: #216b50;
+  color: var(--ldforge-accent-text, #216b50);
   font-weight: 600;
 }
 .ldforge-wizard-progress [aria-current='step'] > span {
-  background: #216b50;
-  color: #fff;
+  background: var(--ldforge-accent-fill, #216b50);
+  color: var(--ldforge-on-accent, #fff);
 }
 .ldforge-wizard-progress [data-complete='true'] > span {
-  background: #dfefe6;
-  color: #216b50;
+  background: var(--ldforge-hover, #dfefe6);
+  color: var(--ldforge-accent-text, #216b50);
 }
 .ldforge-wizard-content {
   padding: 20px 24px;
@@ -904,7 +907,7 @@
   font-size: 17px;
 }
 .ldforge-wizard-hint {
-  color: #65776f;
+  color: var(--ldforge-muted, #65776f);
   margin: 0 0 20px;
   font-size: 13px;
 }
@@ -921,21 +924,21 @@
   gap: 12px;
   margin: 0;
   padding: 14px;
-  border: 1px solid #d7e2dc;
+  border: 1px solid var(--ldforge-border, #d7e2dc);
   border-radius: 9px;
   cursor: pointer;
 }
 .ldforge-wizard-renderer:hover {
-  background: #f5f8f6;
-  border-color: #92b6a3;
+  background: var(--ldforge-surface-tinted, #f5f8f6);
+  border-color: var(--ldforge-border-strong, #92b6a3);
 }
 .ldforge-wizard-renderer:has(input:checked) {
-  border-color: #2e7b59;
-  background: #eef7f1;
-  box-shadow: inset 0 0 0 1px #2e7b59;
+  border-color: var(--ldforge-accent-text, #2e7b59);
+  background: var(--ldforge-selected, #eef7f1);
+  box-shadow: inset 0 0 0 1px var(--ldforge-accent-text, #2e7b59);
 }
 .ldforge-wizard-renderer:has(input:focus-visible) {
-  outline: 3px solid #528eeb;
+  outline: 3px solid var(--ldforge-focus, #528eeb);
   outline-offset: 2px;
 }
 .ldforge-wizard-renderer input {
@@ -950,8 +953,8 @@
   flex: 0 0 32px;
   height: 32px;
   border-radius: 7px;
-  color: #286b50;
-  background: #e5efe9;
+  color: var(--ldforge-accent-text, #286b50);
+  background: var(--ldforge-hover, #e5efe9);
 }
 .ldforge-wizard-renderer strong {
   display: block;
@@ -962,14 +965,14 @@
   margin-top: 4px;
   font-size: 12px;
   line-height: 1.5;
-  color: #65776f;
+  color: var(--ldforge-muted, #65776f);
 }
 .ldforge-wizard-bindings {
   margin-top: 24px;
   padding: 16px;
   border: 1px solid var(--ldforge-border);
   border-radius: 8px;
-  background: #f7faf8;
+  background: var(--ldforge-surface-subtle, #f7faf8);
 }
 .ldforge-wizard-bindings h4 {
   margin: 0 0 12px;
@@ -990,23 +993,23 @@
 }
 .ldforge-wizard-bindings dt span {
   font-size: 10px;
-  color: #65776f;
+  color: var(--ldforge-muted, #65776f);
 }
 .ldforge-wizard-bindings [data-required='true'] {
-  color: #216b50;
+  color: var(--ldforge-accent-text, #216b50);
   font-weight: 600;
 }
 .ldforge-wizard-bindings dd {
   margin: 3px 0 0;
   font-size: 12px;
-  color: #65776f;
+  color: var(--ldforge-muted, #65776f);
 }
 .ldforge-wizard-actions {
   position: sticky;
   bottom: 0;
   margin-top: 0;
   padding: 16px 24px;
-  background: #fff;
+  background: var(--ldforge-surface, #fff);
   border-top: 1px solid var(--ldforge-border);
 }
 .ldforge-wizard-actions .ldforge-wizard-close {
@@ -1014,9 +1017,9 @@
   background: transparent;
 }
 .ldforge-wizard-actions .ldforge-wizard-primary {
-  background: #216b50;
-  border-color: #216b50;
-  color: #fff;
+  background: var(--ldforge-accent-fill, #216b50);
+  border-color: var(--ldforge-accent-fill, #216b50);
+  color: var(--ldforge-on-accent, #fff);
 }
 .ldforge-renderer-wizard > [role='alert'] {
   margin: 0 24px 16px;
@@ -1046,8 +1049,8 @@
   display: block;
 }
 .ldforge-share-toggle[data-copied='true'] {
-  color: #216b50;
-  background: #e5f3e9;
+  color: var(--ldforge-accent-text, #216b50);
+  background: var(--ldforge-hover, #e5f3e9);
 }
 .ldforge-share-toggle[data-copied='true'] svg {
   animation: ldforge-share-copied 320ms ease-out;
