@@ -49,21 +49,31 @@ describe('live toolbar API', () => {
       'first',
       'second',
     ]);
-    expect(host.querySelectorAll('[role="separator"]')).toHaveLength(1);
+    expect(
+      host.querySelectorAll('.ldforge-toolbar-separator[role="separator"]'),
+    ).toHaveLength(1);
     group.setType('buttons');
-    expect(host.querySelectorAll('[role="separator"]')).toHaveLength(0);
+    expect(
+      host.querySelectorAll('.ldforge-toolbar-separator[role="separator"]'),
+    ).toHaveLength(0);
     group.setType('dropdown');
-    expect(host.querySelectorAll('[role="separator"]')).toHaveLength(1);
+    expect(
+      host.querySelectorAll('.ldforge-toolbar-separator[role="separator"]'),
+    ).toHaveLength(1);
     const second = toolbar.getButton('second');
     if (!second) throw new Error('Missing second button');
     toolbar.addButton(second);
-    expect(host.querySelectorAll('[role="separator"]')).toHaveLength(0);
+    expect(
+      host.querySelectorAll('.ldforge-toolbar-separator[role="separator"]'),
+    ).toHaveLength(0);
     group.addButton(button('third'));
     group.addSeparator('third');
     const third = toolbar.getButton('third');
     if (!third) throw new Error('Missing third button');
     third.delete();
-    expect(host.querySelectorAll('[role="separator"]')).toHaveLength(0);
+    expect(
+      host.querySelectorAll('.ldforge-toolbar-separator[role="separator"]'),
+    ).toHaveLength(0);
   });
 
   it('creates detached reusable buttons, moves them between groups and updates labels/actions', async () => {

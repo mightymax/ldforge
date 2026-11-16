@@ -93,7 +93,13 @@ the query exceeds 15 visual lines. `autoGrow: true` grows with the query, using
 `editorRows` as its minimum height. Defaults are 15 rows and auto-grow enabled;
 the demo explicitly disables auto-grow and remembers the checkbox preference.
 
-The gear panel includes an **Show the full query** checkbox. Set
+Drag the handle below the query editor to change its height. It switches to a
+fixed scrolling viewport and updates `editorRows`. The focused handle also accepts
+Arrow Up/Down (one row), Shift+Arrow Up/Down (five rows) and Home (one row).
+Set `controls: { resizeEditor: false }` to hide it. The demo remembers the chosen
+row count as well as the auto-grow preference.
+
+The gear panel includes a **Show the full query** checkbox. Set
 `controls: { autoGrow: false }` to hide it. Runtime methods are
 `getEditorRows()`, `setEditorRows(rows)`, `isAutoGrowEnabled()` and
 `setAutoGrow(enabled)`. Optional `onEditorRowsChange` and `onAutoGrowChange`

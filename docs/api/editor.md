@@ -317,3 +317,9 @@ own height behavior. `onAutoGrowChange(enabled)` and `onEditorRowsChange(rows)`
 run only when the corresponding value changes, not on initial mount. Persistence
 belongs to the host. Hide the checkbox with `controls: { autoGrow: false }` while
 retaining all methods.
+
+The resize handle below the query editor is shown by default. Dragging it or using
+its keyboard controls disables auto-grow and sets `editorRows`, invoking the same
+change callbacks as the API. Arrow Up/Down changes one row, Shift changes five,
+and Home reduces the viewport to one row. Set `controls: { resizeEditor: false }`
+to hide the handle. The demo persists the chosen row count across reloads.

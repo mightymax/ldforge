@@ -1241,3 +1241,35 @@ test('completes SELECT variables from a later WHERE block', async ({
   await option.click();
   await expect(query).toHaveText('SELECT ?subject WHERE { ?subject ?p ?o }');
 });
+
+test('resizes the query editor by dragging and keyboard, retaining height after reload', async ({
+  page,
+}) => {
+  await page.goto('/');
+  const query = page.getByRole('textbox', {
+    name: 'SPARQL query',
+    exact: true,
+  });
+  await query.fill('SELECT * WHERE { ?s ?p ?o }');
+  const handle = page.getByRole('separator', { name: 'Resize query editor' });
+  const before = await query.boundingBox();
+  const grip = await handle.boundingBox();
+  if (!before || !grip) throw new Error('Missing editor geometry');
+  await page.mouse.move(grip.x + grip.width / 2, grip.y + grip.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(
+    grip.x + grip.width / 2,
+    grip.y + grip.height / 2 + 90,
+    { steps: 8 },
+  );
+  await page.mouse.up();
+  await expect
+    .poll(async () => (await query.boundingBox())?.height ?? 0)
+    .toBeGreaterThan(before.height + 50);
+  const rows = Number(await handle.getAttribute('aria-valuenow'));
+  await handle.press('Shift+ArrowDown');
+  await expect(handle).toHaveAttribute('aria-valuenow', String(rows + 5));
+  await expect(query).toHaveText('SELECT * WHERE { ?s ?p ?o }');
+  await page.reload();
+  await expect(handle).toHaveAttribute('aria-valuenow', String(rows + 5));
+});
