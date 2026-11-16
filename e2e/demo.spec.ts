@@ -416,7 +416,7 @@ test('groups icon-only core tools on the right and formats without loading a glo
 }) => {
   await page.goto('/');
   const tools = page.getByRole('group', { name: 'Editor tools', exact: true });
-  await expect(tools.getByRole('button')).toHaveCount(5);
+  await expect(tools.getByRole('button')).toHaveCount(6);
   const gear = tools.getByRole('button', { name: 'IDE settings', exact: true });
   await expect(gear).toHaveCSS('border-left-width', '1px');
   await expect(gear).toHaveCSS('border-left-style', 'solid');
@@ -437,6 +437,7 @@ test('groups icon-only core tools on the right and formats without loading a glo
     'Format query',
     'Plugin wizard',
     'Copy share link',
+    'Keyboard shortcuts',
     'IDE settings',
   ]);
   expect(
@@ -446,6 +447,20 @@ test('groups icon-only core tools on the right and formats without loading a glo
         buttons.every((button) => button.textContent?.trim() === ''),
       ),
   ).toBe(true);
+  const shortcuts = tools.getByRole('button', {
+    name: 'Keyboard shortcuts',
+    exact: true,
+  });
+  await shortcuts.click();
+  const help = page.getByRole('dialog', {
+    name: 'Keyboard shortcuts',
+    exact: true,
+  });
+  await expect(help).toBeVisible();
+  await expect(help).toContainText('Run query');
+  await page.keyboard.press('Escape');
+  await expect(help).not.toBeVisible();
+  await expect(shortcuts).toBeFocused();
   const query = page.getByRole('textbox', {
     name: 'SPARQL query',
     exact: true,
