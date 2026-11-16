@@ -117,3 +117,5 @@ Set `availablePlugins: false` to hide the dropdown, or `visiblePlugins: ['table'
 not remount the result or execute queries. An explicit visiblePlugins array
 replaces the defaults; unknown plugin IDs are rejected. See the
 [API guide](docs/api/editor.md#result-plugin-visibility).
+
+Variable completion searches the entire query, so typing `?` in `SELECT` also suggests variables used later in `WHERE`. It respects subquery projections and ignores variables inside comments, strings and IRIs. Type a variable name to filter the suggestions; use Ctrl+Space to request completion explicitly.

@@ -1,3 +1,4 @@
+import { createEditorResize } from './editor-resize.js';
 import {
   createAutoGrowControl,
   DEFAULT_EDITOR_ROWS,
@@ -418,12 +419,23 @@ export function createEditor(
   );
   autoGrowControl.element.hidden = !controls.autoGrow;
   settingsPanel.append(autoGrowControl.element);
+  const editorResize = createEditorResize({
+    editor: editorHost,
+    getRows: () => editorRows,
+    getLocale: () => locale,
+    resize(rows) {
+      context.setAutoGrow(false);
+      context.setEditorRows(rows);
+    },
+  });
+  editorResize.element.hidden = !controls.resizeEditor;
   const toggle = doc.createElement('button');
   root.append(
     toolbar,
     settingsPanel,
     tabBar,
     editorHost,
+    editorResize.element,
     resultToolbar,
     rendererWarning,
     rendererInfo,
@@ -491,6 +503,7 @@ export function createEditor(
       if (rows === editorRows) return;
       editorRows = rows;
       editorHost.style.setProperty('--ldforge-query-rows', String(rows));
+      editorResize.refresh();
       view.requestMeasure();
       options.onEditorRowsChange?.(rows);
     },
@@ -504,6 +517,7 @@ export function createEditor(
       autoGrow = enabled;
       editorHost.dataset.autoGrow = String(enabled);
       autoGrowControl.refresh();
+      editorResize.refresh();
       view.requestMeasure();
       options.onAutoGrowChange?.(enabled);
     },
@@ -518,6 +532,7 @@ export function createEditor(
       fontSize = size;
       editorHost.style.setProperty('--ldforge-query-font-size', `${size}px`);
       fontSizeControl.refresh();
+      editorResize.refresh();
       view.requestMeasure();
       options.onFontSizeChange?.(size);
     },
@@ -637,6 +652,7 @@ export function createEditor(
     destroy() {
       doc.removeEventListener('pointerdown', dismissRendererPicker);
       if (disposed) return;
+      editorResize.destroy();
       shareControl.destroy();
       rendererWizard.destroy();
       toolbarView.destroy();
@@ -1326,6 +1342,7 @@ export function createEditor(
   }
 
   function refreshLocale(): void {
+    editorResize.refresh();
     autoGrowControl.refresh();
     fontSizeControl.refresh();
     rendererWizard.refreshLocale();

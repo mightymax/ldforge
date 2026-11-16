@@ -11,7 +11,7 @@ import {
   getSparqlContext,
   parseTree,
   prefixDeclarations,
-  previousVariables,
+  queryVariables,
 } from './analysis.js';
 import { defaultPredicates, namespaceCatalog } from './vocabulary.js';
 import type { SparqlOptions } from './vocabulary.js';
@@ -145,7 +145,7 @@ export function createSparqlCompletion(
     const completions: Completion[] = [];
     const variablePrefix = range.text.startsWith('$') ? '$' : '?';
     if (!range.text || /^[?$]/.test(range.text)) {
-      for (const variable of previousVariables(context.state, range.from))
+      for (const variable of queryVariables(context.state, context.pos))
         completions.push({
           label: `${variablePrefix}${variable}`,
           type: 'variable',

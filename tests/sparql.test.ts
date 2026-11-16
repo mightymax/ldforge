@@ -10,6 +10,7 @@ import {
   sparqlLanguage,
   getSparqlContext,
   previousVariables,
+  queryVariables,
   createSparqlCompletion,
   sparqlDiagnostics,
 } from '@ldforge/editor';
@@ -155,7 +156,7 @@ describe('contextual SPARQL completion', () => {
       createSparqlCompletion()(
         new CompletionContext(state, position, true),
       )?.options.map((option) => option.label),
-    ).toEqual(['?person', '?p', '?value']);
+    ).toEqual(['?person', '?p', '?value', '?later', '?x']);
     expect(
       complete('SELECT $name WHERE { FILTER($¦) }').result?.options.map(
         (option) => option.label,
@@ -174,6 +175,47 @@ describe('contextual SPARQL completion', () => {
       'SELECT ?outer WHERE { { SELECT ?inner WHERE { ?inner ?p ?o FILTER(¦) } } }',
     );
     expect(previousVariables(inner.state, inner.position)).toEqual([
+      'inner',
+      'p',
+      'o',
+    ]);
+  });
+  it('suggests variables declared later when writing SELECT', () => {
+    const { state, position, result } = complete(
+      'SELECT ?¦ WHERE { ?subject ?p ?o . FILTER(?subject = "?fake") # ?comment\n }',
+    );
+    expect(queryVariables(state, position)).toEqual(['subject', 'p', 'o']);
+    expect(result?.options.map((option) => option.label)).toEqual([
+      '?subject',
+      '?p',
+      '?o',
+    ]);
+    expect(
+      complete('SELECT $sub¦ WHERE { ?subject ?p ?o }').result?.options.map(
+        (option) => option.label,
+      ),
+    ).toContain('$subject');
+  });
+  it('offers only projected names from later subqueries, including aliases', () => {
+    const { state, position } = input(
+      'SELECT ?¦ WHERE { { SELECT (COUNT(?hidden) AS ?count) ?visible WHERE { ?hidden ?p ?visible } } }',
+    );
+    expect(queryVariables(state, position)).toEqual(['count', 'visible']);
+  });
+  it('respects nested wildcard projections and the current subquery scope', () => {
+    const outer = input(
+      'SELECT ?¦ WHERE { { SELECT * WHERE { ?inner ?p ?o . { SELECT ?exported WHERE { ?hidden ?q ?exported } } } } }',
+    );
+    expect(queryVariables(outer.state, outer.position)).toEqual([
+      'inner',
+      'p',
+      'o',
+      'exported',
+    ]);
+    const inner = input(
+      'SELECT ?outer WHERE { { SELECT ?¦ WHERE { ?inner ?p ?o } } }',
+    );
+    expect(queryVariables(inner.state, inner.position)).toEqual([
       'inner',
       'p',
       'o',

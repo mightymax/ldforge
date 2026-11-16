@@ -1,5 +1,10 @@
 import { createEndpointIndicator } from './endpoint-indicator.js';
-import { readUserAutoGrow, saveUserAutoGrow } from './auto-grow-preference.js';
+import {
+  readUserAutoGrow,
+  saveUserAutoGrow,
+  readUserEditorRows,
+  saveUserEditorRows,
+} from './auto-grow-preference.js';
 import { prefixes as extendedPrefixes } from '@ldforge/prefixes/extended';
 import { readUserFontSize, saveUserFontSize } from './font-size-preference.js';
 import { createTreeRenderer } from '@ldforge/tree';
@@ -328,7 +333,8 @@ const editor = createEditor(mount, {
   onWorkspaceChange: saveQueryWorkspace,
   query: sharedQuery ?? selectQuery,
   prefixesCollapsed: true,
-  editorRows: 15,
+  editorRows: readUserEditorRows(),
+  onEditorRowsChange: saveUserEditorRows,
   autoGrow: readUserAutoGrow(),
   onAutoGrowChange: saveUserAutoGrow,
   sparql: { prefixes: extendedPrefixes },

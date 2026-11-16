@@ -1272,3 +1272,37 @@
 .ldforge-settings .ldforge-auto-grow input {
   margin-top: 3px;
 }
+
+.ldforge-editor-resize {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 9px;
+  border-top: 1px solid var(--ldforge-border);
+  background: var(--ldforge-surface-subtle, #fafcfb);
+  cursor: ns-resize;
+  touch-action: none;
+  user-select: none;
+}
+.ldforge-editor-resize::after {
+  content: '';
+  width: 32px;
+  height: 3px;
+  border-radius: 3px;
+  background: var(--ldforge-border-strong, #a0b7b2);
+}
+.ldforge-editor-resize:hover::after,
+.ldforge-editor-resize[data-dragging='true']::after {
+  background: var(--ldforge-accent);
+}
+.ldforge-editor-resize:focus-visible {
+  outline-offset: -2px;
+}
+.ldforge-editor-resize[hidden] {
+  display: none;
+}
+@media (pointer: coarse) {
+  .ldforge-editor-resize {
+    height: 20px;
+  }
+}

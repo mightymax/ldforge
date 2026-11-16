@@ -212,3 +212,64 @@ export function previousVariables(
   });
   return [...result];
 }
+
+/** Variables throughout the query, including later occurrences and visible subquery outputs. */
+export function queryVariables(
+  state: EditorState,
+  position: number,
+): readonly string[] {
+  const tree = parseTree(state);
+  const scope = subquery(tree.resolveInner(position, -1));
+  const exports = new Map<number, Set<string>>();
+  const nameOf = (node: SyntaxNode) => state.sliceDoc(node.from + 1, node.to);
+  function sameScope(
+    a: SyntaxNode | undefined,
+    b: SyntaxNode | undefined,
+  ): boolean {
+    return a?.from === b?.from;
+  }
+  function visible(node: SyntaxNode, target: SyntaxNode | undefined): boolean {
+    let owner = subquery(node);
+    const name = nameOf(node);
+    while (!sameScope(owner, target)) {
+      if (!owner || !projected(owner).has(name)) return false;
+      owner = subquery(owner.parent ?? owner);
+    }
+    return true;
+  }
+  function projected(query: SyntaxNode): Set<string> {
+    const cached = exports.get(query.from);
+    if (cached) return cached;
+    const result = new Set<string>();
+    exports.set(query.from, result);
+    const select = query.getChild('SelectClause');
+    if (!select) return result;
+    for (const variable of select.getChildren('Var'))
+      result.add(nameOf(variable));
+    if (
+      /^SELECT\s+(?:(?:DISTINCT|REDUCED)\s+)?\*\s*$/i.test(
+        state.sliceDoc(select.from, select.to),
+      )
+    ) {
+      tree.iterate({
+        from: query.from,
+        to: query.to,
+        enter(ref) {
+          if (ref.name === 'Var' && visible(ref.node, query))
+            result.add(nameOf(ref.node));
+        },
+      });
+    }
+    return result;
+  }
+  const result = new Set<string>();
+  tree.iterate({
+    enter(ref) {
+      if (ref.name !== 'Var' || (ref.from <= position && position <= ref.to))
+        return;
+      const name = nameOf(ref.node);
+      if (name && visible(ref.node, scope)) result.add(name);
+    },
+  });
+  return [...result];
+}

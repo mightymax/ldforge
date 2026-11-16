@@ -106,16 +106,22 @@ export function verifyVersions(
   dependencyOrder(libraries);
   return libraries;
 }
+function releaseGitIssues(root) {
+  const issues = [];
+  if (git(root, 'branch', '--show-current') !== 'main')
+    issues.push('Release only from main.');
+  if (git(root, 'status', '--porcelain=v1', '--untracked-files=all'))
+    issues.push(
+      'Release requires a clean working tree, including untracked files.',
+    );
+  return issues;
+}
 export function guardRelease(
   root,
   { fetch = true, checkDependencies = true } = {},
 ) {
-  if (git(root, 'branch', '--show-current') !== 'main')
-    throw new Error('Release only from main.');
-  if (git(root, 'status', '--porcelain=v1', '--untracked-files=all'))
-    throw new Error(
-      'Release requires a clean working tree, including untracked files.',
-    );
+  const issues = releaseGitIssues(root);
+  if (issues.length) throw new Error(issues.join('\n'));
   verifyVersions(root, { checkDependencies });
   if (fetch)
     git(
@@ -631,6 +637,10 @@ if (
     if (['preversion', 'sync', 'reject-workspace'].includes(action))
       rejectDirectVersion();
     else if (action === 'plan') {
+      for (const issue of releaseGitIssues(rootDirectory))
+        process.stderr.write(
+          `Warning: ${issue} Commit your changes on main before preparing or pushing a release.\n`,
+        );
       const plan = await planRelease(rootDirectory);
       if (process.argv.includes('--json'))
         process.stdout.write(

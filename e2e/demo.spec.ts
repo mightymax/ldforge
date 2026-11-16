@@ -1221,3 +1221,23 @@ test('serves complete social sharing metadata without JavaScript', async ({
     await context.close();
   }
 });
+
+test('completes SELECT variables from a later WHERE block', async ({
+  page,
+}) => {
+  await page.goto('/');
+  const query = page.getByRole('textbox', {
+    name: 'SPARQL query',
+    exact: true,
+  });
+  await query.fill('SELECT  WHERE { ?subject ?p ?o }');
+  await query.press('Home');
+  for (let index = 0; index < 7; index++) await query.press('ArrowRight');
+  await query.pressSequentially('?sub');
+  const option = page
+    .locator('.cm-tooltip-autocomplete [role=option]')
+    .filter({ hasText: '?subject' });
+  await expect(option).toBeVisible();
+  await option.click();
+  await expect(query).toHaveText('SELECT ?subject WHERE { ?subject ?p ?o }');
+});

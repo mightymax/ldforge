@@ -10,7 +10,11 @@ import { sparqlDiagnostics } from './diagnostics.js';
 import type { SparqlOptions } from './vocabulary.js';
 
 export { SparqlLanguage as sparqlLanguage };
-export { getSparqlContext, previousVariables } from './analysis.js';
+export {
+  getSparqlContext,
+  previousVariables,
+  queryVariables,
+} from './analysis.js';
 export type { SparqlCursorContext, SparqlPosition } from './analysis.js';
 export { createSparqlCompletion, addPrefix } from './completion.js';
 export { sparqlDiagnostics } from './diagnostics.js';

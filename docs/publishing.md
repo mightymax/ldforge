@@ -49,7 +49,13 @@ npm run release:plan
 npm run release:plan -- --json
 ```
 
-Planning is read-only and works on a development branch. It lists each package's
+Planning is read-only and works on a development branch. It warns when the branch
+is not `main` or the working tree contains staged, unstaged or untracked changes.
+Warnings go to stderr, so `--json` output remains valid JSON. Preparing or pushing
+a release rejects these states with an error. Committed changes on `main` do not
+have to be pushed first.
+
+The plan lists each package's
 old/new version and the reason: explicit changeset, necessary dependency update,
 or embedded bundle change. Multiple changesets accumulate into one release.
 An editor minor starting from 1.0.0 normally plans editor 1.1.0 and Yasgui 1.1.0;

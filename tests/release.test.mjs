@@ -1,3 +1,4 @@
+import process from 'node:process';
 import assert from 'node:assert/strict';
 import { execFileSync, spawnSync } from 'node:child_process';
 import {
@@ -505,7 +506,7 @@ test('an independent second release uses per-package baselines without re-releas
   }
 });
 
-for (const mutation of ['branch', 'dirty', 'untracked', 'behind']) {
+for (const mutation of ['branch', 'dirty', 'staged', 'untracked', 'behind']) {
   test(`preparation rejects ${mutation} state without changing versions`, async () => {
     const project = fixture();
     try {
@@ -513,6 +514,10 @@ for (const mutation of ['branch', 'dirty', 'untracked', 'behind']) {
       if (mutation === 'branch') git(project.root, 'switch', '-c', 'feature');
       if (mutation === 'dirty')
         appendFileSync(join(project.root, '.gitignore'), '# modified\n');
+      if (mutation === 'staged') {
+        appendFileSync(join(project.root, '.gitignore'), '# staged\n');
+        git(project.root, 'add', '.gitignore');
+      }
       if (mutation === 'untracked')
         writeFileSync(join(project.root, 'untracked.txt'), 'user work');
       if (mutation === 'behind') {
@@ -611,3 +616,43 @@ test('publisher preflights all independent versions, uploads in plan order and r
     project.dispose();
   }
 });
+
+for (const mutation of ['clean', 'dirty', 'staged', 'untracked', 'branch']) {
+  test(`plan warns for unsafe Git state but remains read-only: ${mutation}`, () => {
+    const project = fixture();
+    try {
+      change(project);
+      if (mutation === 'branch') git(project.root, 'switch', '-c', 'feature');
+      if (mutation === 'dirty' || mutation === 'staged') {
+        appendFileSync(join(project.root, '.gitignore'), '# modified\n');
+        if (mutation === 'staged') git(project.root, 'add', '.gitignore');
+      }
+      if (mutation === 'untracked')
+        writeFileSync(join(project.root, 'untracked.txt'), 'work');
+      const before = git(project.root, 'status', '--porcelain');
+      const head = git(project.root, 'rev-parse', 'HEAD');
+      const result = spawnSync(
+        process.execPath,
+        ['scripts/release.mjs', 'plan', '--json'],
+        {
+          cwd: project.root,
+          encoding: 'utf8',
+        },
+      );
+      assert.equal(result.status, 0, result.stderr);
+      assert.ok(JSON.parse(result.stdout).releases.length);
+      if (mutation === 'clean') assert.equal(result.stderr, '');
+      else
+        assert.match(
+          result.stderr,
+          mutation === 'branch'
+            ? /Warning: Release only from main/
+            : /Warning: Release requires a clean working tree/,
+        );
+      assert.equal(git(project.root, 'status', '--porcelain'), before);
+      assert.equal(git(project.root, 'rev-parse', 'HEAD'), head);
+    } finally {
+      project.dispose();
+    }
+  });
+}

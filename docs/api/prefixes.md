@@ -64,17 +64,18 @@ For ordinary host integrations, use [tab.addPrefix](tab.md) rather than the low-
 
 Exports from `@ldforge/editor` for custom CodeMirror hosts:
 
-| Export                                        | Purpose                                                                                                   |
-| --------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
-| `sparqlLanguage`                              | SPARQL Lezer `LRLanguage`.                                                                                |
-| `sparqlSupport(options?, locale?)`            | CodeMirror extension for parsing, completion and local diagnostics. `locale` is a getter returning en/nl. |
-| `formatSparql(query, options?)`               | `Promise<string>` standalone formatter; no editor needed.                                                 |
-| `getSparqlContext(state, position)`           | Structural context with booleans `service`, `filter`, `triple`, `blocked`, and `position`.                |
-| `previousVariables(state, before)`            | Earlier visible syntactic variable names without their sigil.                                             |
-| `createSparqlCompletion(options?)`            | CodeMirror completion source.                                                                             |
-| `sparqlDiagnostics(state, locale?, options?)` | Synchronous CodeMirror diagnostics, including known-prefix quick fixes.                                   |
-| `addPrefix(view, prefix, namespace)`          | Adds a declaration to an existing CodeMirror view; returns the actual alias.                              |
-| `defaultPrefixes` / `defaultPredicates`       | Default namespace map / small predicate vocabulary.                                                       |
+| Export                                        | Purpose                                                                                                      |
+| --------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| `sparqlLanguage`                              | SPARQL Lezer `LRLanguage`.                                                                                   |
+| `sparqlSupport(options?, locale?)`            | CodeMirror extension for parsing, completion and local diagnostics. `locale` is a getter returning en/nl.    |
+| `formatSparql(query, options?)`               | `Promise<string>` standalone formatter; no editor needed.                                                    |
+| `getSparqlContext(state, position)`           | Structural context with booleans `service`, `filter`, `triple`, `blocked`, and `position`.                   |
+| `previousVariables(state, before)`            | Earlier visible syntactic variable names without their sigil.                                                |
+| `queryVariables(state, position)`             | Visible variable names throughout the current query scope, including later occurrences, without their sigil. |
+| `createSparqlCompletion(options?)`            | CodeMirror completion source.                                                                                |
+| `sparqlDiagnostics(state, locale?, options?)` | Synchronous CodeMirror diagnostics, including known-prefix quick fixes.                                      |
+| `addPrefix(view, prefix, namespace)`          | Adds a declaration to an existing CodeMirror view; returns the actual alias.                                 |
+| `defaultPrefixes` / `defaultPredicates`       | Default namespace map / small predicate vocabulary.                                                          |
 
 Cursor `position` is subject, predicate, object, expression, service or other. Diagnostics report parser recovery spans and undeclared names. They do not certify semantic validity, endpoint capabilities or query safety. This implementation does not start a language server.
 
