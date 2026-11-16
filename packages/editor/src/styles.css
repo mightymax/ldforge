@@ -98,11 +98,12 @@
 .ldforge-result-tabs {
   display: flex;
   align-self: stretch;
+  align-items: center;
   gap: 4px;
-  overflow-x: auto;
+  overflow: visible;
   min-width: 0;
 }
-.ldforge-result-tabs > button {
+.ldforge-result-tab-item > button[role='tab'] {
   display: inline-flex;
   align-items: center;
   gap: 7px;
@@ -116,15 +117,15 @@
   white-space: nowrap;
   box-shadow: inset 0 -2px transparent;
 }
-.ldforge-result-tabs > button[aria-selected='true'] {
+.ldforge-result-tab-item > button[role='tab'][aria-selected='true'] {
   color: var(--ldforge-accent-text, var(--ldforge-accent));
   box-shadow: inset 0 -2px var(--ldforge-accent);
   font-weight: 600;
 }
-.ldforge-result-tabs > button:hover {
+.ldforge-result-tab-item > button[role='tab']:hover {
   background: var(--ldforge-hover, #edf4f1);
 }
-.ldforge-result-tabs > button:focus-visible {
+.ldforge-result-tab-item > button[role='tab']:focus-visible {
   outline-offset: -3px;
 }
 .ldforge-status {
@@ -1096,4 +1097,164 @@
   height: 1.125rem;
   margin-top: 0.1rem;
   color: var(--ldforge-warning-icon, #936719);
+}
+
+.ldforge-result-tab-item {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+.ldforge-result-tab-item > button[role='tab']:disabled {
+  opacity: 0.45;
+  cursor: default;
+  background: transparent;
+}
+.ldforge-result-tab-item > .ldforge-renderer-info-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 5px;
+  margin-inline-end: 4px;
+  border: 0;
+  background: transparent;
+  color: var(--ldforge-muted, #65756f);
+}
+.ldforge-renderer-info-toggle:hover,
+.ldforge-renderer-info-toggle[aria-expanded='true'] {
+  background: var(--ldforge-hover, #edf4f1);
+  color: var(--ldforge-accent-text, var(--ldforge-accent));
+}
+.ldforge-renderer-info-toggle .ldforge-icon {
+  width: 14px;
+  height: 14px;
+}
+.ldforge-renderer-info {
+  position: relative;
+  margin: 0.75rem;
+  padding: 1rem 2.75rem 1rem 1rem;
+  border: 1px solid var(--ldforge-border);
+  border-radius: 6px;
+  background: var(--ldforge-surface-subtle, #fafcfb);
+  font-size: 0.875rem;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+.ldforge-renderer-info-close {
+  position: absolute;
+  inset-block-start: 0.5rem;
+  inset-inline-end: 0.5rem;
+  padding: 2px 8px;
+  background: transparent;
+  border: 0;
+  font-size: 1.25rem;
+}
+.ldforge-renderer-info p,
+.ldforge-renderer-info dl {
+  margin: 0.625rem 0 0;
+}
+.ldforge-renderer-info dt {
+  margin-top: 0.625rem;
+  color: var(--ldforge-muted, #65756f);
+}
+.ldforge-renderer-info dt code {
+  color: var(--ldforge-text, #182e2b);
+}
+.ldforge-renderer-info dd {
+  margin: 0.125rem 0 0;
+}
+
+.ldforge-result-tab-active {
+  align-self: stretch;
+}
+.ldforge-renderer-picker {
+  position: relative;
+  flex-shrink: 0;
+}
+.ldforge-renderer-picker > summary {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 9px;
+  border-radius: 4px;
+  color: var(--ldforge-muted, #65756f);
+  font-size: 12px;
+  cursor: pointer;
+  list-style: none;
+}
+.ldforge-renderer-picker > summary::-webkit-details-marker {
+  display: none;
+}
+.ldforge-renderer-picker > summary svg {
+  width: 14px;
+  height: 14px;
+}
+.ldforge-renderer-picker > summary:hover,
+.ldforge-renderer-picker[open] > summary {
+  background: var(--ldforge-hover, #edf4f1);
+}
+.ldforge-renderer-picker-options {
+  position: absolute;
+  inset-block-start: calc(100% + 8px);
+  inset-inline-start: 0;
+  z-index: 20;
+  width: 245px;
+  max-width: calc(100vw - 48px);
+  max-height: min(65vh, 440px);
+  overflow-y: auto;
+  padding: 5px;
+  border: 1px solid var(--ldforge-border);
+  border-radius: 7px;
+  background: var(--ldforge-surface, #fff);
+  box-shadow: 0 8px 24px var(--ldforge-shadow, #182e2b18);
+}
+.ldforge-renderer-picker-options .ldforge-result-tab-item {
+  justify-content: space-between;
+}
+.ldforge-renderer-picker-options .ldforge-result-tab-item > button[role='tab'] {
+  flex: 1;
+  padding: 9px;
+  border-radius: 4px;
+  text-align: start;
+}
+
+/* Query viewport only: result renderers own their editor sizing. */
+.ldforge .ldforge-code .cm-editor {
+  font-size: var(--ldforge-query-font-size, 12px);
+  min-height: calc(var(--ldforge-query-rows, 15) * 1.5em + 8px);
+}
+.ldforge .ldforge-code .cm-scroller {
+  line-height: 1.5;
+}
+.ldforge .ldforge-code[data-auto-grow='false'] .cm-editor {
+  height: calc(var(--ldforge-query-rows, 15) * 1.5em + 8px);
+}
+.ldforge .ldforge-code[data-auto-grow='false'] .cm-scroller {
+  overflow: auto;
+}
+.ldforge-auto-grow {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 12px 0;
+  font-size: 13px;
+  cursor: pointer;
+}
+.ldforge-auto-grow[hidden] {
+  display: none;
+}
+.ldforge-settings .ldforge-auto-grow input {
+  width: auto;
+  margin: 0;
+  flex: 0 0 auto;
+}
+
+.ldforge-auto-grow small {
+  display: block;
+  margin-top: 3px;
+  color: var(--ldforge-muted, #65756f);
+  font-size: 12px;
+  line-height: 1.5;
+}
+.ldforge-settings .ldforge-auto-grow input {
+  margin-top: 3px;
 }

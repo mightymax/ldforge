@@ -3,7 +3,7 @@ import {
   saveActiveEndpoint,
 } from './endpoint-preference.js';
 import { createHttpExecutor, createQueryEndpointExecutor } from '@ldforge/core';
-import type { QueryExecutor, SettingsPlugin } from '@ldforge/core';
+import type { Locale, QueryExecutor, SettingsPlugin } from '@ldforge/core';
 import { createEndpointHistory } from './endpoint-history.js';
 import type { EndpointSettings } from './endpoint-history.js';
 import { endpointText } from './endpoint-messages.js';
@@ -11,7 +11,7 @@ import type { EndpointMessage } from './endpoint-messages.js';
 
 export function createEndpointSettings(
   fixtureExecutor: QueryExecutor,
-  onEndpointChange?: (label: string) => void,
+  onEndpointChange?: (label: string, endpoint: string, locale: Locale) => void,
 ): {
   executor: QueryExecutor;
   getEndpoint(): string;
@@ -50,12 +50,15 @@ export function createEndpointSettings(
       },
       render(container, context) {
         container.innerHTML = `
-          <form id="connection">
-            <label for="saved-endpoints" data-i18n="saved"></label>
-            <select id="saved-endpoints" aria-describedby="endpoint-history-help"></select>
-            <p id="endpoint-history-help" data-i18n="historyHelp"></p>
+          <div class="endpoint-overview">
+            <div class="endpoint-manager-heading"><h3 data-i18n="saved"></h3><button id="new-endpoint" type="button" data-i18n="addEndpoint"></button></div>
+            <p id="endpoint-history-help" class="settings-help" data-i18n="historyHelp"></p>
+            <div id="saved-endpoints" role="radiogroup" aria-describedby="endpoint-history-help"></div>
+          </div>
+          <form id="connection" class="endpoint-editor" hidden>
+            <h3 id="endpoint-editor-title"></h3>
             <label for="endpoint" data-i18n="endpoint"></label>
-            <div class="connection-row"><input id="endpoint" type="url" /><button type="submit" data-i18n="apply"></button></div>
+            <input id="endpoint" type="url" required autocomplete="url" />
             <fieldset><legend data-i18n="requestOptions"></legend>
               <label for="endpoint-method" data-i18n="method"></label>
               <select id="endpoint-method"><option value="POST">POST</option><option value="GET">GET</option></select>
@@ -63,10 +66,11 @@ export function createEndpointSettings(
               <div class="headers-heading"><h2 data-i18n="extraHeaders"></h2><button id="add-header" type="button" data-i18n="addHeader"></button></div>
               <div id="header-rows"></div>
               <p class="settings-help" data-i18n="headerHelp"></p>
-              <p class="settings-help" data-i18n="applyHelp"></p>
             </fieldset>
-            <p id="connection-status" role="status"></p>
-          </form>`;
+            <p class="settings-help" data-i18n="applyHelp"></p>
+            <div class="endpoint-editor-actions"><button type="submit" data-i18n="saveEndpoint"></button><button id="cancel-endpoint" type="button" data-i18n="cancel"></button></div>
+          </form>
+          <p id="connection-status" role="status"></p>`;
         const text = (
           key: EndpointMessage,
           values?: Readonly<Record<string, string>>,
@@ -74,6 +78,9 @@ export function createEndpointSettings(
         let activeMethod = 'POST';
         let storageAvailable = true;
         let errorMessage: string | undefined;
+        let savedMessage = false;
+        let editingEndpoint: string | undefined;
+        let headerEndpoint = '';
         const endpointHistory = createEndpointHistory();
         function requireControl<T extends HTMLElement>(selector: string): T {
           const element = container.querySelector<T>(selector);
@@ -82,8 +89,11 @@ export function createEndpointSettings(
           return element;
         }
         const input = requireControl<HTMLInputElement>('#endpoint');
-        const savedEndpoints =
-          requireControl<HTMLSelectElement>('#saved-endpoints');
+        const overview = requireControl<HTMLElement>('.endpoint-overview');
+        const form = requireControl<HTMLFormElement>('#connection');
+        const title = requireControl<HTMLElement>('#endpoint-editor-title');
+        const addEndpoint = requireControl<HTMLButtonElement>('#new-endpoint');
+        const savedEndpoints = requireControl<HTMLElement>('#saved-endpoints');
         const message = requireControl<HTMLElement>('#connection-status');
         const methodInput =
           requireControl<HTMLSelectElement>('#endpoint-method');
@@ -169,59 +179,154 @@ export function createEndpointSettings(
             headerRows.lastElementChild?.querySelector('input')?.focus();
           },
         );
-        // Do not carry authentication headers from one URL to another.
-        input.addEventListener('input', () => loadSettings(input.value.trim()));
+        // A changed URL is a different recipient: never transfer credentials implicitly.
+        input.addEventListener('input', () => {
+          if (input.value.trim() !== headerEndpoint)
+            headerRows.replaceChildren();
+          headerEndpoint = input.value.trim();
+        });
 
-        function refreshEndpointChoices(selected = 'choose'): void {
-          const placeholder = new Option(text('choose'), 'choose');
-          placeholder.disabled = true;
-          savedEndpoints.replaceChildren(
-            placeholder,
-            new Option(text('fixtureChoice'), ''),
-            ...endpointHistory
-              .list()
-              .map((endpoint) => new Option(endpoint, endpoint)),
-          );
-          savedEndpoints.value = selected;
+        function refreshEndpointChoices(): void {
+          savedEndpoints.replaceChildren();
+          savedEndpoints.setAttribute('aria-label', text('saved'));
+          for (const endpoint of ['', ...endpointHistory.list()]) {
+            const row = document.createElement('div');
+            row.className = 'endpoint-choice';
+            row.dataset.active = String(endpoint === activeEndpoint);
+            const label = document.createElement('label');
+            const radio = document.createElement('input');
+            radio.type = 'radio';
+            radio.name = 'demo-endpoint';
+            radio.value = endpoint;
+            radio.checked = endpoint === activeEndpoint;
+            radio.setAttribute('aria-label', endpoint || text('fixtureChoice'));
+            radio.addEventListener('change', () => {
+              if (radio.checked)
+                activateEndpoint(endpoint, endpointHistory.settings(endpoint));
+            });
+            const details = document.createElement('span');
+            details.className = 'endpoint-choice-details';
+            const name = document.createElement(endpoint ? 'code' : 'span');
+            name.textContent = endpoint || text('fixtureChoice');
+            const meta = document.createElement('small');
+            meta.textContent = [
+              endpoint ? endpointHistory.settings(endpoint).method : '',
+              endpoint === activeEndpoint ? text('active') : '',
+            ]
+              .filter(Boolean)
+              .join(' · ');
+            details.append(name, meta);
+            label.append(radio, details);
+            row.append(label);
+            if (endpoint) {
+              const edit = document.createElement('button');
+              edit.type = 'button';
+              edit.className = 'endpoint-edit-button';
+              edit.textContent = text('editEndpoint');
+              edit.setAttribute(
+                'aria-label',
+                `${text('editEndpoint')}: ${endpoint}`,
+              );
+              edit.addEventListener('click', () => openEditor(endpoint));
+              row.append(edit);
+            }
+            savedEndpoints.append(row);
+          }
         }
 
-        function applyEndpoint(value: string, cancelCurrent = true): boolean {
-          try {
-            const endpoint = value.trim();
-            const settings = endpoint
-              ? readSettings()
-              : { method: 'POST' as const, headers: {} };
-            const next = endpoint
-              ? createHttpExecutor({ endpoint, ...settings })
-              : fixtureExecutor;
-            if (cancelCurrent) context.cancel();
-            executor = next;
-            input.value = endpoint;
-            const persisted = endpoint
-              ? endpointHistory.remember(endpoint, settings)
-              : true;
-            refreshEndpointChoices(endpoint ? new URL(endpoint).href : '');
-            activeEndpoint = endpoint;
-            activeMethod = settings.method;
-            storageAvailable = saveActiveEndpoint(endpoint) && persisted;
+        function openEditor(endpoint?: string): void {
+          editingEndpoint = endpoint;
+          input.value = endpoint ?? '';
+          headerEndpoint = input.value;
+          loadSettings(endpoint ?? '');
+          title.textContent = text(endpoint ? 'editEndpoint' : 'newEndpoint');
+          errorMessage = undefined;
+          savedMessage = false;
+          overview.hidden = true;
+          form.hidden = false;
+          refreshStatus();
+          input.focus();
+        }
+        function closeEditor(): void {
+          form.hidden = true;
+          overview.hidden = false;
+          editingEndpoint = undefined;
+          // Remove any credential drafts when leaving the editor.
+          headerRows.replaceChildren();
+          input.value = '';
+        }
+        addEndpoint.addEventListener('click', () => openEditor());
+        requireControl<HTMLButtonElement>('#cancel-endpoint').addEventListener(
+          'click',
+          () => {
+            closeEditor();
             errorMessage = undefined;
+            savedMessage = false;
             refreshStatus();
-            return true;
+            addEndpoint.focus();
+          },
+        );
+
+        function activateEndpoint(
+          value: string,
+          settings: EndpointSettings,
+          cancelCurrent = true,
+        ): void {
+          const endpoint = value ? new URL(value).href : '';
+          const next = endpoint
+            ? createHttpExecutor({ endpoint, ...settings })
+            : fixtureExecutor;
+          if (cancelCurrent) context.cancel();
+          executor = next;
+          activeEndpoint = endpoint;
+          activeMethod = settings.method;
+          storageAvailable = saveActiveEndpoint(endpoint) && storageAvailable;
+          errorMessage = undefined;
+          savedMessage = false;
+          refreshEndpointChoices();
+          refreshStatus();
+        }
+
+        form.addEventListener('submit', (event) => {
+          event.preventDefault();
+          try {
+            const endpoint = new URL(input.value.trim()).href;
+            const settings = readSettings();
+            // Validate the complete connection before saving anything.
+            createHttpExecutor({ endpoint, ...settings });
+            if (
+              endpoint !== editingEndpoint &&
+              endpointHistory.list().includes(endpoint)
+            )
+              throw new Error(text('duplicateEndpoint'));
+            const wasActive = editingEndpoint === activeEndpoint;
+            storageAvailable = editingEndpoint
+              ? endpointHistory.replace(editingEndpoint, endpoint, settings)
+              : endpointHistory.remember(endpoint, settings);
+            if (wasActive) activateEndpoint(endpoint, settings);
+            closeEditor();
+            savedMessage = !wasActive;
+            errorMessage = undefined;
+            refreshEndpointChoices();
+            refreshStatus();
+            savedEndpoints
+              .querySelector<HTMLInputElement>('input:checked')
+              ?.focus();
           } catch (error) {
             errorMessage =
               error instanceof Error ? error.message : String(error);
             refreshStatus();
-            return false;
           }
-        }
+        });
 
         configureEndpoint = (endpoint, method, cancelCurrent = true) => {
-          input.value = endpoint;
-          methodInput.value = method;
-          // Public examples must never inherit another connection's credentials.
-          headerRows.replaceChildren();
-          if (!applyEndpoint(endpoint, cancelCurrent))
-            throw new Error(errorMessage ?? 'Could not configure endpoint.');
+          const settings: EndpointSettings = { method, headers: {} };
+          if (endpoint) {
+            createHttpExecutor({ endpoint, ...settings });
+            storageAvailable = endpointHistory.remember(endpoint, settings);
+          }
+          activateEndpoint(endpoint, settings, cancelCurrent);
+          if (cancelCurrent) closeEditor();
         };
 
         function refreshStatus(): void {
@@ -229,45 +334,44 @@ export function createEndpointSettings(
             activeEndpoint
               ? `Endpoint: ${activeEndpoint}`
               : text('fixtureChoice'),
+            activeEndpoint,
+            context.getLocale(),
           );
           message.textContent =
             errorMessage ??
-            (activeEndpoint
-              ? text('liveStatus', {
-                  endpoint: activeEndpoint,
-                  method: activeMethod,
-                }) + (storageAvailable ? '' : ` ${text('storageUnavailable')}`)
-              : text('fixtureStatus'));
+            (savedMessage
+              ? text('savedStatus')
+              : activeEndpoint
+                ? text('liveStatus', {
+                    endpoint: activeEndpoint,
+                    method: activeMethod,
+                  })
+                : text('fixtureStatus'));
+          if (!storageAvailable)
+            message.textContent += ` ${text('storageUnavailable')}`;
         }
         updateLabels = () => {
           for (const element of container.querySelectorAll<HTMLElement>(
             '[data-i18n]',
-          )) {
+          ))
             element.textContent = text(element.dataset.i18n as EndpointMessage);
-          }
           input.placeholder = text('placeholder');
-          refreshEndpointChoices(
-            savedEndpoints.options.length ? savedEndpoints.value : 'choose',
+          title.textContent = text(
+            editingEndpoint ? 'editEndpoint' : 'newEndpoint',
           );
+          refreshEndpointChoices();
           refreshStatus();
         };
         updateLabels();
-        refreshEndpointChoices();
-        savedEndpoints.addEventListener('change', () => {
-          loadSettings(savedEndpoints.value);
-          applyEndpoint(savedEndpoints.value);
-        });
-        container
-          .querySelector('#connection')
-          ?.addEventListener('submit', (event) => {
-            event.preventDefault();
-            applyEndpoint(input.value);
-          });
-
         const restoredEndpoint = readActiveEndpoint();
         if (restoredEndpoint) {
-          loadSettings(restoredEndpoint);
-          applyEndpoint(restoredEndpoint);
+          if (!endpointHistory.list().includes(restoredEndpoint))
+            storageAvailable = endpointHistory.remember(restoredEndpoint);
+          activateEndpoint(
+            restoredEndpoint,
+            endpointHistory.settings(restoredEndpoint),
+            false,
+          );
         }
         return () => {
           configureEndpoint = undefined;

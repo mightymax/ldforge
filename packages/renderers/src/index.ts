@@ -40,27 +40,7 @@ export function createBooleanRenderer(): ResultRendererPlugin {
   };
 }
 
-export function createJsonRenderer(): ResultRendererPlugin {
-  return {
-    id: 'json',
-    wizard: {
-      description: {
-        en: 'Accepts any query result.',
-        nl: 'Geschikt voor elk queryresultaat.',
-      },
-      bindings: [],
-    },
-    documentationUrl: 'https://ldforge.nl/plugins.html#json',
-    icon: createSvgIcon(['M8 3H6v7l-3 2 3 2v7h2M16 3h2v7l3 2-3 2v7h-2']),
-    label: 'JSON',
-    supports: () => true,
-    render(container, result) {
-      const pre = container.ownerDocument.createElement('pre');
-      pre.textContent = JSON.stringify(result, null, 2);
-      container.replaceChildren(pre);
-    },
-  };
-}
+export { createJsonRenderer } from './json.js';
 
 export { createCardsRenderer } from './cards.js';
 export type { CardsRendererOptions } from './cards.js';

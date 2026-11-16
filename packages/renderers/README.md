@@ -35,3 +35,7 @@ above 500 rows. URI buttons open a reusable resource inspector. Pass
 `loadResource: createResourceLoader(executor)` for endpoint-backed properties; graph
 results can use their own triples. See the [table guide](../../docs/renderers.md#table)
 for options, lifecycle, accessibility and limitations.
+
+## JSON view
+
+JSON uses a read-only CodeMirror editor with JSON syntax highlighting and line numbers. Its copy button copies the complete normalized result, briefly showing a checkmark and confirmation after success. Clipboard failures appear beside the button. The renderer destroys its editor and clears feedback timers during cleanup.

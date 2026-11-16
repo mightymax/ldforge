@@ -1,29 +1,43 @@
 # Editor configuration
 
-`createEditor(container, options)` accepts an `HTMLElement` and an `EditorOptions` object. Configuration is read at mount time. Recreate the editor to change result/settings plugin sets or built-in control visibility, except the plugin wizard which also has runtime visibility control. Toolbar actions and groups can also change through `editor.getToolBar()`. Query text, tabs and language have runtime methods.
+`createEditor(container, options)` accepts an `HTMLElement` and an `EditorOptions` object. Configuration is read at mount time. Recreate the editor to change result/settings plugin sets or built-in control visibility, except the plugin wizard and result plugin presentation, which also have runtime visibility methods. Toolbar actions and groups can also change through `editor.getToolBar()`. Query text, tabs and language have runtime methods.
 
 ## EditorOptions
 
-| Property            | Type                                     | Default              | Behavior                                                                                                                                                                                     |
-| ------------------- | ---------------------------------------- | -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `prefixesCollapsed` | `boolean`                                | `false`              | Initially folds PREFIX declarations on each tab. Fold state is view-only; see [ForgeEditor](editor.md#collapsible-prefix-declarations) for the runtime API.                                  |
-| `themeMainColor`    | `string`                                 | Existing green theme | Optional opaque `#RGB` or `#RRGGBB` accent; derives instance-scoped UI tokens. See [Theming](editor.md#theme-colors).                                                                        |
-| `executor`          | `QueryExecutor`                          | Required             | Runs queries and receives an abort signal.                                                                                                                                                   |
-| `query`             | `string`                                 | `''`                 | Initial first-tab text when no valid workspace is restored.                                                                                                                                  |
-| `workspace`         | `QueryWorkspace`                         | One tab              | Restored tabs and active ID. Takes precedence over `query`. Invalid runtime data falls back to the initial query. Validate persisted JSON with `parseQueryWorkspace`.                        |
-| `controls`          | `EditorControls \| false`                | All controls enabled | Toggles built-in UI. `false` hides every built-in control, including tabs. Custom buttons remain visible.                                                                                    |
-| `locale`            | `'auto' \| 'en' \| 'nl'`                 | `'auto'`             | Project default. Auto uses the first supported browser language, then English.                                                                                                               |
-| `userLocale`        | `'auto' \| 'en' \| 'nl'`                 | `'auto'`             | Restored user override. Auto follows the project setting.                                                                                                                                    |
-| `sparql`            | `SparqlOptions`                          | Built-in catalogs    | Namespace and predicate completion configuration.                                                                                                                                            |
-| `toolbar`           | `ToolbarOptions`                         | `{}`                 | Optional custom group presentation and initial group actions. Existing groups stay adjacent buttons unless configured as dropdowns; see [Toolbar](toolbar.md).                               |
-| `buttons`           | `readonly ButtonPlugin[]`                | Combined Run/Stop    | Replaces the default action list. Include createRunButton() to retain Run/Stop; createCancelButton() is optional.                                                                            |
-| `renderers`         | `readonly ResultRendererPlugin[]`        | `[]`                 | Ordered result views. No implicit renderer is installed.                                                                                                                                     |
-| `settings`          | `readonly SettingsPlugin[]`              | `[]`                 | Host-owned panels under the gear button. Not mounted when `controls.settings` is false.                                                                                                      |
-| `extensions`        | `readonly Extension[]`                   | `[]`                 | Additional CodeMirror 6 extensions, recreated on a tab switch.                                                                                                                               |
-| `onQueryChange`     | `(query: string) => void`                | None                 | Called when active text changes or another tab becomes active. Inactive text edits do not call it.                                                                                           |
-| `onWorkspaceChange` | `(workspace: QueryWorkspace) => void`    | None                 | Receives a detached snapshot after edits, prefix insertion/removal, formatting, rename, create, delete or selection changes. Initial mount does not emit unless a host plugin mutates state. |
-| `onLocaleChange`    | `(preference: LocalePreference) => void` | None                 | Called after user/API language changes. The host can persist this preference.                                                                                                                |
-| `onWarning`         | `(warning: EditorWarning) => void`       | `console.warn`       | Reports unknown shorthand prefixes without changing the query.                                                                                                                               |
+| Property             | Type                                          | Default              | Behavior                                                                                                                                                                                     |
+| -------------------- | --------------------------------------------- | -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `prefixesCollapsed`  | `boolean`                                     | `false`              | Initially folds PREFIX declarations on each tab. Fold state is view-only; see [ForgeEditor](editor.md#collapsible-prefix-declarations) for the runtime API.                                  |
+| `themeMainColor`     | `string`                                      | Existing green theme | Optional opaque `#RGB` or `#RRGGBB` accent; derives instance-scoped UI tokens. See [Theming](editor.md#theme-colors).                                                                        |
+| `executor`           | `QueryExecutor`                               | Required             | Runs queries and receives an abort signal.                                                                                                                                                   |
+| `query`              | `string`                                      | `''`                 | Initial first-tab text when no valid workspace is restored.                                                                                                                                  |
+| `workspace`          | `QueryWorkspace`                              | One tab              | Restored tabs and active ID. Takes precedence over `query`. Invalid runtime data falls back to the initial query. Validate persisted JSON with `parseQueryWorkspace`.                        |
+| `controls`           | `EditorControls \| false`                     | All controls enabled | Toggles built-in UI. `false` hides every built-in control, including tabs. Custom buttons remain visible.                                                                                    |
+| `locale`             | `'auto' \| 'en' \| 'nl'`                      | `'auto'`             | Project default. Auto uses the first supported browser language, then English.                                                                                                               |
+| `userLocale`         | `'auto' \| 'en' \| 'nl'`                      | `'auto'`             | Restored user override. Auto follows the project setting.                                                                                                                                    |
+| `sparql`             | `SparqlOptions`                               | Built-in catalogs    | Namespace and predicate completion configuration.                                                                                                                                            |
+| `toolbar`            | `ToolbarOptions`                              | `{}`                 | Optional custom group presentation and initial group actions. Existing groups stay adjacent buttons unless configured as dropdowns; see [Toolbar](toolbar.md).                               |
+| `buttons`            | `readonly ButtonPlugin[]`                     | Combined Run/Stop    | Replaces the default action list. Include createRunButton() to retain Run/Stop; createCancelButton() is optional.                                                                            |
+| `editorRows`         | `number`                                      | `15`                 | Query viewport in visual lines; minimum when growing. Positive safe integer.                                                                                                                 |
+| `autoGrow`           | `boolean`                                     | `true`               | Grow the query editor with content; false uses a fixed scrolling viewport. Demo explicitly uses false.                                                                                       |
+| `onAutoGrowChange`   | `(enabled: boolean) => void`                  | None                 | Called when the height mode changes via the checkbox or API.                                                                                                                                 |
+| `onEditorRowsChange` | `(rows: number) => void`                      | None                 | Called when the visible-row count changes via the API.                                                                                                                                       |
+| `availablePlugins`   | `boolean`                                     | `true`               | Show the dropdown of remaining registered result plugins.                                                                                                                                    |
+| `visiblePlugins`     | `readonly (string \| ResultRendererPlugin)[]` | `['table', 'json']`  | Initially pinned registered plugins; an explicit array replaces the defaults.                                                                                                                |
+| `renderers`          | `readonly ResultRendererPlugin[]`             | `[]`                 | Ordered result views. No implicit renderer is installed.                                                                                                                                     |
+| `settings`           | `readonly SettingsPlugin[]`                   | `[]`                 | Host-owned panels under the gear button. Not mounted when `controls.settings` is false.                                                                                                      |
+| `extensions`         | `readonly Extension[]`                        | `[]`                 | Additional CodeMirror 6 extensions, recreated on a tab switch.                                                                                                                               |
+| `onQueryChange`      | `(query: string) => void`                     | None                 | Called when active text changes or another tab becomes active. Inactive text edits do not call it.                                                                                           |
+| `onWorkspaceChange`  | `(workspace: QueryWorkspace) => void`         | None                 | Receives a detached snapshot after edits, prefix insertion/removal, formatting, rename, create, delete or selection changes. Initial mount does not emit unless a host plugin mutates state. |
+| `onLocaleChange`     | `(preference: LocalePreference) => void`      | None                 | Called after user/API language changes. The host can persist this preference.                                                                                                                |
+| `onWarning`          | `(warning: EditorWarning) => void`            | `console.warn`       | Reports unknown shorthand prefixes without changing the query.                                                                                                                               |
+
+`availablePlugins?: boolean` controls the result renderer dropdown and defaults to `true`.
+`visiblePlugins?: readonly (string | ResultRendererPlugin)[]` sets the renderers pinned
+on the result bar, defaulting to `['table', 'json']`. Supply registered IDs or plugin
+objects. An explicit list replaces those defaults; unregistered IDs throw before mounting.
+Pinned plugins remain disabled when `supports(result)` returns false. The active
+renderer is always shown, even when it is not pinned. Visibility does not register,
+select, execute or load a renderer. See [runtime methods](editor.md#result-plugin-visibility).
 
 Callbacks are synchronous host code. Keep them short and handle storage failures inside your callback. Exceptions from host callbacks are not silently ignored.
 
@@ -39,9 +53,10 @@ Every property is optional and defaults to `true`.
 | `cancel`                | The action with reserved ID `cancel`, including `createCancelButton()`.                                                     |
 | `prefixFolding`         | Gutter arrows to fold and unfold PREFIX declarations. Hiding these leaves the folding API and keyboard shortcuts available. |
 | `prefixes`              | Prefix search icon and its entry point.                                                                                     |
+| `autoGrow`              | Show the full query checkbox in settings; height APIs remain available when hidden.                                         |
 | `fontSize`              | Query text-size field in settings; API remains available when hidden.                                                       |
 | `loadingIndicator`      | Spinner in results while a query runs; defaults to true.                                                                    |
-| `share`                 | Clipboard share-link icon in the right toolbar. Defaults to true; sharing APIs remain available when hidden.                |
+| `share`                 | Share-link icon in the right toolbar. Defaults to true; sharing APIs remain available when hidden.                          |
 | `rendererWizard`        | Plugin wizard icon; defaults to true. API remains available when hidden.                                                    |
 | `format`                | Format-query icon.                                                                                                          |
 | `settings`              | Gear icon and settings plugin mounting. Hides access to the language selector too.                                          |
@@ -150,3 +165,29 @@ when that catalog is disabled). See [ForgeEditor](editor.md#inspecting-and-remov
 `shareBaseUrl` optionally sets the absolute recipient page URL. By default sharing uses the current page URL, removes ordinary page fragments, preserves hash-based application routes, preserves its other parameters and replaces `query` with the encoded query. Hosts should read that parameter when initializing their editor; the demo opens the shared query without automatically executing it and preserves existing saved tabs.
 
 `shareEndpoint` accepts an endpoint URL or a callback returning the current applied endpoint. When sharing, this is added as `# sparql-endpoint=…` if the query does not already declare one. The demo reads its active connection at copy time. Authentication headers are not part of the shared URL.
+
+## Query editor height
+
+`editorRows?: number` sets the query viewport in visual lines (positive safe integer,
+default **15**). Wrapped lines occupy additional visual rows. With `autoGrow: false`,
+the height stays fixed and the query scrolls internally. Font size changes preserve
+the configured visible-row count. With `autoGrow: true`, rows define the minimum
+height and the editor grows with its content. Library default: `autoGrow: true`,
+preserving the growing editor for existing integrations.
+
+```ts
+// In createEditor options:
+// editorRows: 15,
+// autoGrow: false,
+// onAutoGrowChange: (enabled) => savePreference(enabled),
+// onEditorRowsChange: (rows) => saveRowPreference(rows),
+```
+
+The demo explicitly starts with 15 rows and auto-grow off. The **Show the full query**
+(**Hele query tonen**) checkbox is behind the gear button. Its preference
+is restored from `localStorage` under `ldforge.demo.auto-grow.v1`; unavailable
+storage leaves the current session usable. Hide only the checkbox with
+`controls: { autoGrow: false }`; `controls.settings: false` hides the whole panel.
+The height API remains available. Options apply to the query editor across tabs,
+not the JSON result editor or other result renderers. Runtime methods and callbacks
+are described in [ForgeEditor](editor.md#query-editor-height).

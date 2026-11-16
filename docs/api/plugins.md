@@ -30,7 +30,9 @@ The context passed to actions/settings is the active-query subset of `ForgeEdito
 | `supports(result)`                    | `boolean`              | Whether this renderer can display the result.                                                                                                                                                          |
 | `render(container, result, context?)` | `void \| (() => void)` | Synchronous render. Optional context is `ResultRendererContext` (see below). Return cleanup for listeners or framework roots.                                                                          |
 
-Only supported renderers appear in the result tabs, in registration order. Tabs retain the selected renderer across successful queries when it still supports the result, otherwise the first supported renderer is selected. Arrow keys wrap between tabs; Home/End select the first/last tab. Only the selected tab is in the normal Tab sequence. Labels remain visible and accessible with or without icons. The previous renderer is cleaned up before another view/state is rendered or the editor is destroyed. Render RDF with `textContent`, not HTML. Renderer-owned asynchronous work must be cancelled in its cleanup function.
+By default, Table and JSON stay on the result bar when registered; the active renderer is also shown. Other registered renderers appear in the Choose view dropdown, disabled when `supports(result)` returns false. Its information buttons display the plugin-owned binding contract even when a view is disabled. Use `visiblePlugins` / `availablePlugins` or the [runtime visibility methods](editor.md#result-plugin-visibility) to change presentation. Visibility does not register plugins, select views or load external visualization libraries.
+
+The selected renderer is retained across successful queries when it still supports the result; otherwise the first supported registered renderer is selected. Left/Right and Home/End switch enabled visible tabs, skipping closed dropdown entries. In the dropdown, Up/Down and Home/End move focus among enabled choices and information buttons; Escape closes it. Labels remain accessible with or without icons. If a query header requests a missing or unsupported view, a warning is shown above the results; missing required variable names are taken from the plugin's declared binding contract. The previous renderer is cleaned up before another view/state is rendered or the editor is destroyed. Render RDF with `textContent`, not HTML. Renderer-owned asynchronous work must be cancelled in its cleanup function.
 
 Use `documentationUrl` to describe required bindings, accepted term types, configuration and complete example queries. The built-in renderers link to their usage guides on `https://ldforge.nl/plugins.html`; the demo overrides these links to its local Plugins page. Existing plugins without a URL show no documentation control. Set `controls.rendererDocumentation: false` to hide it globally.
 
@@ -87,6 +89,8 @@ The generic `PluginRegistry<T extends { id: string }>` is exported by core. Cons
 ## Wizard metadata
 
 A result renderer can declare optional `wizard: RendererWizardSchema` metadata.
+The renderer dropdown’s information button shows this description and binding contract, even when the renderer is disabled. The same metadata works for third-party plugins without registration in a built-in catalogue. `supports(result)` remains responsible for applicability; metadata describes requirements but does not replace validation.
+
 It belongs to the plugin: the editor has no global catalogue of unregistered
 renderers. Schemas are plain data and do not load visualization libraries.
 

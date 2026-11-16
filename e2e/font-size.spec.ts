@@ -30,16 +30,13 @@ test('query font size persists and leaves toolbar/settings/results unchanged, in
     sizes.cell,
   );
   expect(await query.innerText()).toBe(original);
-  const saved = page.getByRole('combobox', {
+  const saved = page.getByRole('radiogroup', {
     name: 'Saved endpoints',
     exact: true,
   });
-  await expect(saved).toHaveCSS('border-radius', '8px');
-  expect(
-    await saved.evaluate(
-      (element) => getComputedStyle(element).backgroundImage,
-    ),
-  ).toContain('linear-gradient');
+  await expect(
+    saved.getByRole('radio', { name: 'Local fixture (no endpoint)' }),
+  ).toBeChecked();
   await page
     .getByRole('button', { name: 'Increase text size', exact: true })
     .click();

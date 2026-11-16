@@ -1,3 +1,4 @@
+import { addEndpoint, saveAndSelectEndpoint } from './endpoint-helpers.js';
 import type { Page } from '@playwright/test';
 import { expect, test } from '@playwright/test';
 
@@ -21,12 +22,20 @@ test('runs fixture queries, switches result plugins and uses example button plug
   await expect(page.locator('.ldforge-status')).toHaveText(
     /^3 results in \d+ ms$/,
   );
+  if (!(await page.getByRole('tab', { name: 'JSON', exact: true }).isVisible()))
+    await page.locator('.ldforge-renderer-picker > summary').click();
   await page.getByRole('tab', { name: 'JSON', exact: true }).click();
-  await expect(page.locator('.ldforge-results pre')).toContainText('bindings');
+  await expect(page.locator('.ldforge-results .cm-content')).toContainText(
+    'bindings',
+  );
   await chooseExample(page, 'ASK example');
   await page
     .getByRole('textbox', { name: 'SPARQL query' })
     .press('ControlOrMeta+Enter');
+  if (
+    !(await page.getByRole('tab', { name: 'Boolean', exact: true }).isVisible())
+  )
+    await page.locator('.ldforge-renderer-picker > summary').click();
   await page.getByRole('tab', { name: 'Boolean', exact: true }).click();
   await expect(page.locator('.ldforge-results')).toHaveText('True');
   expect(errors).toEqual([]);
@@ -46,10 +55,11 @@ test('connects an HTTP endpoint and reports transport errors', async ({
   });
   await page.goto('/');
   await page.getByRole('button', { name: 'IDE settings', exact: true }).click();
+  await addEndpoint(page);
   await page
     .getByLabel('SPARQL endpoint', { exact: true })
     .fill('https://example.org/sparql');
-  await page.getByRole('button', { name: 'Apply endpoint' }).click();
+  await saveAndSelectEndpoint(page);
   await page.getByRole('button', { name: 'Run query' }).click();
   await expect(page.locator('.ldforge-status')).toHaveText(
     'SPARQL endpoint returned HTTP 503.',
@@ -68,35 +78,33 @@ test('fits a narrow viewport', async ({ page }) => {
   ).toBe(true);
 });
 
-test('remembers applied endpoints across reloads and reuses a saved choice', async ({
+test('remembers explicitly added endpoints and selects saved connections', async ({
   page,
 }) => {
   await page.goto('/');
   await page.getByRole('button', { name: 'IDE settings', exact: true }).click();
-  const endpoint = page.getByLabel('SPARQL endpoint', { exact: true });
-  const choices = page.getByRole('combobox', { name: 'Saved endpoints' });
   for (const value of [
     'https://one.example/sparql',
     'https://two.example/sparql',
-    'https://one.example/sparql',
   ]) {
-    await endpoint.fill(value);
-    await page.getByRole('button', { name: 'Apply endpoint' }).click();
+    await addEndpoint(page);
+    await page.getByLabel('SPARQL endpoint', { exact: true }).fill(value);
+    await saveAndSelectEndpoint(page);
   }
   await page.reload();
   await page.getByRole('button', { name: 'IDE settings', exact: true }).click();
-  await expect(choices.locator('option')).toHaveText([
-    'Choose a saved endpoint',
-    'Local fixture (no endpoint)',
-    'https://one.example/sparql',
-    'https://two.example/sparql',
-  ]);
-  await choices.selectOption('https://two.example/sparql');
-  await expect(endpoint).toHaveValue('https://two.example/sparql');
+  const choices = page.getByRole('radiogroup', { name: 'Saved endpoints' });
+  await expect(choices.getByRole('radio')).toHaveCount(3);
+  await choices
+    .getByRole('radio', { name: 'https://two.example/sparql', exact: true })
+    .check();
+  await expect(page.locator('#connection')).toBeHidden();
   await expect(page.locator('#connection-status')).toContainText(
     'Live endpoint: https://two.example/sparql',
   );
-  await choices.selectOption('');
+  await choices
+    .getByRole('radio', { name: 'Local fixture (no endpoint)', exact: true })
+    .check();
   await page.getByRole('button', { name: 'Run query' }).click();
   await expect(page.getByRole('table')).toContainText('Amsterdam');
   await expect(page.locator('.ldforge-status')).toHaveText(
@@ -140,6 +148,7 @@ for (const method of ['GET', 'POST']) {
     await ide
       .getByRole('button', { name: 'IDE settings', exact: true })
       .click();
+    await addEndpoint(page);
     await settings
       .getByLabel('SPARQL endpoint', { exact: true })
       .fill('https://secure.example/sparql');
@@ -151,7 +160,7 @@ for (const method of ['GET', 'POST']) {
     await settings
       .getByLabel('Header value', { exact: true })
       .fill('Bearer demo-secret');
-    await settings.getByRole('button', { name: 'Apply endpoint' }).click();
+    await saveAndSelectEndpoint(page);
     await ide
       .getByRole('button', { name: 'IDE settings', exact: true })
       .click();
@@ -168,8 +177,11 @@ for (const method of ['GET', 'POST']) {
       .getByRole('button', { name: 'IDE settings', exact: true })
       .click();
     await page
-      .getByRole('combobox', { name: 'Saved endpoints' })
-      .selectOption('https://secure.example/sparql');
+      .getByRole('button', {
+        name: 'Edit endpoint: https://secure.example/sparql',
+        exact: true,
+      })
+      .click();
     await expect(page.getByLabel('Request method')).toHaveValue(method);
     await expect(page.getByLabel('Header value', { exact: true })).toHaveCount(
       0,
@@ -183,23 +195,28 @@ test('validates header settings and keeps credentials separate between endpoints
   await page.goto('/');
   await page.getByRole('button', { name: 'IDE settings', exact: true }).click();
   const endpoint = page.getByLabel('SPARQL endpoint', { exact: true });
+  await addEndpoint(page);
   await endpoint.fill('https://one.example/sparql');
   await page.getByRole('button', { name: 'Add header' }).click();
   const name = page.getByLabel('Header name', { exact: true });
   await name.fill('Content-Type');
-  await page.getByRole('button', { name: 'Apply endpoint' }).click();
+  await saveAndSelectEndpoint(page);
   await expect(page.locator('#connection-status')).toHaveText(
     'Accept and Content-Type are managed by LDForge.',
   );
   await name.fill('Authorization');
   await page.getByLabel('Header value', { exact: true }).fill('Bearer one');
-  await page.getByRole('button', { name: 'Apply endpoint' }).click();
+  await saveAndSelectEndpoint(page);
+  await addEndpoint(page);
   await endpoint.fill('https://two.example/sparql');
   await expect(page.getByLabel('Header value', { exact: true })).toHaveCount(0);
-  await page.getByRole('button', { name: 'Apply endpoint' }).click();
+  await saveAndSelectEndpoint(page);
   await page
-    .getByRole('combobox', { name: 'Saved endpoints' })
-    .selectOption('https://one.example/sparql');
+    .getByRole('button', {
+      name: 'Edit endpoint: https://one.example/sparql',
+      exact: true,
+    })
+    .click();
   await expect(page.getByLabel('Header value', { exact: true })).toHaveValue(
     'Bearer one',
   );
@@ -290,6 +307,9 @@ test.describe('Dutch browser language', () => {
     );
     await page
       .getByRole('button', { name: 'IDE-instellingen', exact: true })
+      .click();
+    await page
+      .getByRole('button', { name: 'Endpoint toevoegen', exact: true })
       .click();
     await page
       .getByLabel('SPARQL-endpoint', { exact: true })
@@ -449,16 +469,27 @@ test('restores the last applied endpoint and method without running a query', as
   });
   await page.goto('/');
   await page.getByRole('button', { name: 'IDE settings', exact: true }).click();
+  await addEndpoint(page);
   await page
     .getByLabel('SPARQL endpoint', { exact: true })
     .fill('https://remember.example/sparql');
   await page.getByLabel('Request method', { exact: true }).selectOption('GET');
-  await page
-    .getByRole('button', { name: 'Apply endpoint', exact: true })
-    .click();
+  await saveAndSelectEndpoint(page);
   await page.reload();
   expect(requests).toBe(0);
   await page.getByRole('button', { name: 'IDE settings', exact: true }).click();
+  await expect(
+    page.getByRole('radio', {
+      name: 'https://remember.example/sparql',
+      exact: true,
+    }),
+  ).toBeChecked();
+  await page
+    .getByRole('button', {
+      name: 'Edit endpoint: https://remember.example/sparql',
+      exact: true,
+    })
+    .click();
   await expect(page.getByLabel('SPARQL endpoint', { exact: true })).toHaveValue(
     'https://remember.example/sparql',
   );
@@ -468,14 +499,19 @@ test('restores the last applied endpoint and method without running a query', as
   await page.getByRole('button', { name: 'Run query', exact: true }).click();
   await expect(page.locator('.ldforge-status')).toHaveText(/^True in \d+ ms$/);
   expect(requests).toBe(1);
+  await page.locator('#cancel-endpoint').click();
   await page
-    .getByRole('combobox', { name: 'Saved endpoints', exact: true })
-    .selectOption('');
+    .getByRole('radio', { name: 'Local fixture (no endpoint)', exact: true })
+    .check();
   await page.reload();
   await page.getByRole('button', { name: 'IDE settings', exact: true }).click();
-  await expect(page.getByLabel('SPARQL endpoint', { exact: true })).toHaveValue(
-    '',
-  );
+  await expect(
+    page.getByRole('radio', {
+      name: 'Local fixture (no endpoint)',
+      exact: true,
+    }),
+  ).toBeChecked();
+  await expect(page.locator('#connection')).toBeHidden();
 });
 
 test('navigates object-based API documentation and configuration without overflowing on mobile', async ({
@@ -578,10 +614,11 @@ test('uses accessible result tabs and downloads complete CSV independently of th
   await page.getByRole('button', { name: 'Run query', exact: true }).click();
   await expect(
     tabs.getByRole('tab', { name: 'Table', exact: true }),
-  ).toHaveCount(0);
+  ).toBeDisabled();
+  await page.locator('.ldforge-renderer-picker > summary').click();
   await expect(
     tabs.getByRole('tab', { name: 'Boolean', exact: true }),
-  ).toBeVisible();
+  ).toBeEnabled();
 });
 
 test('shows readable read-only TypeScript examples, plugin binding guides and shared site links', async ({
@@ -699,6 +736,7 @@ test('renders Cards from query headers, scopes CSS and preserves manual view swi
   await page.goto('/');
   // Selecting the public example clears private headers and updates the actual settings.
   await page.getByRole('button', { name: 'IDE settings', exact: true }).click();
+  await addEndpoint(page);
   await page
     .getByLabel('SPARQL endpoint', { exact: true })
     .fill('https://private.example/sparql');
@@ -707,9 +745,7 @@ test('renders Cards from query headers, scopes CSS and preserves manual view swi
   await page
     .getByLabel('Header value', { exact: true })
     .fill('Bearer private-token');
-  await page
-    .getByRole('button', { name: 'Apply endpoint', exact: true })
-    .click();
+  await saveAndSelectEndpoint(page);
   await page.getByRole('button', { name: 'IDE settings', exact: true }).click();
   await chooseExample(page, 'Gallery');
   await expect(page.locator('#active-endpoint')).toHaveText(
@@ -733,11 +769,31 @@ test('renders Cards from query headers, scopes CSS and preserves manual view swi
   await expect(
     page.getByRole('link', { name: 'Documentation for Cards', exact: true }),
   ).toHaveAttribute('href', /plugins\.html#cards$/);
+  if (
+    !(await tabs.getByRole('tab', { name: 'Table', exact: true }).isVisible())
+  )
+    await page.locator('.ldforge-renderer-picker > summary').click();
   await tabs.getByRole('tab', { name: 'Table', exact: true }).click();
   await expect(page.getByRole('table')).toContainText('card_title');
+  if (
+    !(await tabs.getByRole('tab', { name: 'Cards', exact: true }).isVisible())
+  )
+    await page.locator('.ldforge-renderer-picker > summary').click();
   await tabs.getByRole('tab', { name: 'Cards', exact: true }).click();
   await expect(cards).toHaveCount(3);
   await page.getByRole('button', { name: 'IDE settings', exact: true }).click();
+  await expect(
+    page.getByRole('radio', {
+      name: 'https://query.wikidata.org/sparql',
+      exact: true,
+    }),
+  ).toBeChecked();
+  await page
+    .getByRole('button', {
+      name: 'Edit endpoint: https://query.wikidata.org/sparql',
+      exact: true,
+    })
+    .click();
   await expect(page.getByLabel('SPARQL endpoint', { exact: true })).toHaveValue(
     'https://query.wikidata.org/sparql',
   );
@@ -840,6 +896,10 @@ test('loads the external chart library only on activation and renders real chart
   await expect(page.getByRole('table')).toBeVisible();
   expect(requests).toBe(0);
   const tabs = page.getByRole('tablist', { name: 'Result view', exact: true });
+  if (
+    !(await tabs.getByRole('tab', { name: 'Charts', exact: true }).isVisible())
+  )
+    await page.locator('.ldforge-renderer-picker > summary').click();
   await tabs.getByRole('tab', { name: 'Charts', exact: true }).click();
   const chart = page.locator('.ldforge-chart');
   await expect(chart).toHaveAttribute('aria-busy', 'false');
@@ -858,7 +918,15 @@ test('loads the external chart library only on activation and renders real chart
   ).toBe(true);
   await chart.getByText('Chart data', { exact: true }).click();
   await expect(chart.getByRole('table')).toContainText('Amsterdam');
+  if (
+    !(await tabs.getByRole('tab', { name: 'Table', exact: true }).isVisible())
+  )
+    await page.locator('.ldforge-renderer-picker > summary').click();
   await tabs.getByRole('tab', { name: 'Table', exact: true }).click();
+  if (
+    !(await tabs.getByRole('tab', { name: 'Charts', exact: true }).isVisible())
+  )
+    await page.locator('.ldforge-renderer-picker > summary').click();
   await tabs.getByRole('tab', { name: 'Charts', exact: true }).click();
   await expect(chart).toHaveAttribute('aria-busy', 'false');
   expect(requests).toBe(1);
@@ -906,10 +974,11 @@ test('executes CONSTRUCT over HTTP with RDF negotiation and displays parsed trip
   });
   await page.goto('/');
   await page.getByRole('button', { name: 'IDE settings', exact: true }).click();
+  await addEndpoint(page);
   await page
     .getByLabel('SPARQL endpoint', { exact: true })
     .fill('https://construct.example/sparql');
-  await page.getByRole('button', { name: 'Apply endpoint' }).click();
+  await saveAndSelectEndpoint(page);
   await page
     .getByRole('textbox', { name: 'SPARQL query', exact: true })
     .fill('construct {?s ?p ?o} where {?s ?p ?o} limit 10');
@@ -920,8 +989,10 @@ test('executes CONSTRUCT over HTTP with RDF negotiation and displays parsed trip
   await expect(page.locator('.ldforge-status')).toHaveText(
     /^2 triples in \d+ ms$/,
   );
+  if (!(await page.getByRole('tab', { name: 'JSON', exact: true }).isVisible()))
+    await page.locator('.ldforge-renderer-picker > summary').click();
   await page.getByRole('tab', { name: 'JSON', exact: true }).click();
-  await expect(page.locator('.ldforge-results pre')).toContainText(
+  await expect(page.locator('.ldforge-results .cm-content')).toContainText(
     '"kind": "graph"',
   );
 });

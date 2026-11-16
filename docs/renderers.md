@@ -788,7 +788,7 @@ const renderers = [createBooleanRenderer()];
 
 **Package:** `@ldforge/renderers` · **Factory:** `createJsonRenderer()` · **ID:** `json`
 
-Displays formatted JSON for debugging and inspecting RDF term metadata. This is LDForge's normalized `QueryResult` model, rather than the endpoint's raw JSON response. Literal text is never interpreted as HTML.
+Displays formatted JSON in a read-only CodeMirror editor with syntax highlighting and line numbers. This is LDForge's normalized `QueryResult` model, rather than the endpoint's raw JSON response. Literal text is never interpreted as HTML. The Copy JSON button copies the complete result, including content outside the visible viewport, and briefly shows a checkmark and confirmation. Clipboard failures appear beside the button. The renderer cleans up its CodeMirror instance and feedback timer when the view is closed; query-editor height settings do not change this result view.
 
 **Binding contract:** supports `kind: 'bindings'`, `kind: 'boolean'` and `kind: 'graph'`. There are no required variable names. SELECT variables, RDF types, datatypes, language tags and unbound fields retain their normalized representation.
 

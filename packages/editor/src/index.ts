@@ -1,3 +1,9 @@
+import {
+  createAutoGrowControl,
+  DEFAULT_EDITOR_ROWS,
+  validateEditorRows,
+} from './editor-height.js';
+import { renderRendererInfo } from './renderer-info.js';
 import { applyTheme, themeTokens } from './theme.js';
 import {
   createShareControl,
@@ -131,6 +137,12 @@ export interface EditorOptions {
   readonly onLocaleChange?: (preference: LocalePreference) => void;
   /** CodeMirror query text size only, 10–24px. */
   readonly fontSize?: number;
+  /** Query viewport in visual lines; minimum when autoGrow is true. Defaults to 15. */
+  readonly editorRows?: number;
+  /** Grow with query content instead of scrolling a fixed viewport. Defaults to true. */
+  readonly autoGrow?: boolean;
+  readonly onAutoGrowChange?: (enabled: boolean) => void;
+  readonly onEditorRowsChange?: (rows: number) => void;
   /** Instance accent as an opaque #RGB or #RRGGBB color. Omit for the default theme. */
   readonly themeMainColor?: string;
   readonly onFontSizeChange?: (size: number) => void;
@@ -139,6 +151,10 @@ export interface EditorOptions {
   /** Optional dropdown presentation and additional declarative button groups. */
   readonly toolbar?: ToolbarOptions;
   readonly renderers?: readonly ResultRendererPlugin[];
+  /** Show the dropdown of other registered renderers. Defaults to true. */
+  readonly availablePlugins?: boolean;
+  /** Renderers pinned on the result bar, by registered ID or descriptor. Defaults to Table and JSON. */
+  readonly visiblePlugins?: readonly (string | ResultRendererPlugin)[];
   readonly settings?: readonly SettingsPlugin[];
   readonly extensions?: readonly Extension[];
   readonly onQueryChange?: (query: string) => void;
@@ -153,6 +169,12 @@ export interface ForgeEditor extends EditorContext {
   getToolBar(): ToolbarApi;
   /** Registered renderers only; does not load their external visual libraries. */
   getRenderers(): readonly ResultRendererPlugin[];
+  showAvailablePlugins(): void;
+  hideAvailablePlugins(): void;
+  /** Pin a registered renderer without selecting it or changing its support predicate. */
+  showPlugin(plugin: string | ResultRendererPlugin): void;
+  /** Unpin a renderer; an active renderer remains visible until another is selected. */
+  hidePlugin(plugin: string | ResultRendererPlugin): void;
   getRendererWizard(): RendererWizardApi;
   /** Share URL for the active query, including its selected renderer. Does not edit. */
   getShareLink(): string;
@@ -161,6 +183,10 @@ export interface ForgeEditor extends EditorContext {
   getThemeMainColor(): string | undefined;
   /** Undefined restores the default theme. */
   setThemeMainColor(color?: string): void;
+  getEditorRows(): number;
+  setEditorRows(rows: number): void;
+  isAutoGrowEnabled(): boolean;
+  setAutoGrow(enabled: boolean): void;
   getFontSize(): number;
   setFontSize(size: number): void;
   isLoadingIndicatorEnabled(): boolean;
@@ -228,6 +254,9 @@ export function createEditor(
   let tokens = themeTokens(themeMainColor);
   let fontSize = options.fontSize ?? DEFAULT_FONT_SIZE;
   validateFontSize(fontSize);
+  let editorRows = options.editorRows ?? DEFAULT_EDITOR_ROWS;
+  validateEditorRows(editorRows);
+  let autoGrow = options.autoGrow ?? true;
   const controls = resolveControls(options.controls);
   let loadingIndicatorEnabled = controls.loadingIndicator;
   const buttons = new PluginRegistry(
@@ -238,6 +267,16 @@ export function createEditor(
     ),
   );
   const renderers = new PluginRegistry(options.renderers);
+  let availablePluginsVisible = options.availablePlugins ?? true;
+  function registeredPluginId(plugin: string | ResultRendererPlugin): string {
+    const id = typeof plugin === 'string' ? plugin : plugin.id;
+    if (!renderers.list().some((renderer) => renderer.id === id))
+      throw new TypeError(`Unknown result renderer: ${id}`);
+    return id;
+  }
+  const visiblePlugins = new Set(
+    options.visiblePlugins?.map(registeredPluginId) ?? ['table', 'json'],
+  );
   const settings = new PluginRegistry(options.settings);
   const catalog = namespaceCatalog(options.sparql ?? {});
   const settingsCleanups: (() => void)[] = [];
@@ -276,6 +315,8 @@ export function createEditor(
   tabBar.hidden = !controls.tabs;
   const editorHost = doc.createElement('div');
   editorHost.className = 'ldforge-code';
+  editorHost.dataset.autoGrow = String(autoGrow);
+  editorHost.style.setProperty('--ldforge-query-rows', String(editorRows));
   editorHost.style.setProperty('--ldforge-query-font-size', `${fontSize}px`);
   editorHost.id = `ldforge-query-${settingsPanelNumber + 1}`;
   editorHost.setAttribute('role', 'tabpanel');
@@ -296,6 +337,10 @@ export function createEditor(
   );
   const rendererWarningText = doc.createElement('span');
   rendererWarning.append(rendererWarningText);
+  const rendererInfo = doc.createElement('section');
+  rendererInfo.className = 'ldforge-renderer-info';
+  rendererInfo.id = `${editorHost.id}-renderer-info`;
+  rendererInfo.hidden = true;
   const resultTabs = doc.createElement('div');
   resultTabs.className = 'ldforge-result-tabs';
   resultTabs.setAttribute('role', 'tablist');
@@ -365,6 +410,14 @@ export function createEditor(
   );
   fontSizeControl.element.hidden = !controls.fontSize;
   settingsPanel.append(fontSizeControl.element);
+  const autoGrowControl = createAutoGrowControl(
+    doc,
+    () => autoGrow,
+    () => locale,
+    (enabled) => context.setAutoGrow(enabled),
+  );
+  autoGrowControl.element.hidden = !controls.autoGrow;
+  settingsPanel.append(autoGrowControl.element);
   const toggle = doc.createElement('button');
   root.append(
     toolbar,
@@ -373,6 +426,7 @@ export function createEditor(
     editorHost,
     resultToolbar,
     rendererWarning,
+    rendererInfo,
     output,
   );
   container.append(root);
@@ -427,6 +481,32 @@ export function createEditor(
       tokens = next;
       themeMainColor = color;
     },
+    getEditorRows() {
+      assertAlive();
+      return editorRows;
+    },
+    setEditorRows(rows) {
+      assertAlive();
+      validateEditorRows(rows);
+      if (rows === editorRows) return;
+      editorRows = rows;
+      editorHost.style.setProperty('--ldforge-query-rows', String(rows));
+      view.requestMeasure();
+      options.onEditorRowsChange?.(rows);
+    },
+    isAutoGrowEnabled() {
+      assertAlive();
+      return autoGrow;
+    },
+    setAutoGrow(enabled) {
+      assertAlive();
+      if (enabled === autoGrow) return;
+      autoGrow = enabled;
+      editorHost.dataset.autoGrow = String(enabled);
+      autoGrowControl.refresh();
+      view.requestMeasure();
+      options.onAutoGrowChange?.(enabled);
+    },
     getFontSize() {
       assertAlive();
       return fontSize;
@@ -453,6 +533,26 @@ export function createEditor(
     getRenderers() {
       assertAlive();
       return renderers.list();
+    },
+    showAvailablePlugins() {
+      assertAlive();
+      availablePluginsVisible = true;
+      refreshPluginPicker();
+    },
+    hideAvailablePlugins() {
+      assertAlive();
+      availablePluginsVisible = false;
+      refreshPluginPicker();
+    },
+    showPlugin(plugin) {
+      assertAlive();
+      visiblePlugins.add(registeredPluginId(plugin));
+      refreshPluginPicker();
+    },
+    hidePlugin(plugin) {
+      assertAlive();
+      visiblePlugins.delete(registeredPluginId(plugin));
+      refreshPluginPicker();
     },
     getRendererWizard() {
       assertAlive();
@@ -535,6 +635,7 @@ export function createEditor(
     cancel: () => controller.cancel(),
     focus: () => view.focus(),
     destroy() {
+      doc.removeEventListener('pointerdown', dismissRendererPicker);
       if (disposed) return;
       shareControl.destroy();
       rendererWizard.destroy();
@@ -800,6 +901,173 @@ export function createEditor(
     else loadingIndicator.remove();
   }
 
+  function refreshPluginPicker(): void {
+    const state = controller.state;
+    if (state.status !== 'success') return;
+    const available = renderers
+      .list()
+      .filter((plugin) => plugin.supports(state.result));
+    renderPluginPicker(
+      available,
+      available.find((plugin) => plugin.id === selectedRenderer) ??
+        available[0],
+    );
+  }
+
+  function renderPluginPicker(
+    available: readonly ResultRendererPlugin[],
+    renderer: ResultRendererPlugin | undefined,
+  ): void {
+    resultTabs.replaceChildren();
+    rendererInfo.hidden = true;
+    rendererInfo.replaceChildren();
+    resultTabs.hidden = renderers.list().length === 0;
+    const picker = doc.createElement('details');
+    picker.className = 'ldforge-renderer-picker';
+    const pickerToggle = doc.createElement('summary');
+    pickerToggle.textContent = translate(locale, 'rendererChoose');
+    appendIcon(
+      pickerToggle,
+      createSvgIcon(['M3 3h7v7H3zM14 3h7v7h-7zM3 14h7v7H3zM14 14h7v7h-7z']),
+    );
+    pickerToggle.setAttribute(
+      'aria-label',
+      translate(locale, 'rendererChoose'),
+    );
+    const chevron = createSvgIcon(['m6 9 6 6 6-6'])(doc);
+    chevron.setAttribute('aria-hidden', 'true');
+    pickerToggle.append(chevron);
+    const pickerOptions = doc.createElement('div');
+    pickerOptions.className = 'ldforge-renderer-picker-options';
+    picker.append(pickerToggle, pickerOptions);
+    pickerToggle.addEventListener('keydown', (event) => {
+      if (event.key !== 'ArrowDown' && event.key !== 'ArrowUp') return;
+      event.preventDefault();
+      picker.open = true;
+      const choices = pickerOptions.querySelectorAll<HTMLButtonElement>(
+        'button:not(:disabled)',
+      );
+      (event.key === 'ArrowDown'
+        ? choices[0]
+        : choices[choices.length - 1]
+      )?.focus();
+    });
+    pickerOptions.addEventListener('keydown', (event) => {
+      if (!['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(event.key)) return;
+      event.preventDefault();
+      event.stopPropagation();
+      const choices = [
+        ...pickerOptions.querySelectorAll<HTMLButtonElement>(
+          'button:not(:disabled)',
+        ),
+      ];
+      const current = choices.indexOf(doc.activeElement as HTMLButtonElement);
+      const next =
+        event.key === 'Home'
+          ? 0
+          : event.key === 'End'
+            ? choices.length - 1
+            : (current +
+                (event.key === 'ArrowDown' ? 1 : -1) +
+                choices.length) %
+              choices.length;
+      choices[next]?.focus();
+    });
+
+    picker.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        picker.open = false;
+        pickerToggle.focus();
+      }
+    });
+    picker.addEventListener('focusout', (event) => {
+      if (event.relatedTarget && !picker.contains(event.relatedTarget as Node))
+        picker.open = false;
+    });
+    resultTabs.append(picker);
+    for (const [index, plugin] of renderers.list().entries()) {
+      const tab = doc.createElement('button');
+      tab.type = 'button';
+      tab.disabled = !available.includes(plugin);
+      tab.setAttribute('aria-disabled', String(tab.disabled));
+      tab.id = `${output.id}-tab-${index}`;
+      tab.dataset.rendererId = plugin.id;
+      tab.setAttribute('role', 'tab');
+      tab.setAttribute('aria-controls', output.id);
+      const selected = plugin === renderer;
+      tab.setAttribute('aria-selected', String(selected));
+      tab.tabIndex = 0;
+      tab.textContent = localize(plugin.label, locale);
+      appendIcon(tab, plugin.icon);
+      if (selected) output.setAttribute('aria-labelledby', tab.id);
+      tab.addEventListener('click', () => {
+        if (selectedRenderer === plugin.id) return;
+        selectedRenderer = plugin.id;
+        renderResult();
+        resultTabs
+          .querySelector<HTMLButtonElement>('[aria-selected="true"]')
+          ?.focus();
+      });
+      const info = doc.createElement('button');
+      info.type = 'button';
+      info.className = 'ldforge-renderer-info-toggle';
+      info.dataset.rendererInfo = plugin.id;
+      info.setAttribute('aria-controls', rendererInfo.id);
+      info.setAttribute('aria-expanded', 'false');
+      const infoLabel = translate(locale, 'rendererBindingContract', {
+        renderer: localize(plugin.label, locale),
+      });
+      info.setAttribute('aria-label', infoLabel);
+      info.title = infoLabel;
+      appendIcon(
+        info,
+        createSvgIcon([
+          'M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18',
+          'M12 11v6m0-10v.01',
+        ]),
+      );
+      const closeInfo = () => {
+        rendererInfo.hidden = true;
+        info.setAttribute('aria-expanded', 'false');
+        pickerToggle.focus();
+      };
+      info.addEventListener('click', () => {
+        const opening = info.getAttribute('aria-expanded') !== 'true';
+        picker.open = false;
+        resultTabs
+          .querySelectorAll('[data-renderer-info]')
+          .forEach((button) => button.setAttribute('aria-expanded', 'false'));
+        rendererInfo.hidden = !opening;
+        if (opening) {
+          info.setAttribute('aria-expanded', 'true');
+          rendererInfo.setAttribute('aria-label', infoLabel);
+          renderRendererInfo(rendererInfo, plugin, locale, closeInfo);
+          rendererInfo.querySelector<HTMLButtonElement>('button')?.focus();
+          rendererInfo.onkeydown = (event) => {
+            if (event.key === 'Escape') {
+              event.preventDefault();
+              closeInfo();
+            }
+          };
+        }
+      });
+      const item = doc.createElement('div');
+      item.className = 'ldforge-result-tab-item';
+      item.setAttribute('role', 'presentation');
+      if (selected || visiblePlugins.has(plugin.id)) {
+        if (selected) item.classList.add('ldforge-result-tab-active');
+        item.append(tab);
+        resultTabs.insertBefore(item, picker);
+      } else {
+        item.append(tab, info);
+        pickerOptions.append(item);
+      }
+    }
+    picker.hidden =
+      !availablePluginsVisible || pickerOptions.childElementCount === 0;
+  }
+
   function renderResult(): void {
     const previousCleanup = cleanup;
     cleanup = undefined;
@@ -808,6 +1076,8 @@ export function createEditor(
       output.replaceChildren();
       rendererWarning.hidden = true;
       rendererWarningText.textContent = '';
+      rendererInfo.hidden = true;
+      rendererInfo.replaceChildren();
       resultTabs.replaceChildren();
       resultTabs.hidden = true;
       rendererDocs.hidden = true;
@@ -866,30 +1136,7 @@ export function createEditor(
       const renderer =
         available.find((plugin) => plugin.id === selectedRenderer) ??
         available[0];
-      resultTabs.hidden = available.length === 0;
-      for (const [index, plugin] of available.entries()) {
-        const tab = doc.createElement('button');
-        tab.type = 'button';
-        tab.id = `${output.id}-tab-${index}`;
-        tab.dataset.rendererId = plugin.id;
-        tab.setAttribute('role', 'tab');
-        tab.setAttribute('aria-controls', output.id);
-        const selected = plugin === renderer;
-        tab.setAttribute('aria-selected', String(selected));
-        tab.tabIndex = selected ? 0 : -1;
-        tab.textContent = localize(plugin.label, locale);
-        appendIcon(tab, plugin.icon);
-        if (selected) output.setAttribute('aria-labelledby', tab.id);
-        tab.addEventListener('click', () => {
-          if (selectedRenderer === plugin.id) return;
-          selectedRenderer = plugin.id;
-          renderResult();
-          resultTabs
-            .querySelector<HTMLButtonElement>('[aria-selected="true"]')
-            ?.focus();
-        });
-        resultTabs.append(tab);
-      }
+      renderPluginPicker(available, renderer);
       if (!renderer) {
         output.textContent = translate(locale, 'noRenderer');
         return;
@@ -924,11 +1171,23 @@ export function createEditor(
     }
   }
 
+  doc.addEventListener('pointerdown', dismissRendererPicker);
+  function dismissRendererPicker(event: Event): void {
+    const picker =
+      resultTabs.querySelector<HTMLDetailsElement>('details[open]');
+    if (picker && !picker.contains(event.target as Node)) picker.open = false;
+  }
+
   resultTabs.addEventListener('keydown', (event) => {
     if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
     const tabs = [
-      ...resultTabs.querySelectorAll<HTMLButtonElement>('[role="tab"]'),
-    ];
+      ...resultTabs.querySelectorAll<HTMLButtonElement>(
+        '[role="tab"]:not(:disabled)',
+      ),
+    ].filter((tab) => {
+      const picker = tab.closest('details');
+      return !picker || picker.open;
+    });
     const current = tabs.indexOf(doc.activeElement as HTMLButtonElement);
     if (current < 0) return;
     event.preventDefault();
@@ -1058,7 +1317,7 @@ export function createEditor(
         tab.setAttribute('aria-selected', String(selected));
         if (tab.parentElement)
           tab.parentElement.dataset.active = String(selected);
-        tab.tabIndex = selected ? 0 : -1;
+        tab.tabIndex = 0;
         if (selected) editorHost.setAttribute('aria-labelledby', tab.id);
       }
     }
@@ -1067,6 +1326,7 @@ export function createEditor(
   }
 
   function refreshLocale(): void {
+    autoGrowControl.refresh();
     fontSizeControl.refresh();
     rendererWizard.refreshLocale();
     shareControl.refreshLocale();

@@ -61,6 +61,38 @@ export function createEndpointHistory(
         headers: { ...sessionHeaders.get(endpoint) },
       };
     },
+    replace(
+      previous: string,
+      value: string,
+      settings: EndpointSettings,
+    ): boolean {
+      const oldEndpoint = normalizeEndpoint(previous);
+      const endpoint = normalizeEndpoint(value);
+      if (!endpoint) throw new Error('Endpoint must use HTTP or HTTPS.');
+      if (
+        !oldEndpoint ||
+        !endpoints.some((item) => item.endpoint === oldEndpoint)
+      )
+        throw new Error('Unknown saved endpoint.');
+      if (
+        endpoint !== oldEndpoint &&
+        endpoints.some((item) => item.endpoint === endpoint)
+      )
+        throw new Error('Endpoint already exists.');
+      endpoints = endpoints.map((item) =>
+        item.endpoint === oldEndpoint
+          ? { endpoint, method: settings.method }
+          : item,
+      );
+      sessionHeaders.delete(oldEndpoint);
+      sessionHeaders.set(endpoint, { ...settings.headers });
+      try {
+        getStorage().setItem(storageKey, JSON.stringify(endpoints));
+        return true;
+      } catch {
+        return false;
+      }
+    },
     remember(
       value: string,
       settings: EndpointSettings = { method: 'POST', headers: {} },

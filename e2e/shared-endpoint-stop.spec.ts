@@ -1,3 +1,4 @@
+import { addEndpoint, saveAndSelectEndpoint } from './endpoint-helpers.js';
 import { expect, test } from '@playwright/test';
 import type { Route } from '@playwright/test';
 test('shared endpoint headers update the connection, omit old credentials and support Stop with a spinner', async ({
@@ -27,15 +28,14 @@ test('shared endpoint headers update the connection, omit old credentials and su
   });
   await page.goto('/');
   await page.getByRole('button', { name: 'IDE settings', exact: true }).click();
+  await addEndpoint(page);
   await page
     .getByLabel('SPARQL endpoint', { exact: true })
     .fill('https://private.example/sparql');
   await page.getByRole('button', { name: 'Add header', exact: true }).click();
   await page.locator('.header-name').fill('Authorization');
   await page.locator('.header-value').fill('Bearer private');
-  await page
-    .getByRole('button', { name: 'Apply endpoint', exact: true })
-    .click();
+  await saveAndSelectEndpoint(page);
   await page.getByRole('button', { name: 'IDE settings', exact: true }).click();
   await page
     .getByRole('textbox', { name: 'SPARQL query', exact: true })
@@ -70,8 +70,11 @@ test('shared endpoint headers update the connection, omit old credentials and su
     page.getByRole('button', { name: 'Examples', exact: true }).locator('svg'),
   ).toHaveCount(2);
   await page.getByRole('button', { name: 'IDE settings', exact: true }).click();
-  await expect(page.getByLabel('SPARQL endpoint', { exact: true })).toHaveValue(
-    'https://shared.example/sparql',
-  );
+  await expect(
+    page.getByRole('radio', {
+      name: 'https://shared.example/sparql',
+      exact: true,
+    }),
+  ).toBeChecked();
   await expect(page.locator('.header-row')).toHaveCount(0);
 });

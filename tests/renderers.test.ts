@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import {
   createBooleanRenderer,
   createJsonRenderer,
@@ -67,9 +67,12 @@ describe('result renderers', () => {
     const container = document.createElement('div');
     const renderer = createJsonRenderer();
     expect(renderer.supports(result)).toBe(true);
-    renderer.render(container, result);
-    expect(JSON.parse(container.textContent ?? '')).toEqual(result);
+    const cleanup = renderer.render(container, result);
+    expect(
+      JSON.parse(container.querySelector('.cm-content')?.textContent ?? ''),
+    ).toEqual(result);
     expect(container.querySelector('img')).toBeNull();
+    cleanup?.();
   });
 });
 
@@ -147,4 +150,40 @@ it('validates host widths and makes column widths discoverable in the plugin wiz
     aliases: ['colums'],
     type: 'text',
   });
+});
+
+it('copies complete JSON and confirms success, then restores the copy button', async () => {
+  vi.useFakeTimers();
+  const writeText = vi.fn().mockResolvedValue(undefined);
+  const previous = Object.getOwnPropertyDescriptor(navigator, 'clipboard');
+  Object.defineProperty(navigator, 'clipboard', {
+    configurable: true,
+    value: { writeText },
+  });
+  const container = document.createElement('div');
+  const cleanup = createJsonRenderer().render(container, result, {
+    locale: 'nl',
+  });
+  try {
+    container.querySelector<HTMLButtonElement>('button')?.click();
+    await Promise.resolve();
+    expect(writeText).toHaveBeenCalledWith(JSON.stringify(result, null, 2));
+    expect(container.querySelector('button')?.dataset.copied).toBe('true');
+    expect(container.querySelector('button')?.textContent).toBe('Gekopieerd!');
+    await vi.advanceTimersByTimeAsync(1800);
+    expect(container.querySelector('button')?.textContent).toBe(
+      'JSON kopiëren',
+    );
+    writeText.mockRejectedValueOnce(new Error('denied'));
+    container.querySelector<HTMLButtonElement>('button')?.click();
+    await Promise.resolve();
+    expect(container.querySelector('[role="status"]')?.textContent).toContain(
+      'mislukt',
+    );
+  } finally {
+    cleanup?.();
+    if (previous) Object.defineProperty(navigator, 'clipboard', previous);
+    else Reflect.deleteProperty(navigator, 'clipboard');
+    vi.useRealTimers();
+  }
 });

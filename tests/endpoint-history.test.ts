@@ -108,3 +108,46 @@ it('stores the active endpoint separately and ignores malformed or unavailable p
   expect(readActiveEndpoint()).toBe('');
   localStorage.clear();
 });
+
+it('replaces saved endpoints atomically, including session headers and renamed URLs', () => {
+  const saved = storage();
+  const history = createEndpointHistory(() => saved);
+  history.remember('https://one.example/sparql', {
+    method: 'POST',
+    headers: { Authorization: 'Bearer old' },
+  });
+  history.remember('https://two.example/sparql');
+  expect(() =>
+    history.replace(
+      'https://one.example/sparql',
+      'https://two.example/sparql',
+      { method: 'GET', headers: {} },
+    ),
+  ).toThrow('already exists');
+  expect(history.settings('https://one.example/sparql').headers).toEqual({
+    Authorization: 'Bearer old',
+  });
+  history.replace(
+    'https://one.example/sparql',
+    'https://renamed.example/sparql',
+    { method: 'GET', headers: { 'X-Project': 'catalogue' } },
+  );
+  expect(history.list()).not.toContain('https://one.example/sparql');
+  expect(history.settings('https://renamed.example/sparql')).toEqual({
+    method: 'GET',
+    headers: { 'X-Project': 'catalogue' },
+  });
+  expect(history.settings('https://one.example/sparql').headers).toEqual({});
+  const restored = createEndpointHistory(() => saved);
+  expect(restored.settings('https://renamed.example/sparql')).toEqual({
+    method: 'GET',
+    headers: {},
+  });
+  expect(saved.getItem()).not.toContain('catalogue');
+  expect(() =>
+    history.replace('https://unknown.example', 'https://new.example', {
+      method: 'POST',
+      headers: {},
+    }),
+  ).toThrow('Unknown');
+});

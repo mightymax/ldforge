@@ -1,3 +1,4 @@
+import { EditorView } from '@codemirror/view';
 import { describe, expect, it, vi } from 'vitest';
 import {
   createHttpExecutor,
@@ -51,8 +52,14 @@ describe('RDF graph results', () => {
     expect(serializeResultsCsv(result)).toContain(
       'subject,predicate,object\r\nhttps://example.org/s,https://example.org/p,Hello',
     );
-    createJsonRenderer().render(container, result);
-    expect(JSON.parse(container.textContent ?? '').kind).toBe('graph');
+    const cleanupJson = createJsonRenderer().render(container, result);
+    const jsonHost = container.querySelector<HTMLElement>('.cm-editor');
+    if (!jsonHost) throw new Error('Missing JSON editor');
+    expect(
+      JSON.parse(EditorView.findFromDOM(jsonHost)?.state.doc.toString() ?? '')
+        .kind,
+    ).toBe('graph');
+    cleanupJson?.();
     expect(
       formatQueryStatus({ status: 'success', result, durationMs: 10 }),
     ).toBe('3 triples in 10 ms');

@@ -41,7 +41,9 @@ describe('editor integration', () => {
     );
     expect(host.querySelector('.ldforge-results')?.textContent).toBe('True');
     host.querySelector<HTMLButtonElement>('[data-renderer-id="json"]')?.click();
-    expect(host.querySelector('pre')?.textContent).toContain('"boolean"');
+    expect(
+      host.querySelector('.cm-content[aria-label="JSON"]')?.textContent,
+    ).toContain('"boolean"');
     await editor.run();
     expect(
       host
@@ -347,10 +349,10 @@ it('renders plugin icons, supports keyboard result tabs and retains accessible l
   );
   expect(
     host
-      .querySelector('[data-renderer-id="boolean"]')
+      .querySelector('[data-renderer-id="json"]')
       ?.getAttribute('aria-selected'),
   ).toBe('true');
-  expect(document.activeElement?.textContent).toBe('Boolean');
+  expect(document.activeElement?.textContent).toBe('JSON');
   document.activeElement?.dispatchEvent(
     new KeyboardEvent('keydown', { key: 'End', bubbles: true }),
   );
@@ -564,3 +566,149 @@ it.each(['en', 'nl'] as const)(
     expect(warning.textContent).toBe('');
   },
 );
+
+it('shows disabled third-party renderers and their localized binding contracts without rendering them', async () => {
+  const render = vi.fn();
+  const { host, editor } = mount({
+    locale: 'nl',
+    executor,
+    query: 'ASK {}',
+    renderers: [
+      createBooleanRenderer(),
+      {
+        id: 'third-party',
+        label: 'Custom map',
+        supports: () => false,
+        render,
+        wizard: {
+          description: { en: 'Custom description', nl: 'Eigen beschrijving' },
+          bindings: [
+            { variable: 'location', required: true, description: 'WKT <safe>' },
+            { variable: 'label', description: 'Naam' },
+          ],
+        },
+      },
+      createJsonRenderer(),
+    ],
+  });
+  await editor.run();
+  const tab = host.querySelector<HTMLButtonElement>(
+    '[data-renderer-id="third-party"]',
+  );
+  expect(tab?.disabled).toBe(true);
+  tab?.click();
+  expect(render).not.toHaveBeenCalled();
+  const info = host.querySelector<HTMLButtonElement>(
+    '[data-renderer-info="third-party"]',
+  );
+  info?.click();
+  const panel = host.querySelector<HTMLElement>('.ldforge-renderer-info');
+  expect(panel?.hidden).toBe(false);
+  expect(panel?.textContent).toContain('Eigen beschrijving');
+  expect(panel?.textContent).toContain('?location · verplicht');
+  expect(panel?.textContent).toContain('?label · optioneel');
+  expect(panel?.textContent).toContain('WKT <safe>');
+  expect(info?.getAttribute('aria-expanded')).toBe('true');
+  panel?.querySelector('button')?.click();
+  expect(panel?.hidden).toBe(true);
+  expect(document.activeElement).toBe(
+    host.querySelector('.ldforge-renderer-picker summary'),
+  );
+  const first = host.querySelector<HTMLButtonElement>(
+    '[data-renderer-id="boolean"]',
+  );
+  first?.focus();
+  first?.dispatchEvent(
+    new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }),
+  );
+  expect(document.activeElement?.getAttribute('data-renderer-id')).toBe('json');
+  info?.click();
+  editor.setQuery('ASK {}');
+  await editor.run();
+  expect(panel?.hidden).toBe(true);
+});
+
+it('configures and toggles plugin visibility without rerendering results or executing queries', async () => {
+  const render = vi.fn((container: HTMLElement) => {
+    container.textContent = 'Result';
+  });
+  const execute = vi.fn(async (): Promise<QueryResult> => ({
+    kind: 'boolean',
+    value: true,
+  }));
+  const maps = {
+    id: 'maps',
+    label: 'Maps',
+    supports: (result: QueryResult) => result.kind === 'bindings',
+    render: vi.fn(),
+  };
+  const { host, editor } = mount({
+    executor: { execute },
+    query: 'ASK {}',
+    availablePlugins: false,
+    visiblePlugins: ['base', maps],
+    renderers: [
+      { id: 'base', label: 'Base', supports: () => true, render },
+      maps,
+      createJsonRenderer(),
+    ],
+  });
+  editor.showPlugin('json');
+  await editor.run();
+  const pinned = () =>
+    [
+      ...host.querySelectorAll(
+        '.ldforge-result-tabs > .ldforge-result-tab-item [data-renderer-id]',
+      ),
+    ].map((tab) => tab.getAttribute('data-renderer-id'));
+  expect(pinned()).toEqual(['base', 'maps', 'json']);
+  expect(
+    host.querySelector<HTMLButtonElement>('[data-renderer-id="maps"]')
+      ?.disabled,
+  ).toBe(true);
+  expect(
+    host.querySelector<HTMLDetailsElement>('.ldforge-renderer-picker')?.hidden,
+  ).toBe(true);
+  editor.hidePlugin(maps);
+  expect(pinned()).toEqual(['base', 'json']);
+  editor.showAvailablePlugins();
+  expect(
+    host.querySelector<HTMLDetailsElement>('.ldforge-renderer-picker')?.hidden,
+  ).toBe(false);
+  editor.hideAvailablePlugins();
+  expect(
+    host.querySelector<HTMLDetailsElement>('.ldforge-renderer-picker')?.hidden,
+  ).toBe(true);
+  editor.showPlugin(maps);
+  expect(pinned()).toContain('maps');
+  expect(render).toHaveBeenCalledTimes(1);
+  expect(execute).toHaveBeenCalledTimes(1);
+  expect(() => editor.showPlugin('unknown')).toThrow('Unknown result renderer');
+  expect(() => editor.hidePlugin('unknown')).toThrow('Unknown result renderer');
+  editor.hidePlugin('base');
+  expect(pinned()).toContain('base'); // The active renderer remains visible.
+  execute.mockResolvedValueOnce({
+    kind: 'bindings',
+    variables: ['geometry'],
+    bindings: [],
+  });
+  await editor.run();
+  expect(
+    host.querySelector<HTMLButtonElement>('[data-renderer-id="maps"]')
+      ?.disabled,
+  ).toBe(false);
+  expect(maps.render).not.toHaveBeenCalled();
+  editor.destroy();
+  expect(() => editor.showAvailablePlugins()).toThrow();
+  expect(() => editor.hideAvailablePlugins()).toThrow();
+  expect(() => editor.showPlugin(maps)).toThrow();
+  expect(() => editor.hidePlugin(maps)).toThrow();
+});
+
+it('rejects unregistered plugin configuration before mounting', () => {
+  const host = document.createElement('div');
+  expect(() =>
+    createEditor(host, { executor, visiblePlugins: ['unknown'] }),
+  ).toThrow('Unknown result renderer');
+  expect(host.children).toHaveLength(0);
+});

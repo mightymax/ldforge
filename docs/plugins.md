@@ -34,7 +34,7 @@ const exampleButton: ButtonPlugin = {
 
 ## Result renderer plugins
 
-A result renderer has an identifier, a label, a support predicate, and a render function. The result tabs show only renderers supporting the current result. An optional `icon: PluginIcon` factory adds decorative artwork beside the label; see [Plugin API](api/plugins.md#pluginicon-and-createsvgicon) for the contract and `createSvgIcon()` helper. The last selected view is retained when it also supports the next result; otherwise the first supported renderer is selected.
+A result renderer has an identifier, a label, a support predicate, and a render function. By default, the result toolbar keeps Table and JSON visible, shows any other active renderer alongside them, and offers the remaining registered renderers in a dropdown; configure `visiblePlugins` and `availablePlugins`, or call `showPlugin`, `hidePlugin`, `showAvailablePlugins` and `hideAvailablePlugins` to change this presentation; unsupported renderers are disabled. Each dropdown entry has an information button that displays its `wizard.description` and `wizard.bindings`, including required and optional variables. This works identically for built-in and third-party plugins; `supports(result)` determines whether a tab is enabled. An optional `icon: PluginIcon` factory adds decorative artwork beside the label; see [Plugin API](api/plugins.md#pluginicon-and-createsvgicon) for the contract and `createSvgIcon()` helper. The last selected view is retained when it also supports the next result; otherwise the first supported renderer is selected.
 
 ```ts
 import type { ResultRendererPlugin } from '@ldforge/core';
@@ -63,7 +63,7 @@ The editor clears the result container between renders and calls the previous cl
 
 ## CodeMirror extensions
 
-Supply CodeMirror 6 extensions through the `extensions` option to configure themes, completions, or additional editor behavior. Core and renderer packages have no CodeMirror dependency. The built-in SPARQL extension provides Lezer-based highlighting, contextual completion and syntax diagnostics. Use `sparql.prefixes` and `sparql.predicates` in editor options to supply namespace and predicate catalogs.
+Supply CodeMirror 6 extensions through the `extensions` option to configure themes, completions, or additional editor behavior. Core has no CodeMirror dependency. The JSON renderer uses a separate read-only CodeMirror instance for highlighted result data. The built-in SPARQL extension provides Lezer-based highlighting, contextual completion and syntax diagnostics. Use `sparql.prefixes` and `sparql.predicates` in editor options to supply namespace and predicate catalogs.
 
 ## Transport integration
 

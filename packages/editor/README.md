@@ -85,3 +85,35 @@ Configure `themeMainColor: "#1a80b9"` for a coordinated instance theme, or call
 `editor.setThemeMainColor(color)` at runtime (omit the argument to reset). Opaque
 `#RGB`/`#RRGGBB` colors are supported. Plugins inherit the documented
 [theme CSS variables](../../docs/api/editor.md#theme-colors).
+
+## Query editor height
+
+Configure `editorRows: 15, autoGrow: false` for a fixed viewport that scrolls when
+the query exceeds 15 visual lines. `autoGrow: true` grows with the query, using
+`editorRows` as its minimum height. Defaults are 15 rows and auto-grow enabled;
+the demo explicitly disables auto-grow and remembers the checkbox preference.
+
+The gear panel includes an **Show the full query** checkbox. Set
+`controls: { autoGrow: false }` to hide it. Runtime methods are
+`getEditorRows()`, `setEditorRows(rows)`, `isAutoGrowEnabled()` and
+`setAutoGrow(enabled)`. Optional `onEditorRowsChange` and `onAutoGrowChange`
+callbacks support host-owned persistence. Row counts must be positive safe integers.
+These settings affect query tabs, leaving JSON and other result renderers alone.
+See the [configuration guide](https://github.com/mightymax/ldforge/blob/main/docs/api/configuration.md#query-editor-height).
+
+## Result view presentation
+
+By default, registered Table and JSON views stay on the bar. The active renderer
+is also visible, with remaining plugins in Choose view. Unsupported choices are
+disabled; information buttons show each dropdown plugin's `wizard.bindings` and
+description. This uses the same public metadata for built-in and third-party plugins.
+Query-header requests for unsupported renderers show a warning with any missing
+required bindings declared by the plugin.
+
+Set `availablePlugins: false` to hide the dropdown, or `visiblePlugins: ['table',
+'json', 'geo']` to pin additional registered views. Runtime methods are
+`showAvailablePlugins()`, `hideAvailablePlugins()`, `showPlugin(idOrPlugin)` and
+`hidePlugin(idOrPlugin)`. Presentation changes preserve the selected view and do
+not remount the result or execute queries. An explicit visiblePlugins array
+replaces the defaults; unknown plugin IDs are rejected. See the
+[API guide](docs/api/editor.md#result-plugin-visibility).

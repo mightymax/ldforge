@@ -1,3 +1,4 @@
+import { addEndpoint, saveAndSelectEndpoint } from './endpoint-helpers.js';
 import { expect, test } from '@playwright/test';
 
 for (const kind of ['SELECT', 'CONSTRUCT', 'ASK', 'DESCRIBE']) {
@@ -30,6 +31,7 @@ for (const kind of ['SELECT', 'CONSTRUCT', 'ASK', 'DESCRIBE']) {
         await page
           .getByRole('button', { name: 'IDE settings', exact: true })
           .click();
+        await addEndpoint(page);
         await page
           .getByLabel('SPARQL endpoint', { exact: true })
           .fill('https://custom.example/sparql');
@@ -38,9 +40,7 @@ for (const kind of ['SELECT', 'CONSTRUCT', 'ASK', 'DESCRIBE']) {
           .click();
         await page.locator('.header-name').fill('Authorization');
         await page.locator('.header-value').fill('Bearer example-only');
-        await page
-          .getByRole('button', { name: 'Apply endpoint', exact: true })
-          .click();
+        await saveAndSelectEndpoint(page);
         await expect(page.locator('#active-endpoint')).toHaveText(
           'Endpoint: https://custom.example/sparql',
         );
@@ -77,8 +77,11 @@ for (const kind of ['SELECT', 'CONSTRUCT', 'ASK', 'DESCRIBE']) {
         .getByRole('button', { name: 'IDE settings', exact: true })
         .click();
       await expect(
-        page.getByLabel('SPARQL endpoint', { exact: true }),
-      ).toHaveValue('');
+        page.getByRole('radio', {
+          name: 'Local fixture (no endpoint)',
+          exact: true,
+        }),
+      ).toBeChecked();
       await expect(page.locator('.header-row')).toHaveCount(0);
       await page
         .getByRole('button', { name: 'IDE settings', exact: true })

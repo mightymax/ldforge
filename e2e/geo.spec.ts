@@ -141,6 +141,8 @@ test('lazy geo modes render real points, polygons, clusters and a heatmap', asyn
   await expect(page.getByRole('table')).toContainText('Nearby');
   expect(counts.leaflet).toBe(0);
   const tabs = page.getByRole('tablist', { name: 'Result view', exact: true });
+  if (!(await tabs.getByRole('tab', { name: 'Map', exact: true }).isVisible()))
+    await page.locator('.ldforge-renderer-picker > summary').click();
   await tabs.getByRole('tab', { name: 'Map', exact: true }).click();
   const map = page.locator('.ldforge-geo');
   await expect(map).toHaveAttribute('aria-busy', 'false');
@@ -192,7 +194,13 @@ test('lazy geo modes render real points, polygons, clusters and a heatmap', asyn
   await mode.getByRole('button', { name: 'Normal', exact: true }).click();
   await expect(map.locator('path.leaflet-interactive')).toHaveCount(4);
   await expect(canvas).toHaveCount(0);
+  if (
+    !(await tabs.getByRole('tab', { name: 'Table', exact: true }).isVisible())
+  )
+    await page.locator('.ldforge-renderer-picker > summary').click();
   await tabs.getByRole('tab', { name: 'Table', exact: true }).click();
+  if (!(await tabs.getByRole('tab', { name: 'Map', exact: true }).isVisible()))
+    await page.locator('.ldforge-renderer-picker > summary').click();
   await tabs.getByRole('tab', { name: 'Map', exact: true }).click();
   await expect(map).toHaveAttribute('aria-busy', 'false');
   expect(counts.leaflet).toBe(1);

@@ -21,13 +21,19 @@ The demo initially folds PREFIX declarations, including restored tabs and newly
 selected example queries. Use the gutter arrow or folded placeholder to expand
 them.
 
-Under **Plugin Examples → Cards example**, load the Wikidata cats query and press
+Under **Examples → Gallery**, load the Wikidata cats query and press
 Run query to show twelve cat cards. Choosing this example selects Wikidata over
 GET, without reusing another connection's headers. That endpoint remains selected
 until you change it in settings; choose **Local fixture (no endpoint)** to return
 to offline examples.
 
-Use the **gear button inside the IDE** to configure an endpoint, choose GET/POST, add headers, or change the language. Applied endpoints and request methods are saved in browser localStorage. Header values remain in memory for this page only and are isolated per endpoint. Browser CORS rules still apply. The demo restores the last applied endpoint and method after a refresh, without automatically running a query. Choose the local fixture to return to example data. SELECT, ASK, CONSTRUCT and DESCRIBE results are supported.
+Use the **gear button inside the IDE** to manage endpoints. The overview lists saved connections and the local fixture. **Add endpoint** opens a separate form for the URL, GET/POST method and optional headers. **Save endpoint** stores a new connection without selecting it; select its radio button to use it. **Edit endpoint** opens an existing profile. Saving changes to the active profile updates that connection; editing another profile keeps the current selection. Cancel discards the draft. Changing a draft's URL clears its headers so credentials are not carried to a different recipient.
+
+Endpoint URLs and methods are saved in browser localStorage. Header values remain in memory for this page only and are isolated per endpoint. Browser CORS rules still apply. The demo restores the selected endpoint and method after a refresh without running a query. Select **Local fixture (no endpoint)** to return to example data. The active URL below the editor uses a code font; its clipboard button copies just the URL and briefly shows a checkmark.
+
+The demo starts with a fixed 15-line query viewport and scrolls longer queries internally. **Show the full query** under Settings lets the editor grow with the query; the demo remembers this preference. Integrations configure `editorRows` and `autoGrow`, or use `setEditorRows()` and `setAutoGrow()`. The library defaults to 15 rows with auto-grow enabled.
+
+Table and JSON stay on the result bar by default. Other registered views appear in **Choose view**, disabled when unsuitable; each dropdown entry has a binding-contract information button. The active view also remains on the bar. Configure `visiblePlugins` / `availablePlugins`, or call `showPlugin()`, `hidePlugin()`, `showAvailablePlugins()` and `hideAvailablePlugins()` at runtime. If `# view=…` requests an unsupported view, a warning explains the mismatch and lists missing declared required bindings. JSON uses read-only CodeMirror syntax highlighting with a copy button and confirmation. The share-link tool uses a share icon.
 
 Create queries with **+**, switch tabs, and rename a tab by double-clicking its name or using its pencil button. Enter or leaving the name field saves it; Escape cancels. Query text, titles, and the active tab are saved to localStorage when editing or switching. There is one CodeMirror view and one active editor state: inactive tabs store plain text only. Switching cancels a running query and resets undo history and results.
 

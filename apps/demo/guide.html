@@ -204,12 +204,20 @@ const editor = createEditor(container, {
           <section class="guide-section">
             <h2>Configure requests inside the IDE</h2>
             <p>
-              Open the gear button in the demo's toolbar for endpoint settings.
-              Choose a saved endpoint, select GET or POST, and add header
-              name/value pairs such as Authorization with a Bearer token. Select
-              Apply endpoint to activate your changes. Endpoint URLs and methods
-              are remembered; header values stay in memory for this page only
-              and are kept separate per endpoint.
+              Open the gear button to see saved endpoints and the local fixture.
+              Select a connection to use it, or choose
+              <strong>Add endpoint</strong>
+              to open a separate form for its URL, GET/POST method and headers.
+              <strong>Save endpoint</strong> adds the profile; select it in the
+              list when you want to use it. <strong>Edit endpoint</strong> opens
+              an existing profile, and Cancel discards your draft. Saving
+              changes to the active profile updates that connection. Editing
+              another profile keeps the current selection. Changing a draft URL
+              clears its headers. URLs and methods are remembered; header values
+              stay in memory for this page only and are kept separate per
+              endpoint. The endpoint URL below the editor is shown in a code
+              font, with a clipboard button that briefly shows a checkmark after
+              copying.
             </p>
             <p>For your own integration, configure the executor directly:</p>
             <pre><code>const executor = createHttpExecutor({
@@ -238,6 +246,37 @@ const editor = createEditor(container, {
           </section>
           <section class="guide-section">
             <h2>Configure the IDE and control individual tabs</h2>
+            <p>
+              The demo uses a fixed 15-line query viewport and scrolls longer
+              queries internally. Open Settings and check
+              <strong>Show the full query</strong> to grow with the query; the
+              demo remembers this preference. In your integration, set
+              <code>editorRows: 15, autoGrow: false</code>. The library defaults
+              to 15 rows with auto-grow enabled; rows are the minimum height
+              when growing. Wrapped lines count as visual rows, and the viewport
+              scales with the query text size.
+            </p>
+            <pre><code>// In createEditor options:
+// editorRows: 15, autoGrow: false,
+// onAutoGrowChange: (enabled) =&gt; savePreference(enabled),
+// controls: { autoGrow: true } // Show the checkbox in Settings.
+
+editor.setEditorRows(20);
+editor.setAutoGrow(true);
+console.log(editor.getEditorRows(), editor.isAutoGrowEnabled());</code></pre>
+            <p>
+              Rows must be positive safe integers. The height API resizes the
+              same query editor without changing query text, history or results,
+              and applies across query tabs. JSON and other result views keep
+              their own sizing. Hide the checkbox with
+              <code>controls.autoGrow: false</code>; the API remains available.
+              Use <code>onAutoGrowChange</code> and
+              <code>onEditorRowsChange</code> for host-owned persistence. See
+              the
+              <a href="./api.html?page=configuration#query-editor-height"
+                >configuration reference</a
+              >.
+            </p>
             <p>
               The right-side icon group contains Prefixes, Format query and
               Settings. Hide individual built-in controls through the controls
@@ -363,6 +402,7 @@ const loadExample: ButtonPlugin = {
 const countRenderer: ResultRendererPlugin = {
   id: 'my-project.count',
   label: 'Row count',
+  wizard: { description: 'Accepts SELECT results.', bindings: [] },
   supports: (result) =&gt; result.kind === 'bindings',
   render(container, result) {
     if (result.kind !== 'bindings') return;
@@ -384,12 +424,37 @@ const countRenderer: ResultRendererPlugin = {
               destruction.
             </p>
             <p>
-              The result tabs only offer supported views. Renderers can supply
-              an optional icon factory; CSV download exports the full result
-              independently of the selected tab. Registration order determines
-              the initial view. JSON view displays LDForge's normalized result
-              model. For large results, limit your query or supply a paginated
-              or virtualized renderer.
+              Registered Table and JSON views stay on the bar by default. Other
+              plugins appear in <strong>Choose view</strong>, disabled when
+              their result requirements are not met. The active view remains on
+              the bar. Information buttons in the dropdown show each plugin's
+              binding contract. This uses optional
+              <code>wizard.description</code> and
+              <code>wizard.bindings</code> metadata from the plugin, including
+              third-party plugins; <code>supports(result)</code> decides whether
+              a view is enabled. A query header requesting an unavailable view
+              shows a warning, including missing required bindings when
+              declared.
+            </p>
+            <pre><code>// In createEditor options:
+// availablePlugins: true, // Show the dropdown (default).
+// visiblePlugins: ['table', 'json', 'geo'], // Explicit registered IDs or objects.
+
+editor.hideAvailablePlugins();
+editor.showAvailablePlugins();
+editor.showPlugin('geo');
+editor.hidePlugin('geo');</code></pre>
+            <p>
+              Visibility changes preserve the current result and do not execute
+              a query or load visualization libraries. JSON uses a read-only
+              CodeMirror editor with highlighting and a copy button that briefly
+              confirms success. It shows LDForge's normalized result model. CSV
+              download exports the full result independently of the selected
+              view. The share icon copies a query link, including the active
+              renderer and applied endpoint without authentication headers.
+              Registration order determines the initial supported view. For
+              large results, limit your query or supply a paginated or
+              virtualized renderer.
             </p>
           </section>
           <section id="standalone-chart" class="guide-section">

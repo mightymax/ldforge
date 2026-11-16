@@ -4,29 +4,34 @@ Returned by `createEditor(container: HTMLElement, options: EditorOptions): Forge
 
 ## Methods
 
-| Method                            | Returns                  | Behavior                                                                                                                                                              |
-| --------------------------------- | ------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `setPrefixesCollapsed(collapsed)` | `void`                   | Collapses or expands every PREFIX group in the active query. Presentation only; source, execution and persistence retain every declaration. Throws after destruction. |
-| `arePrefixesCollapsed()`          | `boolean`                | True when every PREFIX group is folded; false for expanded/partially folded queries or queries without declarations. Throws after destruction.                        |
-| `togglePrefixes()`                | `boolean`                | Toggles all PREFIX groups and returns the resulting collapsed state. Returns false when no declarations exist. Throws after destruction.                              |
-| `getTabs()`                       | `TabCollection`          | The same live, indexable collection each time. Throws after destruction.                                                                                              |
-| `getToolBar()`                    | `ToolbarApi`             | Live toolbar API for standalone buttons, adjacent groups and dropdowns. See [Toolbar](toolbar.md).                                                                    |
-| `getWorkspace()`                  | `QueryWorkspace`         | Detached plain-data snapshot for persistence.                                                                                                                         |
-| `getShareLink()`                  | `string`                 | Returns the active query URL with the selected renderer in its header, without editing.                                                                               |
-| `copyShareLink()`                 | `Promise<string>`        | Copies the URL to the clipboard; after success, saves its renderer header in one undoable edit if the active query is unchanged. Requires browser clipboard access.   |
-| `getQuery()`                      | `string`                 | Active tab's current text.                                                                                                                                            |
-| `setQuery(query)`                 | `void`                   | Replaces active text in one undoable edit and emits host callbacks. A no-op after destruction.                                                                        |
-| `formatQuery(options?)`           | `Promise<string>`        | Formats the tab active when called. Equivalent to `getTabs().getActive().formatQuery(options)`.                                                                       |
-| `getPrefixes()`                   | `Record<string, string>` | Detached snapshot of explicitly declared aliases and namespaces; excludes the completion catalog.                                                                     |
-| `removePrefix(prefix)`            | `void`                   | Removes all declarations of this alias. A missing alias is a no-op.                                                                                                   |
-| `addPrefix(prefix, namespace?)`   | `string \| undefined`    | Adds to the active tab and returns the actual alias; undefined means unknown shorthand.                                                                               |
-| `getState()`                      | `QueryState`             | Latest execution state. See [Transport and results](transport.md).                                                                                                    |
-| `run()`                           | `Promise<void>`          | Executes active text. Resolves after the request settles; failures are recorded in state instead of rejecting. Throws/rejects if the controller is destroyed.         |
-| `cancel()`                        | `void`                   | Aborts pending work and resets execution state to idle.                                                                                                               |
-| `getLocale()`                     | `'en' \| 'nl'`           | Resolved language for this IDE.                                                                                                                                       |
-| `setLocale(preference)`           | `void`                   | Sets user override; auto restores the project/browser default. Calls `onLocaleChange`. A no-op after destruction.                                                     |
-| `focus()`                         | `void`                   | Focuses CodeMirror. Use only while mounted.                                                                                                                           |
-| `destroy()`                       | `void`                   | Idempotent. Aborts requests, disposes result/settings resources and CodeMirror, and removes the IDE section. Does not remove the caller's container.                  |
+| Method                                              | Returns                           | Behavior                                                                                                                                                              |
+| --------------------------------------------------- | --------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `setPrefixesCollapsed(collapsed)`                   | `void`                            | Collapses or expands every PREFIX group in the active query. Presentation only; source, execution and persistence retain every declaration. Throws after destruction. |
+| `arePrefixesCollapsed()`                            | `boolean`                         | True when every PREFIX group is folded; false for expanded/partially folded queries or queries without declarations. Throws after destruction.                        |
+| `togglePrefixes()`                                  | `boolean`                         | Toggles all PREFIX groups and returns the resulting collapsed state. Returns false when no declarations exist. Throws after destruction.                              |
+| `getTabs()`                                         | `TabCollection`                   | The same live, indexable collection each time. Throws after destruction.                                                                                              |
+| `getToolBar()`                                      | `ToolbarApi`                      | Live toolbar API for standalone buttons, adjacent groups and dropdowns. See [Toolbar](toolbar.md).                                                                    |
+| `getWorkspace()`                                    | `QueryWorkspace`                  | Detached plain-data snapshot for persistence.                                                                                                                         |
+| `getRenderers()`                                    | `readonly ResultRendererPlugin[]` | Registered renderers in registration order, without loading their external libraries.                                                                                 |
+| `showAvailablePlugins()` / `hideAvailablePlugins()` | `void`                            | Show or hide the result renderer dropdown.                                                                                                                            |
+| `showPlugin(plugin)` / `hidePlugin(plugin)`         | `void`                            | Pin or unpin a registered ID or renderer descriptor. The active renderer remains visible.                                                                             |
+| `getEditorRows()` / `setEditorRows(rows)`           | `number` / `void`                 | Read or set the query viewport's positive safe-integer row count.                                                                                                     |
+| `isAutoGrowEnabled()` / `setAutoGrow(enabled)`      | `boolean` / `void`                | Read or change query height mode; the Show the full query checkbox stays synchronized.                                                                                |
+| `getShareLink()`                                    | `string`                          | Returns the active query URL with the selected renderer in its header, without editing.                                                                               |
+| `copyShareLink()`                                   | `Promise<string>`                 | Copies the URL to the clipboard; after success, saves its renderer header in one undoable edit if the active query is unchanged. Requires browser clipboard access.   |
+| `getQuery()`                                        | `string`                          | Active tab's current text.                                                                                                                                            |
+| `setQuery(query)`                                   | `void`                            | Replaces active text in one undoable edit and emits host callbacks. A no-op after destruction.                                                                        |
+| `formatQuery(options?)`                             | `Promise<string>`                 | Formats the tab active when called. Equivalent to `getTabs().getActive().formatQuery(options)`.                                                                       |
+| `getPrefixes()`                                     | `Record<string, string>`          | Detached snapshot of explicitly declared aliases and namespaces; excludes the completion catalog.                                                                     |
+| `removePrefix(prefix)`                              | `void`                            | Removes all declarations of this alias. A missing alias is a no-op.                                                                                                   |
+| `addPrefix(prefix, namespace?)`                     | `string \| undefined`             | Adds to the active tab and returns the actual alias; undefined means unknown shorthand.                                                                               |
+| `getState()`                                        | `QueryState`                      | Latest execution state. See [Transport and results](transport.md).                                                                                                    |
+| `run()`                                             | `Promise<void>`                   | Executes active text. Resolves after the request settles; failures are recorded in state instead of rejecting. Throws/rejects if the controller is destroyed.         |
+| `cancel()`                                          | `void`                            | Aborts pending work and resets execution state to idle.                                                                                                               |
+| `getLocale()`                                       | `'en' \| 'nl'`                    | Resolved language for this IDE.                                                                                                                                       |
+| `setLocale(preference)`                             | `void`                            | Sets user override; auto restores the project/browser default. Calls `onLocaleChange`. A no-op after destruction.                                                     |
+| `focus()`                                           | `void`                            | Focuses CodeMirror. Use only while mounted.                                                                                                                           |
+| `destroy()`                                         | `void`                            | Idempotent. Aborts requests, disposes result/settings resources and CodeMirror, and removes the IDE section. Does not remove the caller's container.                  |
 
 Use a handle only while mounted. In particular, tab methods deliberately throw after destruction rather than recreating detached state. A formatting operation pending during deletion/destruction rejects without writing back.
 
@@ -252,3 +257,63 @@ fallbacks to retain your plugin's current appearance, for example:
 A manual override of only `--ldforge-accent` remains supported but does not derive
 the complete palette; use `themeMainColor` for coordinated colors. Plugin content
 ported outside the editor root must explicitly inherit/copy these variables.
+
+## Result plugin visibility
+
+```ts
+const maps = createGeoRenderer(); // import from @ldforge/geo
+const editor = createEditor(container, {
+  executor,
+  renderers: [createTableRenderer(), createJsonRenderer(), maps],
+  availablePlugins: true, // Default: show the dropdown.
+  visiblePlugins: ['table', 'json', maps],
+});
+editor.hideAvailablePlugins();
+editor.showAvailablePlugins();
+editor.showPlugin(maps); // Also accepts the registered ID: 'geo'.
+editor.hidePlugin('geo');
+```
+
+`showAvailablePlugins()` / `hideAvailablePlugins()` control only the dropdown.
+`showPlugin(plugin)` pins a registered renderer on the bar; `hidePlugin(plugin)`
+returns it to the dropdown. Both accept a registered ID or a plugin descriptor.
+The active renderer remains visible after unpinning until another view is selected.
+An unavailable pinned renderer is visible but disabled according to `supports(result)`.
+These methods do not execute the query, remount the result, change the selected view,
+or load visualization libraries. Calls are idempotent; unknown renderer IDs throw
+`TypeError`, and all four methods throw after destruction. Defaults pin Table and JSON;
+`visiblePlugins` replaces that initial list. Dropdown visibility defaults to `true`.
+No built-in catalogue is used: third-party renderers follow the same rules.
+
+## Query editor height
+
+```ts
+const editor = createEditor(container, {
+  executor,
+  editorRows: 15,
+  autoGrow: false,
+  onAutoGrowChange: (enabled) => console.log('Auto-grow:', enabled),
+  onEditorRowsChange: (rows) => console.log('Visible rows:', rows),
+});
+editor.setEditorRows(20);
+editor.getEditorRows(); // 20
+editor.setAutoGrow(true);
+editor.isAutoGrowEnabled(); // true
+```
+
+`getEditorRows()` / `setEditorRows(rows)` read or set the viewport's visual-row
+count. Values must be positive safe integers; invalid values throw `RangeError`
+and leave the current value intact. `isAutoGrowEnabled()` / `setAutoGrow(enabled)`
+read or set growth behavior. When disabled, scrolling stays inside a fixed query
+viewport; when enabled, `editorRows` is the minimum and the editor grows to fit.
+The **Show the full query** (**Hele query tonen**) checkbox under Settings stays synchronized with API changes. All four methods
+throw after destruction. Row count defaults to 15; library auto-grow defaults to
+true. The demo explicitly uses false and persists the user's checkbox choice.
+
+Changes preserve query text, selection, history, folds, tabs, execution and results;
+they resize the same CodeMirror view. The settings are per editor instance and
+apply to all its query tabs, including wrapped lines. Result renderers keep their
+own height behavior. `onAutoGrowChange(enabled)` and `onEditorRowsChange(rows)`
+run only when the corresponding value changes, not on initial mount. Persistence
+belongs to the host. Hide the checkbox with `controls: { autoGrow: false }` while
+retaining all methods.

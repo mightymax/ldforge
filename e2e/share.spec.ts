@@ -1,3 +1,4 @@
+import { addEndpoint, saveAndSelectEndpoint } from './endpoint-helpers.js';
 import { expect, test } from '@playwright/test';
 
 test('copies a link with the active view and opens the shared query over a saved workspace', async ({
@@ -14,6 +15,8 @@ test('copies a link with the active view and opens the shared query over a saved
     '# view=table\n# css=color: green\nSELECT ?resource WHERE { ?resource ?p ?o }',
   );
   await page.getByRole('button', { name: 'Run query', exact: true }).click();
+  if (!(await page.getByRole('tab', { name: 'JSON', exact: true }).isVisible()))
+    await page.locator('.ldforge-renderer-picker > summary').click();
   await page.getByRole('tab', { name: 'JSON', exact: true }).click();
   await page
     .getByRole('button', { name: 'Copy share link', exact: true })
@@ -52,10 +55,9 @@ test('shares the applied endpoint in query metadata and removes page fragments',
   await page.goto('/#plugins');
   await page.getByRole('button', { name: 'IDE settings', exact: true }).click();
   const endpoint = 'https://example.org/sparql?graph=demo';
+  await addEndpoint(page);
   await page.getByLabel('SPARQL endpoint', { exact: true }).fill(endpoint);
-  await page
-    .getByRole('button', { name: 'Apply endpoint', exact: true })
-    .click();
+  await saveAndSelectEndpoint(page);
   await page.getByRole('button', { name: 'IDE settings', exact: true }).click();
   await page
     .getByRole('button', { name: 'Copy share link', exact: true })

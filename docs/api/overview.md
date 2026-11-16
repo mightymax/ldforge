@@ -39,6 +39,8 @@ const editor = createEditor(container, {
   query: 'select * where { ?s ?p ?o } limit 10',
   locale: 'auto',
   themeMainColor: '#1a80b9',
+  editorRows: 15,
+  autoGrow: false,
   controls: { prefixes: true, format: true, settings: true, download: true },
   sparql: { prefixes },
   renderers: [

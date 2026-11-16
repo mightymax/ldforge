@@ -187,6 +187,10 @@ test('lazy network and timeline plugins render, navigate, link and cleanly react
   await page.getByRole('button', { name: 'Run query', exact: true }).click();
   expect(loads.network).toBe(0);
   const tabs = page.getByRole('tablist', { name: 'Result view', exact: true });
+  if (
+    !(await tabs.getByRole('tab', { name: 'Network', exact: true }).isVisible())
+  )
+    await page.locator('.ldforge-renderer-picker > summary').click();
   await tabs.getByRole('tab', { name: 'Network', exact: true }).click();
   const network = page.locator('.ldforge-network');
   await expect(network).toHaveAttribute('aria-busy', 'false');
@@ -214,7 +218,15 @@ test('lazy network and timeline plugins render, navigate, link and cleanly react
         .data.some((value, index) => index % 4 === 3 && value > 0),
     );
   expect(pixels).toBe(true);
+  if (
+    !(await tabs.getByRole('tab', { name: 'Table', exact: true }).isVisible())
+  )
+    await page.locator('.ldforge-renderer-picker > summary').click();
   await tabs.getByRole('tab', { name: 'Table', exact: true }).click();
+  if (
+    !(await tabs.getByRole('tab', { name: 'Network', exact: true }).isVisible())
+  )
+    await page.locator('.ldforge-renderer-picker > summary').click();
   await tabs.getByRole('tab', { name: 'Network', exact: true }).click();
   await expect(network).toHaveAttribute('aria-busy', 'false');
   expect(loads.network).toBe(1);
@@ -245,7 +257,17 @@ test('lazy network and timeline plugins render, navigate, link and cleanly react
   await timeline
     .getByRole('button', { name: 'Fit timeline', exact: true })
     .click();
+  if (
+    !(await tabs.getByRole('tab', { name: 'Table', exact: true }).isVisible())
+  )
+    await page.locator('.ldforge-renderer-picker > summary').click();
   await tabs.getByRole('tab', { name: 'Table', exact: true }).click();
+  if (
+    !(await tabs
+      .getByRole('tab', { name: 'Timeline', exact: true })
+      .isVisible())
+  )
+    await page.locator('.ldforge-renderer-picker > summary').click();
   await tabs.getByRole('tab', { name: 'Timeline', exact: true }).click();
   await expect(timeline).toHaveAttribute('aria-busy', 'false');
   expect(loads).toEqual({ network: 1, timeline: 1, css: 1 });

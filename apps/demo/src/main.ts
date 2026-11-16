@@ -1,3 +1,5 @@
+import { createEndpointIndicator } from './endpoint-indicator.js';
+import { readUserAutoGrow, saveUserAutoGrow } from './auto-grow-preference.js';
 import { prefixes as extendedPrefixes } from '@ldforge/prefixes/extended';
 import { readUserFontSize, saveUserFontSize } from './font-size-preference.js';
 import { createTreeRenderer } from '@ldforge/tree';
@@ -298,7 +300,7 @@ const app = document.querySelector<HTMLElement>('#app');
 if (!app) throw new Error('Demo mount point is missing.');
 app.innerHTML = `
   <header><a class="wordmark" href="./">LD<span>Forge</span><span class="badge">DEVELOPER PREVIEW</span></a><nav aria-label="Main navigation"><a href="./" aria-current="page">Demo</a><a href="./guide.html">Integration guide</a><a href="./api.html">API reference</a><a href="./plugins.html">Plugins</a></nav></header>
-  <section class="intro"><p class="eyebrow">COMPOSABLE LINKED DATA TOOLS</p><h1>A home for your<br><span>next SPARQL query.</span></h1><p>An embeddable editor. Your actions. Your result views.<br>Built to fit the application you are building.</p></section>
+  <section class="intro"><h1>A home for your <span>next SPARQL query.</span></h1><p>An embeddable editor. Your actions. Your result views. Built to fit the application you are building.</p></section>
 
   <div id="editor"></div>
   <p id="active-endpoint" class="active-endpoint" role="status"></p>
@@ -307,12 +309,15 @@ app.innerHTML = `
 
 const endpointIndicator =
   document.querySelector<HTMLElement>('#active-endpoint');
-const connection = createEndpointSettings(fixtureExecutor, (label) => {
-  if (endpointIndicator) {
-    endpointIndicator.textContent = label;
-    endpointIndicator.title = label;
-  }
-});
+const endpointIndicatorView = endpointIndicator
+  ? createEndpointIndicator(endpointIndicator)
+  : undefined;
+const connection = createEndpointSettings(
+  fixtureExecutor,
+  (label, endpoint, locale) => {
+    endpointIndicatorView?.update(label, endpoint, locale);
+  },
+);
 const mount = document.querySelector<HTMLElement>('#editor');
 if (!mount) throw new Error('Editor mount point is missing.');
 const sharedQuery = new URL(location.href).searchParams.get('query');
@@ -323,6 +328,9 @@ const editor = createEditor(mount, {
   onWorkspaceChange: saveQueryWorkspace,
   query: sharedQuery ?? selectQuery,
   prefixesCollapsed: true,
+  editorRows: 15,
+  autoGrow: readUserAutoGrow(),
+  onAutoGrowChange: saveUserAutoGrow,
   sparql: { prefixes: extendedPrefixes },
   executor: connection.executor,
   shareEndpoint: () => connection.getEndpoint(),
@@ -567,6 +575,10 @@ queryExamples.addButton({
 });
 queryExamples.addSeparator('example-table-publishers');
 
-if (import.meta.hot) import.meta.hot.dispose(() => editor.destroy());
+if (import.meta.hot)
+  import.meta.hot.dispose(() => {
+    endpointIndicatorView?.destroy();
+    editor.destroy();
+  });
 
 mountSiteChrome();

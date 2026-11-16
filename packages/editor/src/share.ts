@@ -85,8 +85,8 @@ export function createShareControl(host: {
       copied
         ? ['M5 12l4 4L19 6']
         : [
-            'M9 5H6a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-3',
-            'M9 2h6v5H9z',
+            'M12 16V3m-5 5 5-5 5 5',
+            'M5 13v7a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-7',
           ],
     )(doc);
     button.replaceChildren(icon);

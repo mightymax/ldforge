@@ -34,7 +34,7 @@ type QueryResult =
 
 `Binding` maps variable names without sigils to `BindingTerm`. Unbound variables are absent. A term has readonly `type` (uri, bnode, literal or typed-literal), `value: string`, optional `datatype: string`, and optional `'xml:lang': string`.
 
-`@ldforge/renderers` exports `createTableRenderer()`, `createCardsRenderer(options?)`, `createBooleanRenderer()`, and `createJsonRenderer()`. JSON renders the normalized result model, not the endpoint's raw response. Table cells use text, and boolean/table captions follow editor locale.
+`@ldforge/renderers` exports `createTableRenderer()`, `createCardsRenderer(options?)`, `createBooleanRenderer()`, and `createJsonRenderer()`. JSON shows the normalized result model in a read-only CodeMirror editor with syntax highlighting and a copy button with confirmation; it does not show the endpoint's raw response. Table cells use text, and boolean/table captions follow editor locale.
 
 ## RDF graph execution
 
@@ -96,7 +96,7 @@ A newer request cancels the previous request. Cancellation and identity checks s
 ## Portable endpoint headers
 
 The demo honors a `sparql-endpoint` directive in the leading query-comment block.
-It selects the endpoint on **Run**, updates visible connection settings/history,
+It selects the endpoint on **Run**, updates the active connection and saved endpoint list,
 and uses GET. Pasting or loading a query alone does not execute a request.
 
 ```sparql
@@ -130,3 +130,20 @@ execution. All four basic examples choose local data. Live examples prepend thei
 own `sparql-endpoint` comment so a copied query carries its connection with it.
 Adding such a header manually to a basic query opts into that live endpoint.
 The Plugin wizard preserves this transport directive while updating renderers.
+
+## Demo endpoint manager
+
+The demo's gear panel lists saved endpoints with their HTTP method and current
+selection. Add endpoint opens a blank URL/method/header form; Save endpoint adds
+the profile without switching the connection. Select a saved endpoint or the
+local fixture to activate it. Edit endpoint opens a separate draft; Cancel discards
+it. Saving an active profile applies its changes, while saving another profile
+keeps the active selection. Changing a profile URL clears its draft headers and
+renames the saved entry on successful save. Duplicate saved URLs are rejected.
+
+The demo persists URLs and methods and restores the active endpoint without
+executing a query. Header values stay in memory per URL and are not restored after
+reload. Public examples and `# sparql-endpoint` queries select their own connection
+without inheriting stored session headers. The active URL below the editor has a
+clipboard button with a brief copied checkmark. This manager is demo-owned host
+code, not automatic persistence or credential management in `createHttpExecutor`.

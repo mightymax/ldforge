@@ -13,6 +13,7 @@ export interface EditorControls {
   readonly settings?: boolean;
   readonly language?: boolean;
   readonly fontSize?: boolean;
+  readonly autoGrow?: boolean;
   readonly tabs?: boolean;
   readonly addTab?: boolean;
   readonly renameTab?: boolean;
@@ -35,6 +36,7 @@ export function resolveControls(
     settings: true,
     language: true,
     fontSize: true,
+    autoGrow: true,
     tabs: true,
     addTab: true,
     renameTab: true,
