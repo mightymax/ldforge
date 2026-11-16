@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       release_tag:
-        description: Existing release tag to recover (for example v0.1.1)
+        description: Existing batch tag or historical vVERSION tag to recover
         required: true
         type: string
       artifact_run_id:
@@ -46,6 +46,7 @@ jobs:
           node-version: '24'
           package-manager-cache: false
       - run: npm install --global npm@11
+      - run: npm ci --prefix tooling --ignore-scripts
       - name: Verify original release passed its checks
         id: source
         env:
@@ -61,7 +62,7 @@ jobs:
           import { readFileSync } from 'node:fs';
           import { execFileSync } from 'node:child_process';
           import { verifyTag } from './tooling/scripts/release.mjs';
-          verifyTag('source', process.env.RELEASE_TAG);
+          verifyTag('source', process.env.RELEASE_TAG, { allowLegacy: true });
           const run = JSON.parse(readFileSync('original-run.json', 'utf8'));
           const pages = JSON.parse(readFileSync('original-jobs.json', 'utf8'));
           const sha = execFileSync('git', ['-C', 'source', 'rev-parse', 'HEAD'], { encoding: 'utf8' }).trim();
@@ -92,8 +93,8 @@ jobs:
           RELEASE_TAG: ${{ inputs.release_tag }}
         run: |
           if ! gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
-            RELEASE_BASE="${RELEASE_TAG%%+*}"
-            if [[ "$RELEASE_BASE" == *-* ]]; then
+            PRERELEASE=$(node --input-type=module -e 'import fs from "node:fs"; const p = `source/.releases/${process.env.RELEASE_TAG}.json`; console.log(fs.existsSync(p) ? JSON.parse(fs.readFileSync(p)).prerelease : /-/.test(process.env.RELEASE_TAG.split("+")[0]))')
+            if [[ "$PRERELEASE" == true ]]; then
               gh release create "$RELEASE_TAG" --verify-tag --generate-notes --title "$RELEASE_TAG" --prerelease
             else
               gh release create "$RELEASE_TAG" --verify-tag --generate-notes --title "$RELEASE_TAG"

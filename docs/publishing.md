@@ -1,152 +1,216 @@
 # Publishing LDForge
 
-The public repository is [mightymax/ldforge](https://github.com/mightymax/ldforge). Consumer documentation uses npm packages. Normal installation, builds and tests never publish anything.
+The public repository is [mightymax/ldforge](https://github.com/mightymax/ldforge).
+The eleven public packages have independent semver versions. One central release
+plan and workflow coordinates publication; private root/demo packages are not
+published or version-bumped. Installation, builds and tests do not publish.
 
-## One version for the project
-
-Release from the repository root. `@ldforge/core`, `@ldforge/prefixes`, `@ldforge/renderers`, `@ldforge/charts`, `@ldforge/geo`, `@ldforge/network`, `@ldforge/timeline`, `@ldforge/pivot`, `@ldforge/tree` and `@ldforge/editor` share one version and one `vVERSION` Git tag. The private root coordinates releases; the demo remains private. Internal dependency ranges are synchronized automatically.
-
-This keeps compatible package combinations easy to identify and avoids ten separate release commands. A change to one package releases all ten, including unchanged packages. Independent versioning would reduce those releases but require dependency-specific version management; it is unnecessary for the current tightly integrated project.
-
-## One-time npm authentication
-
-The `ldforge` npm organization must own the package scope, and the publishing account must have write access to all ten packages. The workflow publishes public packages.
-
-New packages such as `@ldforge/network`, `@ldforge/timeline`, `@ldforge/pivot` and `@ldforge/tree` require a first interactive local publication (`npm login`, then `npm publish -w PACKAGE --access public`) before their npm Trusted Publishers can be configured. Do this from a tested, committed build; do not add CI npm tokens. Both publication workflows authenticate exclusively through GitHub OIDC; no npm access token is configured in CI. Configure **Trusted publishing** in the npm settings of each of the ten packages:
-
-| Field                 | Value                                                               |
-| --------------------- | ------------------------------------------------------------------- |
-| Provider              | GitHub Actions                                                      |
-| Organization or user  | `mightymax`                                                         |
-| Repository            | `ldforge`                                                           |
-| Workflow filename     | `release.yml`                                                       |
-| Environment           | Leave empty; this workflow does not use an environment              |
-| Publishing permission | Enable **Allow npm publish**; leave **Allow npm dist-tag** disabled |
-
-Remove any old GitHub `NPM_TOKEN` secret. After a successful OIDC publication, revoke the old npm token on npmjs.com. The workflows authenticate through GitHub OIDC with short-lived credentials. It uses Node.js 24 and npm 11, with `id-token: write` only in the publishing job. Public GitHub repositories and public packages qualify for automatic provenance with trusted publishing. Follow the current [npm trusted publishing instructions](https://docs.npmjs.com/trusted-publishers/), including any activation deadline shown when configuring a publisher.
-
-## Make a release
-
-Make and commit changes on any branch. Run `npm ci`, install Chromium once with `npx playwright install chromium`, then run `npm run check` locally. Merge or commit the intended changes onto `main` and ensure the working tree is clean, including untracked files.
-
-From the root:
+## Record a package change
 
 ```sh
-npm version patch
-# Or: npm version minor
-# Or: npm version major
-# Or: npm version prerelease --preid=beta
+npm run changeset
 ```
 
-Do not run all examples: each command creates a release. Starting from `0.1.0`, `npm version patch` releases `0.1.1`.
+Choose affected packages and patch/minor/major, then describe the change. Commit
+the generated `.changeset/<unique-name>.md` alongside code, tests and docs. Files
+can also be written manually, for example `.changeset/resize-editor.md`:
 
-The lifecycle hooks:
+```md
+---
+'@ldforge/editor': minor
+---
 
-1. Require the repository root, branch `main`, a clean working tree, matching package versions and an accessible `origin`. They fetch remote main and reject behind/diverged history. Local commits ahead of remote main are allowed; no preliminary push is needed.
-2. Update all package versions, internal dependency ranges and the lockfile. npm creates the release commit and annotated `vVERSION` tag.
-3. Atomically push main and that tag. Both remote updates succeed together or neither does.
-4. Start GitHub's **Release** workflow for the tag. Ordinary branch pushes and pull requests do not run GitHub tests.
+Add a drag handle to resize the query editor.
+```
 
-Use standard npm lifecycle hooks and tag creation. Do not bypass them with `--ignore-scripts`, `--force`, custom tag prefixes or `--no-git-tag-version`. Per-workspace `npm version` commands are rejected. Wait for a release to finish before starting the next one.
+The planner also includes `@ldforge/yasgui` because its standalone bundle embeds
+editor code. It conservatively uses the largest bump among its changed embedded
+core/prefix/editor/renderer dependencies, unless an explicit Yasgui changeset
+requests a larger bump. A geo/charts/network/timeline/pivot/tree-only change does
+not rebuild Yasgui: these plugins are not embedded in that facade.
 
-The GitHub check job verifies the tag, main ancestry and versions; runs type checking, lint, formatting, coverage, release-hook tests, builds, documentation checks, isolated package installation and Chromium tests; then packs the ten packages. Only after success does a separate job publish those exact checked tarballs, in dependency order, and create a GitHub release with the tarballs attached. Artifacts are retained for 14 days. Stable versions use npm's `latest` tag; prereleases use `next`.
+Source changes require changesets, including new/untracked package files, package
+README/build metadata, and copied editor inputs (`docs/api`, `docs/renderers.md`
+and `scripts/build-editor-assets.mjs`). Changelogs are generated output. The planner
+uses each package's current version tag as its baseline, falling back to historical
+`vVERSION` tags, and checks coverage before changing anything.
 
-When website deployment is configured, a final job calls the reusable website workflow after successful npm publication. Website failures do not roll back already published npm packages. See [Deployment](deployment.md#automated-website-releases) for setup and website-only retries.
+Internal dependencies are updated when required by their declared ranges. Ranges
+for packages being released can also raise their minimum to another package in
+that batch, ensuring the advertised functionality is available. Compatible core
+updates do not force every dependent to be released. For breaking dependency
+changes, review every affected public API and add explicit major changesets where
+needed; an automatic dependency bump cannot decide public API compatibility.
 
-## Recover a failed release
+## Inspect a release plan
 
-If the preversion guard fails, fix the reported condition and rerun the intended command. No version has changed.
+```sh
+npm run release:plan
+npm run release:plan -- --json
+```
 
-If the final push fails, npm may already have created the local release commit and tag. Fix connectivity or remote permissions and retry without another version bump:
+Planning is read-only and works on a development branch. It lists each package's
+old/new version and the reason: explicit changeset, necessary dependency update,
+or embedded bundle change. Multiple changesets accumulate into one release.
+An editor minor starting from 1.0.0 normally plans editor 1.1.0 and Yasgui 1.1.0;
+core and unrelated plugins remain at 1.0.0.
+
+No package changesets means no npm release. Website-only work uses the separate
+[website workflow](deployment.md#automated-website-releases), without dummy package
+versions. Tests may still build every package; selective publication does not
+weaken integration checks.
+
+## Prepare and release, step by step
+
+Commit/merge the intended changes and changesets to main. Install dependencies
+and Chromium as needed, and run the full checks. If a new dependency minimum is not yet published, prepare
+the batch locally first so its versioned tarball can be tested, then run the full
+checks before pushing. Wait for an existing release,
+including website deployment, to finish before starting another.
+
+```sh
+npm ci
+npx playwright install chromium
+npm run check
+npm run release:plan
+```
+
+Prepare **locally**, from clean main with no untracked files:
+
+```sh
+npm run release:prepare
+```
+
+This checks branch, working tree, internal ranges and lockfile; fetches main and
+rejects behind/diverged history; applies the Changesets plan; updates the lockfile;
+and commits versions, changelogs and `.releases/release-<UTC timestamp>-<base SHA>.json`.
+It creates an annotated batch tag and `<package name>@<version>` tags at that commit.
+For example `@ldforge/editor@1.1.0`. Only participating packages are versioned.
+It does **not** push or publish. Review before continuing:
+
+```sh
+git show --stat HEAD
+git show HEAD:.releases/<batch-tag>.json
+```
+
+Push the exact prepared release when ready:
 
 ```sh
 npm run release:push
 ```
 
-If GitHub checks find a code defect, fix it on main, run local checks and make a new version. Never move a published release tag. For transient infrastructure or authentication failures, fix the cause and rerun the failed workflow jobs in GitHub. If the tarball artifact has expired, rerun the check job too.
+Main and all batch/package tags are pushed atomically. The `release-*` batch tag
+starts GitHub's Release workflow. Per-package tags do not start duplicate runs.
+CI verifies the batch/source/main ancestry, runs all checks and packs exactly the
+planned packages. A separate OIDC job publishes the checked tarballs in dependency
+order, creates the GitHub release, and optionally deploys the website from that
+same commit. Stable package versions use npm `latest`; prereleases use `next`.
+Artifacts are retained for 14 days.
 
-Publishing ten npm packages is not atomic. The publisher checks every target version before uploading and compares registry integrity hashes to the artifact manifest. A retry skips versions already published with identical bytes and continues the remaining packages. An existing version with different bytes stops the release; resolve it with a new version, never overwrite or unpublish it to force a retry. Registry lookup failures also stop publication before uploading.
-
-## Validate the recovery workflow's trusted publisher
-
-Each trusted publisher must publish successfully within its own activation window.
-Running the retry workflow against already-published artifacts skips every upload
-and does not validate an unused publisher.
-
-When a new publication through `retry-release.yml` is needed:
-
-1. Wait for any current release, including website deployment, to finish.
-2. Set the repository Actions variable `NPM_RELEASE_VIA_RETRY` to `true`.
-3. Make the next ordinary root release with `npm version patch`. The Release
-   workflow still verifies, tests and packs the exact tagged source; its normal
-   publishing job and dependent website job are skipped.
-4. Once the check job succeeds, dispatch `retry-release.yml` on `main` with the
-   new `release_tag` and the original Release run's `artifact_run_id`.
-5. Wait for recovery publication and website deployment to complete. Remove
-   `NPM_RELEASE_VIA_RETRY` so subsequent releases publish normally.
-
-Both workflows share the same concurrency group. Do not bypass version,
-source-commit or artifact-integrity checks, republish an existing version, or
-change a release tag to validate a publisher.
-
-## Inspect package contents
+Once comfortable with the flow, the combined command prepares and pushes:
 
 ```sh
-npm run build
-npm pack --workspace @ldforge/core --dry-run
-npm pack --workspace @ldforge/prefixes --dry-run
-npm pack --workspace @ldforge/renderers --dry-run
-npm pack --workspace @ldforge/editor --dry-run
-npm pack --workspace @ldforge/charts --dry-run
-npm pack --workspace @ldforge/geo --dry-run
-npm pack --workspace @ldforge/network --dry-run
-npm pack --workspace @ldforge/timeline --dry-run
-npm pack --workspace @ldforge/pivot --dry-run
-npm pack --workspace @ldforge/tree --dry-run
+npm run release
 ```
 
-Review JavaScript, declarations, source maps, source, README, LICENSE, editor CSS and API documentation. `npm run test:packages` installs actual tarballs in an isolated consumer and checks their public entry points. Release tests use temporary Git repositories and never push this repository or publish to npm.
+**This starts a real release**, unlike `release:plan`. Do not use it as a smoke test.
+If preparation fails before commit, inspect the local changes and resolve the
+failure before retrying; no push or publication has occurred. If a prepared batch
+exists, use `release:push` rather than preparing another bump.
 
-### Recovering a delayed or partially published release
+## Direct version commands are blocked
 
-npm may accept a new package before its version becomes visible to registry
-reads. The publisher prints npm's upload output and waits up to approximately ten
-minutes per package for the exact expected integrity to appear. A different
-integrity always stops publication immediately. A retry skips versions whose
-integrity already matches; it never overwrites published packages.
+Normal root and per-workspace `npm version patch/minor/major` calls fail in
+`preversion`, before version files, commits or tags are changed. The old automatic
+root `version`/`postversion` sync/push hooks are removed. Use changesets and the
+controlled release commands instead. The changeset wrapper also rejects
+`version`/`publish`; raw Changesets commands would skip LDForge's bundle and artifact
+rules. A manually pushed legacy-style `v*` tag does not trigger the new Release
+workflow. CI requires a valid batch record for new publications.
 
-Normally, retry the failed publication job in the original **Release** run. If
-that tag contains older publication tooling, use **Retry tested npm release**
-from `main`, supplying the existing tag and the original Release run ID. This
-workflow verifies that the original release checks succeeded and that the
-artifacts belong to the exact tagged commit, then publishes those same tarballs
-using the current tooling. It does not rebuild packages or move the tag. On
-success it creates the GitHub release and deploys the website, like a normal
-release. Artifacts must still be within their 14-day retention period.
-
-Add a separate trusted publisher for `retry-release.yml` on all ten packages,
-using the same GitHub owner and repository, leaving the environment empty and
-enabling **Allow npm publish** only. Keep the `release.yml` publisher in place;
-authorization for one workflow filename does not authorize the other. Configure
-this before running recovery; the recovery workflow also uses OIDC without an npm token.
-
-## First manual publication of @ldforge/tree
-
-After the feature PR is merged, publish just the new package at the current workspace version (`0.1.6` when introduced). Existing packages need no republishing. Use a clean main checkout and Node.js 24/npm 11:
+## Prereleases
 
 ```sh
-git switch main
-git pull --ff-only origin main
-npm ci
-npx playwright install chromium
-npm run check
-npm pack --workspace @ldforge/tree --dry-run
-npm login --registry=https://registry.npmjs.org/
-npm whoami --registry=https://registry.npmjs.org/
-npm publish --workspace @ldforge/tree --access public --registry=https://registry.npmjs.org/
-npm view @ldforge/tree version --registry=https://registry.npmjs.org/
+npm run changeset -- pre enter beta
+# Commit the mode file and normal changesets; inspect/prepare/push as above.
 ```
 
-Complete the browser login and any npm 2FA challenge. The account must have permission to create public packages in `@ldforge`. Check the workspace version before publication; never overwrite an existing published version. Do not run `npm version` for this bootstrap: it pushes a release tag and starts automated publication of all packages before this new package's trusted publisher is configured.
+Changed packages receive their own `-beta.N` versions and publish with `next`.
+The root version stays unchanged. To promote to stable:
 
-Once the package is visible, open [@ldforge/tree settings](https://www.npmjs.com/package/@ldforge/tree/access). Add GitHub Actions trusted publishers for owner `mightymax`, repository `ldforge`, first workflow `release.yml`, then `retry-release.yml`. Leave environment empty and enable **Allow npm publish**. Follow any activation instructions/deadline displayed by npm. See the [npm trusted publishing documentation](https://docs.npmjs.com/trusted-publishers/). After setup, future project releases use the ordinary root `npm version patch/minor/major` flow and include this tenth package automatically.
+```sh
+npm run changeset -- pre exit
+# Commit this mode change, then inspect/prepare/push the stable release.
+```
+
+Changesets tracks prerelease state in `.changeset/pre.json` and its prerelease
+changeset files. Keep these in Git. The batch record declares whether the GitHub
+release is a prerelease; the batch tag's timestamp is not a semver version.
+
+## npm authentication and provenance
+
+The `ldforge` organization and publishing account must allow public publication
+of all eleven packages. Configure npm Trusted Publishing for GitHub owner
+`mightymax`, repository `ldforge`, workflow filename `release.yml`, no environment,
+and **Allow npm publish** enabled. Keep **Allow npm dist-tag** disabled.
+Configure a second publisher for `retry-release.yml` for recovery.
+
+A newly introduced npm package can require a first interactive local publication
+before its publisher can be configured. Use a tested, committed build and publish
+only that new workspace with `npm publish -w PACKAGE --access public`; this is a
+bootstrap operation, not the normal release process.
+
+Do not add CI npm tokens. Both workflows retain Node.js 24/npm 11, GitHub OIDC,
+short-lived credentials and automatic provenance for eligible public packages.
+`id-token: write` is restricted to the publishing job. Preserve existing trusted
+publisher workflow filenames when upgrading. Follow npm's current
+[trusted publishing instructions](https://docs.npmjs.com/trusted-publishers/),
+including publisher activation deadlines.
+
+## Recover a failed release
+
+For a failed atomic push, fix connectivity/permissions and run `npm run release:push`.
+Do not bump again. If main advanced meanwhile, resolve the history conflict first;
+never force-push a published release or move its tags.
+
+For transient CI/publication failures, rerun failed jobs in the original Release
+run. Every target package/version is checked before the first upload. Matching
+registry integrity is skipped; different bytes stop the whole publication plan.
+The publisher waits for registry visibility after upload instead of republishing.
+Never overwrite/unpublish a released version to force recovery. A code defect in
+an already published package requires a new changeset/version.
+
+If the artifact expired, rerun its check job. If the original tag has older tooling,
+use **Retry tested npm release** (`retry-release.yml`) on main, supplying its exact
+batch tag and original artifact run ID. Recovery validates the original successful
+check job and source SHA, downloads its original tarballs and uses current tooling
+to publish those exact bytes. It never rebuilds or moves the release tag. Both
+workflows use the same non-cancelling concurrency group.
+
+The current verifier accepts schema-2 per-package artifact manifests and historical
+single-version manifests from `vVERSION` releases, including the older ten-package
+layout. Historical recovery uses the historical source's manifests; it does not
+require migrating published tags or package versions. New normal releases accept
+only the batch-tag/record model. Historical release logic remains isolated in
+`scripts/release-legacy.mjs` for verification and regression tests.
+
+If a recovery trusted publisher needs its first successful publication, set the
+Actions variable `NPM_RELEASE_VIA_RETRY=true` before the next planned release. The
+normal workflow still verifies/tests/packs it, but skips its publishing and website
+jobs. Once checks pass, dispatch recovery using that run/tag, wait for publication
+and website deployment, then remove the variable. No extra version bump is needed.
+Skipping already published artifacts does not activate an unused trusted publisher.
+
+## Compatibility and package checks
+
+`npm run test:packages` installs all current tarballs in an isolated consumer and
+checks imports, declarations and package contents. `npm run test:compatibility`
+additionally installs current editor/plugins/Yasgui with the declared minimum
+core/prefix/renderer versions from npm and checks runtime rendering, declarations
+and a single compatible core copy. If a required minimum is introduced by the
+unpublished batch, its local tarball is used; unavailable older minimums and
+non-404 registry failures fail the check.
+
+Release tests use temporary repositories and local bare remotes. They test plans,
+versioning, tags, integrity and recovery without publishing to npm or pushing this
+repository. Builds/checks do not perform an actual release.
