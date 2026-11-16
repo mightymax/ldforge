@@ -1,0 +1,79 @@
+{
+  "schemaVersion": 2,
+  "releaseTag": "release-20261116-120931-8baa24c",
+  "baseCommit": "8baa24c3912cb22ecaa9d9214691f8a37812163e",
+  "changesets": [
+    {
+      "releases": [
+        {
+          "name": "@ldforge/editor",
+          "type": "patch"
+        }
+      ],
+      "summary": "Style table search and filter inputs inside the embedded editor without relying on demo form styles.",
+      "id": "embedded-table-inputs"
+    },
+    {
+      "releases": [
+        {
+          "name": "@ldforge/editor",
+          "type": "minor"
+        }
+      ],
+      "summary": "Add an accessible drag handle to resize the query editor, with keyboard controls and an option to hide it. Resizing switches to a fixed viewport and uses the existing row-count and auto-grow callbacks.",
+      "id": "query-editor-resize"
+    },
+    {
+      "releases": [
+        {
+          "name": "@ldforge/editor",
+          "type": "minor"
+        }
+      ],
+      "summary": "Complete variable names from the entire query, including variables used later in WHERE, while respecting subquery projections.",
+      "id": "query-variable-completion"
+    },
+    {
+      "id": "ldforge-bundle-b7a4d38a81af",
+      "summary": "Rebuild the standalone Yasgui browser bundle with @ldforge/editor@1.1.0.",
+      "releases": [
+        {
+          "name": "@ldforge/yasgui",
+          "type": "minor"
+        }
+      ]
+    }
+  ],
+  "releases": [
+    {
+      "name": "@ldforge/editor",
+      "type": "minor",
+      "oldVersion": "1.0.0",
+      "changesets": [
+        "embedded-table-inputs",
+        "query-editor-resize",
+        "query-variable-completion"
+      ],
+      "newVersion": "1.1.0",
+      "reasons": [
+        "embedded-table-inputs: Style table search and filter inputs inside the embedded editor without relying on demo form styles.",
+        "query-editor-resize: Add an accessible drag handle to resize the query editor, with keyboard controls and an option to hide it. Resizing switches to a fixed viewport and uses the existing row-count and auto-grow callbacks.",
+        "query-variable-completion: Complete variable names from the entire query, including variables used later in WHERE, while respecting subquery projections."
+      ]
+    },
+    {
+      "name": "@ldforge/yasgui",
+      "type": "minor",
+      "oldVersion": "1.0.0",
+      "changesets": [
+        "ldforge-bundle-b7a4d38a81af"
+      ],
+      "newVersion": "1.1.0",
+      "reasons": [
+        "ldforge-bundle-b7a4d38a81af: Rebuild the standalone Yasgui browser bundle with @ldforge/editor@1.1.0.",
+        "Embedded bundle changes: @ldforge/editor"
+      ]
+    }
+  ],
+  "prerelease": false
+}
