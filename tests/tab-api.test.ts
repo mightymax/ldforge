@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { createEditor, formatSparql } from '@ldforge/editor';
 import type { ForgeEditor } from '@ldforge/editor';
-import { undo } from '@codemirror/commands';
+import { redo, undo } from '@codemirror/commands';
 import { EditorView } from '@codemirror/view';
 
 const editors: ForgeEditor[] = [];
@@ -207,4 +207,106 @@ it('hides configured built-in controls but leaves custom buttons and the public 
   expect(
     partial.host.querySelector<HTMLElement>('.ldforge-language')?.hidden,
   ).toBe(true);
+});
+
+describe('declared prefix API', () => {
+  it('inspects structural declarations as detached snapshots and removes only matching nodes', () => {
+    const body = `SELECT * WHERE {
+      ?s <https://example.org/PREFIX> "PREFIX fake: <https://fake/>" .
+      BIND('''PREFIX long: <https://long/>''' AS ?text)
+      ?s ex:p ?o
+    }`;
+    const query =
+      '# PREFIX comment: <https://comment/>\n' +
+      'BASE <https://base/>\n' +
+      'PREFIX ex: <https://first/> # keep this comment\n' +
+      'prefix : <https://default/> PREFIX ex: <https://last/>\n' +
+      'PREFIX constructor: <https://prototype/>\n' +
+      body;
+    const { editor } = mount({ query, sparql: { prefixes: false } });
+    const expected = Object.fromEntries([
+      ['ex', 'https://last/'],
+      ['', 'https://default/'],
+      ['constructor', 'https://prototype/'],
+    ]);
+    expect(editor.getPrefixes()).toEqual(expected);
+    const snapshot = editor.getPrefixes();
+    snapshot.ex = 'changed';
+    expect(editor.getPrefixes()).toEqual(expected);
+    editor.removePrefix('ex');
+    expect(editor.getQuery()).toBe(
+      query
+        .replace('PREFIX ex: <https://first/>', '')
+        .replace('PREFIX ex: <https://last/>', ''),
+    );
+    expect(editor.getQuery()).toContain(body);
+    expect(editor.getPrefixes()).toEqual(
+      Object.fromEntries([
+        ['', 'https://default/'],
+        ['constructor', 'https://prototype/'],
+      ]),
+    );
+    editor.removePrefix('');
+    expect(editor.getPrefixes()).toEqual({
+      ['constructor']: 'https://prototype/',
+    });
+  });
+
+  it('supports undo/redo and callbacks for removal, addition, manual edits and tab switches', () => {
+    const onQueryChange = vi.fn();
+    const onWorkspaceChange = vi.fn();
+    const query = 'PREFIX ex: <https://example.org/>\nASK { ?s ex:p ?o }';
+    const { editor, host } = mount({ query, onQueryChange, onWorkspaceChange });
+    const dom = host.querySelector<HTMLElement>('.cm-editor');
+    const view = dom ? EditorView.findFromDOM(dom) : null;
+    if (!view) throw new Error('Missing view');
+    onQueryChange.mockClear();
+    onWorkspaceChange.mockClear();
+    editor.removePrefix('missing');
+    expect(onQueryChange).not.toHaveBeenCalled();
+    expect(onWorkspaceChange).not.toHaveBeenCalled();
+    editor.removePrefix('ex');
+    expect(onQueryChange).toHaveBeenLastCalledWith(editor.getQuery());
+    expect(onWorkspaceChange).toHaveBeenLastCalledWith(editor.getWorkspace());
+    expect(editor.getPrefixes()).toEqual({});
+    expect(undo(view)).toBe(true);
+    expect(editor.getPrefixes()).toEqual({ ex: 'https://example.org/' });
+    expect(redo(view)).toBe(true);
+    expect(editor.getPrefixes()).toEqual({});
+    editor.addPrefix('ex', 'https://example.org/');
+    expect(editor.getPrefixes()).toEqual({ ex: 'https://example.org/' });
+    undo(view);
+    expect(editor.getPrefixes()).toEqual({});
+    redo(view);
+    view.dispatch({
+      changes: {
+        from: 0,
+        to: view.state.doc.length,
+        insert: 'PREFIX manual: <https://manual/> ASK {}',
+      },
+    });
+    expect(editor.getPrefixes()).toEqual({ manual: 'https://manual/' });
+    expect(onQueryChange).toHaveBeenLastCalledWith(editor.getQuery());
+    const first = editor.getTabs().getActive();
+    const other = editor.getTabs().addTab({ query });
+    expect(editor.getPrefixes()).toEqual({ ex: 'https://example.org/' });
+    onQueryChange.mockClear();
+    onWorkspaceChange.mockClear();
+    first.removePrefix('manual');
+    expect(first.isActive).toBe(false);
+    expect(first.getPrefixes()).toEqual({});
+    expect(other.getPrefixes()).toEqual({ ex: 'https://example.org/' });
+    expect(onQueryChange).not.toHaveBeenCalled();
+    expect(onWorkspaceChange).toHaveBeenCalledTimes(1);
+    expect(onWorkspaceChange).toHaveBeenLastCalledWith(editor.getWorkspace());
+    first.activate();
+    expect(editor.getPrefixes()).toEqual({});
+    expect(onQueryChange).toHaveBeenLastCalledWith(first.getQuery());
+    other.delete();
+    expect(() => other.getPrefixes()).toThrow('deleted');
+    expect(() => other.removePrefix('ex')).toThrow('deleted');
+    editor.destroy();
+    expect(() => first.getPrefixes()).toThrow('destroyed');
+    expect(() => first.removePrefix('ex')).toThrow('destroyed');
+  });
 });

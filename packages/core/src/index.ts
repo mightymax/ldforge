@@ -50,6 +50,8 @@ export type QueryState =
 
 export interface EditorContext {
   formatQuery(): Promise<string>;
+  getPrefixes(): Record<string, string>;
+  removePrefix(prefix: string): void;
   addPrefix(prefix: string, namespace?: string): string | undefined;
   getLocale(): Locale;
   setLocale(preference: LocalePreference): void;

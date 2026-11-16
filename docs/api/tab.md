@@ -15,15 +15,17 @@ Properties other than `id` require a live editor. `name` throws for a deleted ta
 
 ## Methods
 
-| Method                          | Returns               | Behavior                                                                                                                                      |
-| ------------------------------- | --------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
-| `getQuery()`                    | `string`              | Reads this tab's source, including inactive tabs.                                                                                             |
-| `setQuery(query)`               | `void`                | Replaces this tab's text. Active edits are undoable and emit both query/workspace callbacks; inactive edits emit only the workspace callback. |
-| `formatQuery(options?)`         | `Promise<string>`     | Formats this tab without activating it. See [formatting behavior](editor.md#formatting-options).                                              |
-| `addPrefix(prefix, namespace?)` | `string \| undefined` | Adds a declaration and returns the actual alias. Resolves shorthand through the configured catalog when namespace is omitted.                 |
-| `rename(name)`                  | `void`                | Trims and persists the name. Empty/whitespace restores the automatic label. Names need not be unique.                                         |
-| `activate()`                    | `void`                | Makes this tab active. Calling it on the active tab is a no-op. Does not force keyboard focus.                                                |
-| `delete()`                      | `boolean`             | Removes this tab; returns false if it is the only remaining tab.                                                                              |
+| Method                          | Returns                  | Behavior                                                                                                                                      |
+| ------------------------------- | ------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| `getQuery()`                    | `string`                 | Reads this tab's source, including inactive tabs.                                                                                             |
+| `setQuery(query)`               | `void`                   | Replaces this tab's text. Active edits are undoable and emit both query/workspace callbacks; inactive edits emit only the workspace callback. |
+| `formatQuery(options?)`         | `Promise<string>`        | Formats this tab without activating it. See [formatting behavior](editor.md#formatting-options).                                              |
+| `getPrefixes()`                 | `Record<string, string>` | Detached snapshot of explicitly declared aliases and namespaces; excludes the completion catalog.                                             |
+| `removePrefix(prefix)`          | `void`                   | Removes all declarations of this alias. A missing alias is a no-op.                                                                           |
+| `addPrefix(prefix, namespace?)` | `string \| undefined`    | Adds a declaration and returns the actual alias. Resolves shorthand through the configured catalog when namespace is omitted.                 |
+| `rename(name)`                  | `void`                   | Trims and persists the name. Empty/whitespace restores the automatic label. Names need not be unique.                                         |
+| `activate()`                    | `void`                   | Makes this tab active. Calling it on the active tab is a no-op. Does not force keyboard focus.                                                |
+| `delete()`                      | `boolean`                | Removes this tab; returns false if it is the only remaining tab.                                                                              |
 
 Methods throw for deleted tabs or a destroyed editor. Formatting additionally rejects for invalid syntax or if this tab's text changes before the async format finishes. It never overwrites newer source. Deleting another tab does not invalidate this handle.
 
@@ -56,4 +58,28 @@ await tab.formatQuery({ indentSize: 2 });
 console.log(tab.getQuery());
 // The previously active query remains displayed until this call:
 tab.activate();
+```
+
+## Inspecting and removing prefixes
+
+Declarations are parsed structurally: PREFIX-like text in comments, literals and
+IRIs is ignored. With duplicate alias declarations, the last declaration wins in
+the snapshot; removal deletes all declarations of that alias. The empty string
+addresses the default prefix. Namespaces are returned as written inside the IRI
+brackets, without resolving BASE or decoding escapes.
+
+Removal retains surrounding whitespace, comments, unrelated declarations and the
+query body. Uses of the removed alias are left intact, so the query may need a
+replacement declaration before execution. Active edits participate in undo/redo
+and emit the normal query/workspace callbacks. Inactive tab edits emit only the
+workspace callback and never select the tab. As with other tab edits, inactive
+tabs store text only; undo history resets on tab switches. Manual edits and tab
+switches invoke the normal callbacks, where hosts can read a fresh snapshot.
+
+```ts
+const tab = editor.getTabs().getActive();
+const declared = tab.getPrefixes();
+if (declared.ex !== undefined) tab.removePrefix('ex');
+else tab.addPrefix('ex', 'https://example.org/');
+console.log(editor.getPrefixes()); // Current active query declarations.
 ```

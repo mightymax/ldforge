@@ -409,6 +409,9 @@ export function createEditor(
     },
     formatQuery: (formatOptions) =>
       tabApi.collection.getActive().formatQuery(formatOptions),
+    getPrefixes: () => tabApi.collection.getActive().getPrefixes(),
+    removePrefix: (prefix) =>
+      tabApi.collection.getActive().removePrefix(prefix),
     addPrefix: (prefix, namespace) =>
       tabApi.collection.getActive().addPrefix(prefix, namespace),
     getWorkspace: () => queryTabs.snapshot(),
