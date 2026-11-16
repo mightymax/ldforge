@@ -276,6 +276,31 @@ describe('declared prefix API', () => {
     }
   });
 
+  it('preserves the cursor and backward selection in the query body when toggling prefixes', () => {
+    const query = 'SELECT ?subject WHERE { ?subject ?predicate ?object }';
+    const { editor, host } = mount({ query });
+    const dom = host.querySelector<HTMLElement>('.cm-editor');
+    const view = dom ? EditorView.findFromDOM(dom) : null;
+    if (!view) throw new Error('Missing view');
+    const start = query.indexOf('?predicate');
+    for (const selection of [
+      { anchor: start },
+      { anchor: start + '?predicate'.length, head: start },
+    ]) {
+      view.dispatch({ selection });
+      const original = view.state.selection.main;
+      for (let i = 0; i < 3; i++) {
+        editor.addPrefix('ex', 'https://example.org/');
+        const offset = editor.getQuery().length - query.length;
+        expect(view.state.selection.main.anchor).toBe(original.anchor + offset);
+        expect(view.state.selection.main.head).toBe(original.head + offset);
+        editor.removePrefix('ex');
+        expect(view.state.selection.main.anchor).toBe(original.anchor);
+        expect(view.state.selection.main.head).toBe(original.head);
+      }
+    }
+  });
+
   it('supports undo/redo and callbacks for removal, addition, manual edits and tab switches', () => {
     const onQueryChange = vi.fn();
     const onWorkspaceChange = vi.fn();

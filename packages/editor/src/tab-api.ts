@@ -1,4 +1,4 @@
-import { EditorState } from '@codemirror/state';
+import { EditorState, type ChangeSpec } from '@codemirror/state';
 import type { Locale } from '@ldforge/core';
 import { translate } from '@ldforge/core';
 import { prefixDeclarations } from './sparql/analysis.js';
@@ -60,7 +60,7 @@ export interface TabAdapter {
   snapshot(): QueryWorkspace;
   locale(): Locale;
   assertAlive(): void;
-  setQuery(id: string, query: string): void;
+  setQuery(id: string, query: string, changes?: ChangeSpec): void;
   rename(id: string, name: string): void;
   activate(id: string): void;
   delete(id: string): boolean;
@@ -73,7 +73,7 @@ export function queryWithPrefix(
   query: string,
   preferred: string,
   namespace: string,
-): { query: string; prefix: string } {
+): { query: string; prefix: string; changes?: ChangeSpec } {
   namespaceCatalog({ prefixes: { [preferred]: namespace } });
   const state = EditorState.create({ doc: query });
   const declared = prefixDeclarations(state);
@@ -87,6 +87,7 @@ export function queryWithPrefix(
   return {
     query: query.slice(0, edit.from) + edit.insert + query.slice(edit.from),
     prefix,
+    changes: edit,
   };
 }
 
@@ -168,6 +169,7 @@ export function createTabApi(adapter: TabAdapter): {
         // A standalone declaration owns its line ending. Keep comments and
         // other statements on shared lines intact.
         let query = original;
+        const changes: { from: number; to: number }[] = [];
         for (const declaration of declarations.reverse()) {
           let { from, to } = declaration;
           const lineStart = original.lastIndexOf('\n', from - 1) + 1;
@@ -180,16 +182,18 @@ export function createTabApi(adapter: TabAdapter): {
             from = lineStart;
             to = newline < 0 ? lineEnd : newline + 1;
           }
+          changes.push({ from, to });
           query = query.slice(0, from) + query.slice(to);
         }
-        adapter.setQuery(id, query);
+        adapter.setQuery(id, query, changes.reverse());
       },
       addPrefix(prefix: string, namespace?: string) {
         const original = record(id).query;
         const iri = resolve(prefix, namespace);
         if (iri === undefined) return undefined;
         const result = queryWithPrefix(original, prefix, iri);
-        if (result.query !== original) adapter.setQuery(id, result.query);
+        if (result.query !== original)
+          adapter.setQuery(id, result.query, result.changes);
         return result.prefix;
       },
       rename(title: string) {

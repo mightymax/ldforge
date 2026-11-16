@@ -547,9 +547,14 @@ export function createEditor(
     warn:
       options.onWarning ??
       ((warning) => console.warn(`[LDForge] ${warning.message}`)),
-    setQuery(id, query) {
-      if (queryTabs.snapshot().activeId === id) context.setQuery(query);
-      else {
+    setQuery(id, query, changes) {
+      if (queryTabs.snapshot().activeId === id) {
+        if (changes) {
+          // Map cursor/selection through the prefix edits instead of replacing
+          // the entire document and mapping every position to its end.
+          view.dispatch({ changes, annotations: isolateHistory.of('full') });
+        } else context.setQuery(query);
+      } else {
         queryTabs.update(query, id);
         notifyWorkspace();
       }
