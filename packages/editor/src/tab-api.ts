@@ -30,6 +30,10 @@ export interface QueryTabHandle {
   setQuery(query: string): void;
   /** Lazy local formatting. Rejects on invalid syntax, deletion or newer text edits. */
   formatQuery(options?: FormatOptions): Promise<string>;
+  /** Detached declared aliases; the last declaration wins for duplicate aliases. */
+  getPrefixes(): Record<string, string>;
+  /** Remove all declarations of an alias, leaving uses and surrounding text intact. */
+  removePrefix(prefix: string): void;
   /** Returns the actual alias, or undefined for an unknown shorthand (with a warning). */
   addPrefix(prefix: string, namespace?: string): string | undefined;
   /** Trim and store a name; an empty name restores the localized default. */
@@ -147,6 +151,25 @@ export function createTabApi(adapter: TabAdapter): {
           );
         if (formatted !== original) adapter.setQuery(id, formatted);
         return formatted;
+      },
+      getPrefixes() {
+        return Object.fromEntries(
+          prefixDeclarations(EditorState.create({ doc: record(id).query })).map(
+            ({ prefix, iri }) => [prefix, iri],
+          ),
+        );
+      },
+      removePrefix(prefix: string) {
+        const original = record(id).query;
+        const declarations = prefixDeclarations(
+          EditorState.create({ doc: original }),
+        ).filter((entry) => entry.prefix === prefix);
+        if (!declarations.length) return;
+        // Delete only syntax node ranges, retaining comments and whitespace.
+        let query = original;
+        for (const { from, to } of declarations.reverse())
+          query = query.slice(0, from) + query.slice(to);
+        adapter.setQuery(id, query);
       },
       addPrefix(prefix: string, namespace?: string) {
         const original = record(id).query;

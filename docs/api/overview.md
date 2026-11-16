@@ -84,6 +84,9 @@ if (first) {
   first.rename('My first query');
   first.addPrefix('sdo', 'https://schema.org/');
   first.addPrefix('dct');
+  console.log(editor.getPrefixes(), first.getPrefixes());
+  first.removePrefix('dct');
+  editor.removePrefix('unused');
 }
 
 const second = tabs.addTab({

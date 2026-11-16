@@ -4,25 +4,27 @@ Returned by `createEditor(container: HTMLElement, options: EditorOptions): Forge
 
 ## Methods
 
-| Method                            | Returns               | Behavior                                                                                                                                                              |
-| --------------------------------- | --------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `setPrefixesCollapsed(collapsed)` | `void`                | Collapses or expands every PREFIX group in the active query. Presentation only; source, execution and persistence retain every declaration. Throws after destruction. |
-| `arePrefixesCollapsed()`          | `boolean`             | True when every PREFIX group is folded; false for expanded/partially folded queries or queries without declarations. Throws after destruction.                        |
-| `togglePrefixes()`                | `boolean`             | Toggles all PREFIX groups and returns the resulting collapsed state. Returns false when no declarations exist. Throws after destruction.                              |
-| `getTabs()`                       | `TabCollection`       | The same live, indexable collection each time. Throws after destruction.                                                                                              |
-| `getToolBar()`                    | `ToolbarApi`          | Live toolbar API for standalone buttons, adjacent groups and dropdowns. See [Toolbar](toolbar.md).                                                                    |
-| `getWorkspace()`                  | `QueryWorkspace`      | Detached plain-data snapshot for persistence.                                                                                                                         |
-| `getQuery()`                      | `string`              | Active tab's current text.                                                                                                                                            |
-| `setQuery(query)`                 | `void`                | Replaces active text in one undoable edit and emits host callbacks. A no-op after destruction.                                                                        |
-| `formatQuery(options?)`           | `Promise<string>`     | Formats the tab active when called. Equivalent to `getTabs().getActive().formatQuery(options)`.                                                                       |
-| `addPrefix(prefix, namespace?)`   | `string \| undefined` | Adds to the active tab and returns the actual alias; undefined means unknown shorthand.                                                                               |
-| `getState()`                      | `QueryState`          | Latest execution state. See [Transport and results](transport.md).                                                                                                    |
-| `run()`                           | `Promise<void>`       | Executes active text. Resolves after the request settles; failures are recorded in state instead of rejecting. Throws/rejects if the controller is destroyed.         |
-| `cancel()`                        | `void`                | Aborts pending work and resets execution state to idle.                                                                                                               |
-| `getLocale()`                     | `'en' \| 'nl'`        | Resolved language for this IDE.                                                                                                                                       |
-| `setLocale(preference)`           | `void`                | Sets user override; auto restores the project/browser default. Calls `onLocaleChange`. A no-op after destruction.                                                     |
-| `focus()`                         | `void`                | Focuses CodeMirror. Use only while mounted.                                                                                                                           |
-| `destroy()`                       | `void`                | Idempotent. Aborts requests, disposes result/settings resources and CodeMirror, and removes the IDE section. Does not remove the caller's container.                  |
+| Method                            | Returns                  | Behavior                                                                                                                                                              |
+| --------------------------------- | ------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `setPrefixesCollapsed(collapsed)` | `void`                   | Collapses or expands every PREFIX group in the active query. Presentation only; source, execution and persistence retain every declaration. Throws after destruction. |
+| `arePrefixesCollapsed()`          | `boolean`                | True when every PREFIX group is folded; false for expanded/partially folded queries or queries without declarations. Throws after destruction.                        |
+| `togglePrefixes()`                | `boolean`                | Toggles all PREFIX groups and returns the resulting collapsed state. Returns false when no declarations exist. Throws after destruction.                              |
+| `getTabs()`                       | `TabCollection`          | The same live, indexable collection each time. Throws after destruction.                                                                                              |
+| `getToolBar()`                    | `ToolbarApi`             | Live toolbar API for standalone buttons, adjacent groups and dropdowns. See [Toolbar](toolbar.md).                                                                    |
+| `getWorkspace()`                  | `QueryWorkspace`         | Detached plain-data snapshot for persistence.                                                                                                                         |
+| `getQuery()`                      | `string`                 | Active tab's current text.                                                                                                                                            |
+| `setQuery(query)`                 | `void`                   | Replaces active text in one undoable edit and emits host callbacks. A no-op after destruction.                                                                        |
+| `formatQuery(options?)`           | `Promise<string>`        | Formats the tab active when called. Equivalent to `getTabs().getActive().formatQuery(options)`.                                                                       |
+| `getPrefixes()`                   | `Record<string, string>` | Detached snapshot of explicitly declared aliases and namespaces; excludes the completion catalog.                                                                     |
+| `removePrefix(prefix)`            | `void`                   | Removes all declarations of this alias. A missing alias is a no-op.                                                                                                   |
+| `addPrefix(prefix, namespace?)`   | `string \| undefined`    | Adds to the active tab and returns the actual alias; undefined means unknown shorthand.                                                                               |
+| `getState()`                      | `QueryState`             | Latest execution state. See [Transport and results](transport.md).                                                                                                    |
+| `run()`                           | `Promise<void>`          | Executes active text. Resolves after the request settles; failures are recorded in state instead of rejecting. Throws/rejects if the controller is destroyed.         |
+| `cancel()`                        | `void`                   | Aborts pending work and resets execution state to idle.                                                                                                               |
+| `getLocale()`                     | `'en' \| 'nl'`           | Resolved language for this IDE.                                                                                                                                       |
+| `setLocale(preference)`           | `void`                   | Sets user override; auto restores the project/browser default. Calls `onLocaleChange`. A no-op after destruction.                                                     |
+| `focus()`                         | `void`                   | Focuses CodeMirror. Use only while mounted.                                                                                                                           |
+| `destroy()`                       | `void`                   | Idempotent. Aborts requests, disposes result/settings resources and CodeMirror, and removes the IDE section. Does not remove the caller's container.                  |
 
 Use a handle only while mounted. In particular, tab methods deliberately throw after destruction rather than recreating detached state. A formatting operation pending during deletion/destruction rejects without writing back.
 
@@ -152,3 +154,27 @@ const size = editor.getFontSize();
 The text-size field is under the gear button; default and Reset are 12 px. The
 host can supply `fontSize` and `onFontSizeChange` for persistence. The demo uses
 localStorage. Text-size and spinner API methods throw after editor destruction.
+
+## Inspecting and removing prefixes
+
+Declarations are parsed structurally: PREFIX-like text in comments, literals and
+IRIs is ignored. With duplicate alias declarations, the last declaration wins in
+the snapshot; removal deletes all declarations of that alias. The empty string
+addresses the default prefix. Namespaces are returned as written inside the IRI
+brackets, without resolving BASE or decoding escapes.
+
+Removal retains surrounding whitespace, comments, unrelated declarations and the
+query body. Uses of the removed alias are left intact, so the query may need a
+replacement declaration before execution. Active edits participate in undo/redo
+and emit the normal query/workspace callbacks. Inactive tab edits emit only the
+workspace callback and never select the tab. As with other tab edits, inactive
+tabs store text only; undo history resets on tab switches. Manual edits and tab
+switches invoke the normal callbacks, where hosts can read a fresh snapshot.
+
+```ts
+const tab = editor.getTabs().getActive();
+const declared = tab.getPrefixes();
+if (declared.ex !== undefined) tab.removePrefix('ex');
+else tab.addPrefix('ex', 'https://example.org/');
+console.log(editor.getPrefixes()); // Current active query declarations.
+```

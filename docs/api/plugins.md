@@ -18,7 +18,7 @@ Plugins are trusted host code, registered per editor instance. IDs must be uniqu
 
 ## EditorContext
 
-The context passed to actions/settings is the active-query subset of `ForgeEditor`: `getQuery`, `setQuery`, `formatQuery`, `addPrefix`, `getState`, `run`, `cancel`, `getLocale`, and `setLocale`. Toolbar access, tab collections, mounting and destruction are on the host's `ForgeEditor` handle. See [Editor](editor.md) for method semantics. `formatQuery` returns a promise and must be returned or awaited by an action.
+The context passed to actions/settings is the active-query subset of `ForgeEditor`: `getQuery`, `setQuery`, `formatQuery`, `getPrefixes`, `removePrefix`, `addPrefix`, `getState`, `run`, `cancel`, `getLocale`, and `setLocale`. Toolbar access, tab collections, mounting and destruction are on the host's `ForgeEditor` handle. See [Editor](editor.md) for method semantics. `formatQuery` returns a promise and must be returned or awaited by an action.
 
 ## ResultRendererPlugin
 
