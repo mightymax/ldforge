@@ -30,4 +30,4 @@ createChartRenderer({ loadLibrary: () => import('chart.js/auto') });
 
 The latter allows bundlers to emit a separate local chunk; it still defers download until activation, but includes Chart.js in the application's build output. No mandatory CDN requests occur if you supply your own loader. Renderers immediately return cleanup functions and discard late module completions after tab changes. Each active chart is destroyed on cleanup.
 
-See the [full chart guide](https://github.com/mightymax/ldforge/blob/main/docs/renderers.md#charts) for binding contracts, validation, duplicate aggregation, accessibility, module-loader API and deployment details. LDForge code is EUPL-1.2; Chart.js is independently MIT licensed.
+See the [full chart guide](https://github.com/mightymax/ldforge/blob/main/docs/renderers.md#charts) for binding contracts, validation, duplicate aggregation, accessibility, module-loader API and deployment details. LDForge code is MIT; Chart.js is independently MIT licensed.

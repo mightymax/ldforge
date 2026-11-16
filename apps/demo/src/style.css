@@ -363,6 +363,11 @@ header nav .repository-link {
   color: #285c46;
   text-underline-offset: 3px;
 }
+.site-imprint .license-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
 @media (max-width: 800px) {
   header {
     flex-wrap: wrap;

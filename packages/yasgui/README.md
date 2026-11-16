@@ -101,4 +101,4 @@ only accepts `false`. DOM classes and visual appearance follow LDForge; old Yasg
 CSS customizations require migration. `fetch` is an additive option for host
 integration and tests. LDForge's native plugin API remains available separately.
 
-License: EUPL-1.2.
+License: MIT.

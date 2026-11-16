@@ -125,4 +125,4 @@ For self-hosting, supply your own library/CSS URLs and tile provider. A loader s
 
 Maps are removed on cleanup, pending library completions are ignored after disposal, and failed loads can be retried. An expandable text representation remains available while loading or after failure. Labels use DOM text nodes, never HTML. Library and tile URLs are host configuration and cannot be changed through query comments.
 
-See the [full guide](https://github.com/mightymax/ldforge/blob/main/docs/renderers.md#geo) for live Wikidata castles and OpenStreetMap 3D building queries. LDForge is EUPL-1.2; Leaflet is independently BSD-2-Clause licensed and map tiles/data have their own terms.
+See the [full guide](https://github.com/mightymax/ldforge/blob/main/docs/renderers.md#geo) for live Wikidata castles and OpenStreetMap 3D building queries. LDForge is MIT; Leaflet is independently BSD-2-Clause licensed and map tiles/data have their own terms.

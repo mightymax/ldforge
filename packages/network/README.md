@@ -82,4 +82,4 @@ SELECT ?source ?sourceLabel ?target ?targetLabel ?relationLabel ?sourceGroup ?ta
 }
 ```
 
-LDForge is EUPL-1.2; the external visualization library retains its own license.
+LDForge is MIT; the external visualization library retains its own license.

@@ -3,7 +3,7 @@
   "version": "1.2.0",
   "description": "Yasgui-compatible facade for the LDForge SPARQL IDE",
   "type": "module",
-  "license": "EUPL-1.2",
+  "license": "MIT",
   "files": [
     "dist",
     "src",

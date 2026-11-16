@@ -88,4 +88,4 @@ SELECT ?pivotRow ?pivotColumn ?pivotValue WHERE {
 ORDER BY ?pivotRow ?pivotColumn
 ```
 
-LDForge is EUPL-1.2 licensed.
+LDForge is MIT licensed.

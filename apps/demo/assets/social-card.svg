@@ -13,7 +13,7 @@
     <text x="72" y="364" font-size="57" font-weight="700" letter-spacing="-1.5">your way.</text>
     <text x="72" y="430" font-size="25" fill="#cee2d8">Embed. Query. Extend.</text>
     <text x="72" y="550" font-size="24">ldforge.nl</text>
-    <text x="1130" y="550" text-anchor="end" font-size="17" fill="#b8d6ca">By LDMax · EUPL-1.2</text>
+    <text x="1130" y="550" text-anchor="end" font-size="17" fill="#b8d6ca">By LDMax · MIT</text>
   </g>
   <rect x="700" y="174" width="428" height="280" rx="16" fill="#064d46" stroke="#45897e"/>
   <path d="M700 220h428" stroke="#45897e"/>

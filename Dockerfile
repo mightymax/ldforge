@@ -22,7 +22,7 @@ RUN npm run build -w @ldforge/demo
 
 FROM ${NGINX_IMAGE} AS runtime
 LABEL org.opencontainers.image.source="https://github.com/mightymax/ldforge"
-LABEL org.opencontainers.image.licenses="EUPL-1.2"
+LABEL org.opencontainers.image.licenses="MIT"
 COPY deploy/container/nginx.conf /etc/nginx/nginx.conf
 COPY LICENSE /usr/share/licenses/ldforge/LICENSE
 COPY deploy/container/default.conf /etc/nginx/conf.d/default.conf

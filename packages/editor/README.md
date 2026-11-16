@@ -58,7 +58,7 @@ The full object-based reference is included in the npm package and rendered by t
 - [Plugin contracts](docs/api/plugins.md)
 - [Transport and results](docs/api/transport.md)
 
-Formatting returns a promise and loads its parser/printer on demand. Inactive tab operations do not allocate another editor view. Persistence is host-owned through onWorkspaceChange. controls only changes visibility; it does not disable public API methods. License: EUPL-1.2.
+Formatting returns a promise and loads its parser/printer on demand. Inactive tab operations do not allocate another editor view. Persistence is host-owned through onWorkspaceChange. controls only changes visibility; it does not disable public API methods. License: MIT.
 
 ## Plugin wizard
 

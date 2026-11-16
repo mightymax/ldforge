@@ -12,7 +12,7 @@ Use English for source comments, documentation, issues, and pull requests.
 
 Keep core independent of UI frameworks and LDMax-specific services. Add editor actions and result views through plugins. Public API changes must include documentation and examples. Do not introduce runtime dependencies without considering their browser impact and license.
 
-Pull requests should explain the problem, resulting behavior, and validation performed. Report meaningful limitations. Never commit credentials or private endpoint data. Contributions are provided under the repository's EUPL-1.2 license; dependencies keep their own licenses.
+Pull requests should explain the problem, resulting behavior, and validation performed. Report meaningful limitations. Never commit credentials or private endpoint data. Contributions are provided under the repository's MIT license; dependencies keep their own licenses.
 
 GitHub runs checks only for release tags. Run `npm run check` locally before submitting changes. Maintainers release all six packages together using `npm version patch` (or another semver increment) from a clean `main` checkout at the repository root. The version hooks synchronize manifests, commit, tag and atomically push main and the tag; the release workflow tests before publishing. See [Publishing](docs/publishing.md) for authentication setup and recovery.
 

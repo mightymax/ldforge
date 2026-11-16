@@ -3,7 +3,7 @@
   "version": "1.2.0",
   "description": "LDForge editor: composable SPARQL tooling",
   "type": "module",
-  "license": "EUPL-1.2",
+  "license": "MIT",
   "files": [
     "dist",
     "src",

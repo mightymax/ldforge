@@ -89,6 +89,6 @@ SELECT ?timelineLabel ?timelineStart ?timelineEnd ?timelineGroup ?timelineDescri
 ORDER BY ?timelineStart
 ```
 
-LDForge is EUPL-1.2; the external visualization library retains its own license.
+LDForge is MIT; the external visualization library retains its own license.
 
 Timeline images load lazily, use no-referrer, and disappear on image errors. Unsafe or invalid image URLs are omitted without dropping events. The example samples one portrait per painter and requests a Commons thumbnail.

@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "Lazy-loaded interactive timeline result renderer for LDForge",
   "type": "module",
-  "license": "EUPL-1.2",
+  "license": "MIT",
   "files": [
     "dist",
     "src",

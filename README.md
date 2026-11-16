@@ -162,7 +162,7 @@ This is a working foundation, not feature parity with LDMax. SELECT/ASK and CONS
 
 ## License
 
-Licensed under the [European Union Public Licence 1.2](LICENSE), SPDX identifier `EUPL-1.2`. Full license text is included in each library package. See the [official EUPL versions](https://interoperable-europe.ec.europa.eu/collection/eupl/eupl-text-eupl-12). Third-party dependencies retain their own licenses.
+Licensed under the [MIT License](LICENSE), SPDX identifier `MIT`. Full license text is included in each library package. Third-party dependencies retain their own licenses.
 
 ## Optional geodata
 

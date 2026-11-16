@@ -1,6 +1,6 @@
 # @ldforge/prefixes
 
-Two frozen RDF/SPARQL namespace catalogs without labels or descriptions. ESM with TypeScript declarations, no dependencies and no network requests. Licensed under EUPL-1.2.
+Two frozen RDF/SPARQL namespace catalogs without labels or descriptions. ESM with TypeScript declarations, no dependencies and no network requests. Licensed under MIT.
 
 ```sh
 npm install @ldforge/prefixes

@@ -2,7 +2,7 @@
   "name": "ldforge-workspace",
   "private": true,
   "type": "module",
-  "license": "EUPL-1.2",
+  "license": "MIT",
   "engines": {
     "node": ">=22.12.0"
   },

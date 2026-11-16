@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "Compact and extended RDF/SPARQL prefix catalogs with namespace search",
   "type": "module",
-  "license": "EUPL-1.2",
+  "license": "MIT",
   "files": [
     "dist",
     "src",
