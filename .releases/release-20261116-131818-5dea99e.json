@@ -1,0 +1,138 @@
+{
+  "schemaVersion": 2,
+  "releaseTag": "release-20261116-131818-5dea99e",
+  "baseCommit": "5dea99e653c7b52edab6e9d4d296715de01caab9",
+  "changesets": [
+    {
+      "releases": [
+        { "name": "@ldforge/charts", "type": "patch" },
+        { "name": "@ldforge/core", "type": "patch" },
+        { "name": "@ldforge/editor", "type": "patch" },
+        { "name": "@ldforge/geo", "type": "patch" },
+        { "name": "@ldforge/network", "type": "patch" },
+        { "name": "@ldforge/pivot", "type": "patch" },
+        { "name": "@ldforge/prefixes", "type": "patch" },
+        { "name": "@ldforge/renderers", "type": "patch" },
+        { "name": "@ldforge/timeline", "type": "patch" },
+        { "name": "@ldforge/tree", "type": "patch" },
+        { "name": "@ldforge/yasgui", "type": "patch" }
+      ],
+      "summary": "Change the LDForge license from EUPL-1.2 to MIT. Update package license metadata, bundled LICENSE files and license documentation. Third-party dependencies retain their own licenses.",
+      "id": "mit-license"
+    }
+  ],
+  "releases": [
+    {
+      "name": "@ldforge/core",
+      "type": "patch",
+      "oldVersion": "1.0.0",
+      "changesets": ["mit-license"],
+      "newVersion": "1.0.1",
+      "reasons": [
+        "mit-license: Change the LDForge license from EUPL-1.2 to MIT. Update package license metadata, bundled LICENSE files and license documentation. Third-party dependencies retain their own licenses."
+      ]
+    },
+    {
+      "name": "@ldforge/prefixes",
+      "type": "patch",
+      "oldVersion": "1.0.0",
+      "changesets": ["mit-license"],
+      "newVersion": "1.0.1",
+      "reasons": [
+        "mit-license: Change the LDForge license from EUPL-1.2 to MIT. Update package license metadata, bundled LICENSE files and license documentation. Third-party dependencies retain their own licenses."
+      ]
+    },
+    {
+      "name": "@ldforge/renderers",
+      "type": "patch",
+      "oldVersion": "1.1.0",
+      "changesets": ["mit-license"],
+      "newVersion": "1.1.1",
+      "reasons": [
+        "mit-license: Change the LDForge license from EUPL-1.2 to MIT. Update package license metadata, bundled LICENSE files and license documentation. Third-party dependencies retain their own licenses."
+      ]
+    },
+    {
+      "name": "@ldforge/charts",
+      "type": "patch",
+      "oldVersion": "1.0.0",
+      "changesets": ["mit-license"],
+      "newVersion": "1.0.1",
+      "reasons": [
+        "mit-license: Change the LDForge license from EUPL-1.2 to MIT. Update package license metadata, bundled LICENSE files and license documentation. Third-party dependencies retain their own licenses."
+      ]
+    },
+    {
+      "name": "@ldforge/geo",
+      "type": "patch",
+      "oldVersion": "1.1.0",
+      "changesets": ["mit-license"],
+      "newVersion": "1.1.1",
+      "reasons": [
+        "mit-license: Change the LDForge license from EUPL-1.2 to MIT. Update package license metadata, bundled LICENSE files and license documentation. Third-party dependencies retain their own licenses."
+      ]
+    },
+    {
+      "name": "@ldforge/network",
+      "type": "patch",
+      "oldVersion": "1.0.0",
+      "changesets": ["mit-license"],
+      "newVersion": "1.0.1",
+      "reasons": [
+        "mit-license: Change the LDForge license from EUPL-1.2 to MIT. Update package license metadata, bundled LICENSE files and license documentation. Third-party dependencies retain their own licenses."
+      ]
+    },
+    {
+      "name": "@ldforge/timeline",
+      "type": "patch",
+      "oldVersion": "1.0.0",
+      "changesets": ["mit-license"],
+      "newVersion": "1.0.1",
+      "reasons": [
+        "mit-license: Change the LDForge license from EUPL-1.2 to MIT. Update package license metadata, bundled LICENSE files and license documentation. Third-party dependencies retain their own licenses."
+      ]
+    },
+    {
+      "name": "@ldforge/pivot",
+      "type": "patch",
+      "oldVersion": "1.0.0",
+      "changesets": ["mit-license"],
+      "newVersion": "1.0.1",
+      "reasons": [
+        "mit-license: Change the LDForge license from EUPL-1.2 to MIT. Update package license metadata, bundled LICENSE files and license documentation. Third-party dependencies retain their own licenses."
+      ]
+    },
+    {
+      "name": "@ldforge/tree",
+      "type": "patch",
+      "oldVersion": "1.0.0",
+      "changesets": ["mit-license"],
+      "newVersion": "1.0.1",
+      "reasons": [
+        "mit-license: Change the LDForge license from EUPL-1.2 to MIT. Update package license metadata, bundled LICENSE files and license documentation. Third-party dependencies retain their own licenses."
+      ]
+    },
+    {
+      "name": "@ldforge/editor",
+      "type": "patch",
+      "oldVersion": "1.2.0",
+      "changesets": ["mit-license"],
+      "newVersion": "1.2.1",
+      "reasons": [
+        "mit-license: Change the LDForge license from EUPL-1.2 to MIT. Update package license metadata, bundled LICENSE files and license documentation. Third-party dependencies retain their own licenses."
+      ]
+    },
+    {
+      "name": "@ldforge/yasgui",
+      "type": "patch",
+      "oldVersion": "1.2.0",
+      "changesets": ["mit-license"],
+      "newVersion": "1.2.1",
+      "reasons": [
+        "mit-license: Change the LDForge license from EUPL-1.2 to MIT. Update package license metadata, bundled LICENSE files and license documentation. Third-party dependencies retain their own licenses.",
+        "Embedded bundle changes: @ldforge/core, @ldforge/editor, @ldforge/prefixes, @ldforge/renderers"
+      ]
+    }
+  ],
+  "prerelease": false
+}
