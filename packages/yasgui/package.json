@@ -1,6 +1,6 @@
 {
   "name": "@ldforge/yasgui",
-  "version": "0.1.10",
+  "version": "1.0.0",
   "description": "Yasgui-compatible facade for the LDForge SPARQL IDE",
   "type": "module",
   "license": "EUPL-1.2",
@@ -28,9 +28,9 @@
     "access": "public"
   },
   "dependencies": {
-    "@ldforge/core": "^0.1.10",
-    "@ldforge/editor": "^0.1.10",
-    "@ldforge/renderers": "^0.1.10",
+    "@ldforge/core": "^1.0.0",
+    "@ldforge/editor": "^1.0.0",
+    "@ldforge/renderers": "^1.0.0",
     "@codemirror/state": "^6.7.6"
   },
   "repository": {
