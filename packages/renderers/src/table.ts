@@ -86,11 +86,43 @@ export function createTableRenderer(
         { count: new Intl.NumberFormat(locale).format(result.bindings.length) },
       );
       const data = result;
+      let expanded: Binding | undefined;
+      let expandedVariable: string | undefined;
+      let detailHeight = 0;
+      let lastRange = '';
+      const detailRow = doc.createElement('tr');
+      detailRow.className = 'ldforge-table-detail';
+      const detailCell = detailRow.insertCell();
+      detailCell.colSpan = Math.max(1, data.variables.length);
+      detailCell.style.cssText = 'padding:0 12px 12px;background:#f5f8f6';
       const inspector = createResourceInspector(container, {
         locale,
+        onClose(restoreFocus) {
+          const button = body.querySelector<HTMLButtonElement>(
+            '.ldforge-resource-info[aria-expanded="true"]',
+          );
+          button?.setAttribute('aria-expanded', 'false');
+          if (restoreFocus) button?.focus({ preventScroll: true });
+          expanded = undefined;
+          expandedVariable = undefined;
+          detailHeight = 0;
+          detailRow.remove();
+          lastRange = '';
+        },
         ...(graph ? { graph } : {}),
         ...(options.loadResource ? { loadResource: options.loadResource } : {}),
       });
+      inspector.element.style.marginTop = '8px';
+      detailCell.append(inspector.element);
+      const ResizeObserverClass = doc.defaultView?.ResizeObserver;
+      const observer = ResizeObserverClass
+        ? new ResizeObserverClass(() => {
+            if (expanded && detailRow.isConnected) {
+              detailHeight = detailRow.getBoundingClientRect().height;
+            }
+          })
+        : undefined;
+      observer?.observe(detailRow);
       const controls = doc.createElement('div');
       controls.className = 'ldforge-table-controls';
       controls.style.cssText =
@@ -127,14 +159,25 @@ export function createTableRenderer(
       let rows = [...data.bindings];
       const collator = new Intl.Collator(locale, { numeric: true });
       const headers: HTMLTableCellElement[] = [];
+      const sortIcons: (SVGElement | HTMLElement)[] = [];
       for (const [index, variable] of data.variables.entries()) {
         const cell = doc.createElement('th');
         cell.scope = 'col';
+        cell.style.zIndex = '1';
         if (virtual) cell.style.top = '0';
         cell.style.overflowWrap = 'anywhere';
         const button = doc.createElement('button');
         button.type = 'button';
-        button.textContent = variable;
+        button.className = 'ldforge-table-sort';
+        button.style.cssText =
+          'display:flex;align-items:center;gap:6px;width:100%;min-width:0;padding:0;margin:0 0 8px;border:0;border-radius:0;background:transparent;box-shadow:none;color:inherit;font:inherit;text-align:left;cursor:pointer';
+        const label = doc.createElement('span');
+        label.style.cssText = 'min-width:0;overflow-wrap:anywhere';
+        label.textContent = variable;
+        const icon = createSvgIcon(['M7 9l5-5 5 5', 'M7 15l5 5 5-5'])(doc);
+        icon.style.cssText = 'flex:0 0 16px;width:16px;height:16px';
+        button.append(label, icon);
+        sortIcons.push(icon);
         button.onclick = () => {
           direction = sortColumn === index ? -direction : 1;
           sortColumn = index;
@@ -143,11 +186,6 @@ export function createTableRenderer(
         cell.append(button);
         headers.push(cell);
         header.append(cell);
-        const filterCell = doc.createElement('label');
-        filterCell.textContent = variable;
-        filterCell.style.cssText =
-          'display:flex;flex-direction:column;flex:1 1 120px;min-width:0';
-        controls.append(filterCell);
         const filter = doc.createElement('input');
         filter.type = 'search';
         filter.style.width = '100%';
@@ -159,25 +197,34 @@ export function createTableRenderer(
         );
         filter.oninput = () => refresh();
         filters.push(filter);
-        filterCell.append(filter);
+        cell.append(filter);
       }
       const body = table.createTBody();
       const rowHeight = 36;
       function draw() {
         const scrollTop = viewport.scrollTop;
+        const expandedIndex = expanded ? rows.indexOf(expanded) : -1;
+        const headerHeight = table.tHead?.offsetHeight ?? 0;
+        const detailTop = headerHeight + (expandedIndex + 1) * rowHeight;
+        const adjustedScroll =
+          expandedIndex >= 0 && scrollTop > detailTop
+            ? scrollTop - Math.min(detailHeight, scrollTop - detailTop)
+            : scrollTop;
         const nextBody = doc.createElement('tbody');
         const start = virtual
           ? Math.max(
               0,
-              Math.floor(
-                (scrollTop - (table.tHead?.offsetHeight ?? 0)) / rowHeight,
-              ) - 5,
+              Math.floor((adjustedScroll - headerHeight) / rowHeight) - 5,
             )
           : 0;
         const first = Math.min(start, rows.length);
         const end = virtual
           ? Math.min(rows.length, first + Math.ceil(height / rowHeight) + 12)
           : rows.length;
+        const range = `${first}:${end}`;
+        if (range === lastRange) return;
+        lastRange = range;
+        const focused = doc.activeElement;
         function spacer(size: number) {
           if (!size) return;
           const row = nextBody.insertRow();
@@ -186,7 +233,10 @@ export function createTableRenderer(
           cell.colSpan = Math.max(1, data.variables.length);
           cell.style.cssText = `height:${size}px;padding:0;border:0;line-height:0`;
         }
-        spacer(first * rowHeight);
+        spacer(
+          first * rowHeight +
+            (expandedIndex >= 0 && expandedIndex < first ? detailHeight : 0),
+        );
         for (let index = first; index < end; index++) {
           const binding = rows[index];
           if (!binding) continue;
@@ -218,13 +268,36 @@ export function createTableRenderer(
               const label = `${locale === 'nl' ? 'Informatie over' : 'Information about'} ${term.value}`;
               button.setAttribute('aria-label', label);
               button.title = label;
+              button.setAttribute(
+                'aria-expanded',
+                String(binding === expanded && variable === expandedVariable),
+              );
               const infoIcon = createSvgIcon([
                 'M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20Z',
                 'M12 11v6M12 7h.01',
               ])(doc);
               button.append(infoIcon);
               button.onclick = () => {
+                if (
+                  expanded === binding &&
+                  expandedVariable === variable &&
+                  !inspector.element.hidden
+                ) {
+                  inspector.close();
+                  return;
+                }
+                body
+                  .querySelectorAll('[aria-expanded="true"]')
+                  .forEach((item) =>
+                    item.setAttribute('aria-expanded', 'false'),
+                  );
+                expanded = binding;
+                expandedVariable = variable;
+                button.setAttribute('aria-expanded', 'true');
+                row.after(detailRow);
+                lastRange = '';
                 void inspector.open(term);
+                detailHeight = detailRow.getBoundingClientRect().height;
               };
               const resource = doc.createElement('span');
               resource.style.cssText =
@@ -243,13 +316,24 @@ export function createTableRenderer(
                   })
                 : (term.datatype ?? term.type);
           }
+          if (binding === expanded) nextBody.append(detailRow);
         }
-        spacer((rows.length - end) * rowHeight);
+        spacer(
+          (rows.length - end) * rowHeight +
+            (expandedIndex >= end ? detailHeight : 0),
+        );
         body.replaceChildren(...nextBody.childNodes);
         table.setAttribute('aria-rowcount', String(rows.length + 1));
+        if (
+          focused instanceof HTMLElement &&
+          inspector.element.contains(focused)
+        )
+          focused.focus({ preventScroll: true });
         if (virtual) viewport.scrollTop = scrollTop;
       }
       function refresh() {
+        if (expanded) inspector.close(false);
+        lastRange = '';
         const query = search.value.toLocaleLowerCase(locale);
         rows = data.bindings.filter(
           (binding) =>
@@ -276,16 +360,29 @@ export function createTableRenderer(
               ),
           );
         }
-        headers.forEach((cell, i) =>
+        headers.forEach((cell, i) => {
+          const active = i === sortColumn;
           cell.setAttribute(
             'aria-sort',
-            i === sortColumn
-              ? direction === 1
-                ? 'ascending'
-                : 'descending'
-              : 'none',
-          ),
-        );
+            active ? (direction === 1 ? 'ascending' : 'descending') : 'none',
+          );
+          const button = cell.querySelector('button');
+          if (button)
+            button.title =
+              locale === 'nl'
+                ? `Sorteer ${data.variables[i]} ${active && direction === 1 ? 'aflopend' : 'oplopend'}`
+                : `Sort ${data.variables[i]} ${active && direction === 1 ? 'descending' : 'ascending'}`;
+          sortIcons[i]?.querySelectorAll('path').forEach((path, arrow) => {
+            path.setAttribute(
+              'opacity',
+              active
+                ? arrow === (direction === 1 ? 0 : 1)
+                  ? '1'
+                  : '0.15'
+                : '0.45',
+            );
+          });
+        });
         caption.textContent =
           search.value || filters.some((f) => f.value)
             ? `${rows.length} / ${data.bindings.length} ${locale === 'nl' ? 'resultaten' : 'results'}`
@@ -298,7 +395,7 @@ export function createTableRenderer(
         draw();
       }
       search.oninput = () => refresh();
-      viewport.onscroll = () => draw();
+      if (virtual) viewport.onscroll = () => draw();
       refresh();
       if (invalid) {
         const warning = doc.createElement('p');
@@ -307,15 +404,11 @@ export function createTableRenderer(
           locale === 'nl'
             ? 'Ongeldige kolombreedtes: gebruik één positief percentage per kolom, samen 100%. Gelijke breedtes worden gebruikt.'
             : 'Invalid column widths: use one positive percentage per column, totaling 100%. Equal widths are used.';
-        container.replaceChildren(
-          warning,
-          controls,
-          viewport,
-          inspector.element,
-        );
-      } else container.replaceChildren(controls, viewport, inspector.element);
+        container.replaceChildren(warning, controls, viewport);
+      } else container.replaceChildren(controls, viewport);
       return () => {
         viewport.onscroll = null;
+        observer?.disconnect();
         inspector.destroy();
       };
     },
