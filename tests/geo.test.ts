@@ -92,6 +92,42 @@ describe('WKT geodata', () => {
   });
 });
 describe('lazy map lifecycle', () => {
+  it.each([false, true])(
+    'supports host popup actions and fallback (fallback=%s)',
+    async (useFallback) => {
+      const { L } = mockLibrary();
+      const action = vi.fn();
+      const button = document.createElement('button');
+      button.textContent = 'Show datasets';
+      button.addEventListener('click', action);
+      const renderPopup = vi.fn(() => (useFallback ? undefined : button));
+      const cleanup = createGeoRenderer({
+        loadLibrary: async () => L,
+        stylesheetUrl: false,
+        tileUrl: false,
+        renderPopup,
+      }).render(document.createElement('div'), result());
+      await flush();
+      const feature = buildGeoFeatures(result())[0] as GeoFeature;
+      const bindPopup = vi.fn();
+      vi.mocked(L.geoJSON).mock.calls[0]?.[1].onEachFeature(feature, {
+        bindPopup,
+        bindTooltip: vi.fn(),
+        on: vi.fn(),
+        getLatLng: vi.fn(),
+      });
+      expect(renderPopup).toHaveBeenCalledWith(document, feature.properties);
+      const content = bindPopup.mock.calls[0]?.[0] as HTMLElement;
+      if (useFallback) expect(content.className).toBe('ldforge-geo-popup');
+      else {
+        expect(content).toBe(button);
+        content.click();
+        expect(action).toHaveBeenCalledTimes(1);
+      }
+      if (typeof cleanup === 'function') cleanup();
+    },
+  );
+
   it('loads only on activation, fits bounds, uses safe popups, and removes maps', async () => {
     const { L, map } = mockLibrary();
     const loadLibrary = vi.fn(async () => ({ default: L }));

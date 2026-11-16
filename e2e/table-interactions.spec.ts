@@ -10,7 +10,7 @@ test('virtual table reaches the final row and filters and sorts all loaded rows'
     host.id = 'large-table';
     host.className = 'ldforge';
     document.body.replaceChildren(host);
-    createTableRenderer().render(host, {
+    createTableRenderer({ scroll: true }).render(host, {
       kind: 'bindings',
       variables: ['value'],
       bindings: Array.from({ length: 10000 }, (_, i) => ({
@@ -151,6 +151,7 @@ test('resource details expand beneath their row and survive virtual scrolling', 
     host.className = 'ldforge';
     document.body.replaceChildren(host);
     createTableRenderer({
+      scroll: true,
       loadResource: async (iri: string) => ({
         kind: 'graph',
         triples: [

@@ -23,7 +23,7 @@ describe('interactive table', () => {
         value: literal(String(i)),
       })),
     };
-    createTableRenderer().render(container, data);
+    createTableRenderer({ scroll: true }).render(container, data);
     expect(container.querySelectorAll('tbody tr').length).toBeLessThan(40);
     const search = required(container.querySelector<HTMLInputElement>('input'));
     search.value = 'odd';

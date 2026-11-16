@@ -1,4 +1,5 @@
 import { createGeoPopup } from './popup.js';
+import type { GeoPopupRenderer } from './popup.js';
 import type { GeoFeature, Position } from './model.js';
 
 export interface ThreeDMapHandle {
@@ -48,6 +49,7 @@ export interface ThreeDLibrary {
   };
 }
 export interface ThreeDOptions {
+  renderPopup?: GeoPopupRenderer;
   tileUrl?: string | false;
   tileAttribution?: string;
 }
@@ -203,7 +205,11 @@ export function createThreeDMap(
       layers: ['buildings', 'lines', 'points'],
     })[0];
     if (!feature || !event.lngLat || disposed) return;
-    const content = createGeoPopup(container.ownerDocument, feature.properties);
+    const content =
+      options.renderPopup?.(
+        container.ownerDocument,
+        feature.properties ?? {},
+      ) ?? createGeoPopup(container.ownerDocument, feature.properties);
     popup?.remove();
     popup = new library.Popup();
     popup.setLngLat(event.lngLat).setDOMContent(content).addTo(map);

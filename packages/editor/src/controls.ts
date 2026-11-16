@@ -10,6 +10,7 @@ export interface EditorControls {
   readonly rendererWizard?: boolean;
   readonly share?: boolean;
   readonly loadingIndicator?: boolean;
+  readonly keyboardHelp?: boolean;
   readonly settings?: boolean;
   readonly language?: boolean;
   readonly fontSize?: boolean;
@@ -34,6 +35,7 @@ export function resolveControls(
     rendererWizard: true,
     share: true,
     loadingIndicator: true,
+    keyboardHelp: true,
     settings: true,
     language: true,
     fontSize: true,

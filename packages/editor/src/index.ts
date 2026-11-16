@@ -1,3 +1,5 @@
+import { createKeyboardHelp } from './keyboard-help.js';
+import { runShortcutLabel } from './keyboard.js';
 import { createEditorResize } from './editor-resize.js';
 import {
   createAutoGrowControl,
@@ -205,8 +207,8 @@ export function createRunButton(): ButtonPlugin {
   const label = { en: 'Run query', nl: 'Query uitvoeren' };
   const stopLabel = { en: 'Stop query', nl: 'Query stoppen' };
   const title = {
-    en: 'Run query (Ctrl/Cmd+Enter)',
-    nl: 'Query uitvoeren (Ctrl/Cmd+Enter)',
+    en: `Run query (${runShortcutLabel()})`,
+    nl: `Query uitvoeren (${runShortcutLabel()})`,
   };
   const icon = createSvgIcon(['m8 4 12 8-12 8z']);
   const stopIcon = createSvgIcon(['M6 6h12v12H6z']);
@@ -654,6 +656,7 @@ export function createEditor(
       if (disposed) return;
       editorResize.destroy();
       shareControl.destroy();
+      keyboardHelp.destroy();
       rendererWizard.destroy();
       toolbarView.destroy();
       disposed = true;
@@ -899,6 +902,12 @@ export function createEditor(
         message: error instanceof Error ? error.message : String(error),
       });
     },
+  });
+  const keyboardHelp = createKeyboardHelp({
+    root,
+    tools,
+    visible: controls.keyboardHelp,
+    getLocale: () => locale,
   });
   root.insertBefore(prefixPicker.panel, tabBar);
 
@@ -1347,6 +1356,7 @@ export function createEditor(
     fontSizeControl.refresh();
     rendererWizard.refreshLocale();
     shareControl.refreshLocale();
+    keyboardHelp.refreshLocale();
     prefixPicker.refreshLocale();
     tools.setAttribute('aria-label', translate(locale, 'coreTools'));
     customActions.setAttribute('aria-label', translate(locale, 'extraActions'));

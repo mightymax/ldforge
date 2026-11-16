@@ -145,7 +145,11 @@ it('validates host widths and makes column widths discoverable in the plugin wiz
   expect(() => createTableRenderer({ columnWidths: [50, 40] })).toThrow(
     'totaling 100',
   );
-  expect(createTableRenderer().wizard?.options?.[0]).toMatchObject({
+  expect(
+    createTableRenderer().wizard?.options?.find(
+      (option) => option.key === 'columns',
+    ),
+  ).toMatchObject({
     key: 'columns',
     aliases: ['colums'],
     type: 'text',

@@ -159,6 +159,30 @@ describe('3D map adapter', () => {
       }).sources,
     ).toHaveProperty('basemap.attribution', 'Custom');
   });
+
+  it.each([false, true])(
+    'uses host popup DOM in 3D and allows fallback (fallback=%s)',
+    async (useFallback) => {
+      const { library, popup, events } = mockThreeD();
+      const content = document.createElement('button');
+      content.textContent = 'Show datasets';
+      const renderPopup = vi.fn(() => (useFallback ? undefined : content));
+      const handle = createThreeDMap(
+        document.createElement('div'),
+        features(),
+        library,
+        { renderPopup },
+      );
+      events.get('load')?.({});
+      await handle.ready;
+      events.get('click')?.({ point: [0, 0], lngLat: [5, 52] });
+      expect(renderPopup).toHaveBeenCalledTimes(1);
+      const displayed = popup.setDOMContent.mock.calls[0]?.[0] as HTMLElement;
+      if (useFallback) expect(displayed.className).toBe('ldforge-geo-popup');
+      else expect(displayed).toBe(content);
+      handle.destroy();
+    },
+  );
   it('renders safe label/height popups, settles on load and removes event handlers on cleanup', async () => {
     const { library, map, popup, events } = mockThreeD();
     const handle = createThreeDMap(

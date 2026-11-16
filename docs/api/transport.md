@@ -147,3 +147,18 @@ reload. Public examples and `# sparql-endpoint` queries select their own connect
 without inheriting stored session headers. The active URL below the editor has a
 clipboard button with a brief copied checkmark. This manager is demo-owned host
 code, not automatic persistence or credential management in `createHttpExecutor`.
+
+## Table viewport configuration
+
+`createTableRenderer(options?: TableRendererOptions)` renders all loaded rows at
+full height by default. Set `scroll: true` for a bounded vertical viewport;
+`viewportHeight` defaults to 480 pixels (minimum 120), and `virtualizeThreshold`
+defaults to 500 rows. Virtualization only applies in scroll mode.
+The table overrides the editor result-panel height cap while active and restores
+it on cleanup, so other plugins retain their sizing.
+
+Per-query configuration overrides these host defaults:
+`# view=table; table-scroll=true; table-height=480`. Use `table-scroll=false`
+for a full table. The table's Plugin wizard exposes both options. Invalid query
+values show a warning and fall back to API defaults. See
+[table sizing](../../docs/renderers.md#sorting-filters-and-large-results).

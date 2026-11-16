@@ -21,6 +21,38 @@ SELECT ?geometryLabel ?geometry WHERE {
 }
 ```
 
+## Host popup content
+
+Use `renderPopup(document, properties)` to return custom popup DOM in both 2D
+and 3D, including individual markers in Grouped mode. Return `undefined` to use
+the built-in popup. `properties.link` can identify a feature in a host lookup
+built from the query results. The host may attach buttons that load a query into
+its editor; no query text is executed automatically by the map plugin.
+
+```ts
+createGeoRenderer({
+  renderPopup(document, properties) {
+    const publishers = publishersByPlace.get(String(properties.link));
+    if (!publishers) return undefined;
+    const list = document.createElement('ul');
+    for (const publisher of publishers) {
+      const item = document.createElement('li');
+      item.textContent = publisher.name;
+      const button = document.createElement('button');
+      button.textContent = 'Show datasets';
+      button.addEventListener('click', () => loadPublisherQuery(publisher.iri));
+      item.append(button);
+      list.append(item);
+    }
+    return list;
+  },
+});
+```
+
+Popup factories are trusted host code. Use `textContent` for RDF values rather
+than interpreting them as HTML. Bind listeners to returned elements; popups are
+discarded when their map is destroyed. Do not retain them through global listeners.
+
 ## Popup bindings
 
 All of these bindings are optional; features still render without them in 2D or 3D:
