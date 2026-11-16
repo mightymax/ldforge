@@ -6,6 +6,7 @@ import { basename, join, resolve } from 'node:path';
 import process from 'node:process';
 import { URL, fileURLToPath, pathToFileURL } from 'node:url';
 import semver from 'semver';
+import { format, resolveConfig } from 'prettier';
 import { applyReleasePlan } from '@changesets/apply-release-plan';
 import {
   packagePaths,
@@ -343,7 +344,14 @@ export async function prepareRelease(
     ),
   };
   mkdirSync(join(root, '.releases'), { recursive: true });
-  writeJson(join(root, '.releases', `${releaseTag}.json`), record);
+  const recordPath = join(root, '.releases', `${releaseTag}.json`);
+  writeFileSync(
+    recordPath,
+    await format(JSON.stringify(record), {
+      ...(await resolveConfig(recordPath)),
+      filepath: recordPath,
+    }),
+  );
   git(
     root,
     'add',

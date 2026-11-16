@@ -16,6 +16,7 @@ import { join } from 'node:path';
 import { URL, fileURLToPath } from 'node:url';
 import { test } from 'node:test';
 import { parse as parseYaml } from 'yaml';
+import { format } from 'prettier';
 import {
   packagePaths,
   planRelease,
@@ -261,6 +262,17 @@ test('prepare is local, publishes only planned artifacts and atomically pushes a
     change(project);
     const beforeRemote = git(project.remote, 'rev-parse', 'main');
     const record = await prepareRelease(project.root, { now: date });
+    const recordPath = join(
+      project.root,
+      '.releases',
+      `${record.releaseTag}.json`,
+    );
+    const recordSource = readFileSync(recordPath, 'utf8');
+    assert.equal(
+      recordSource,
+      await format(recordSource, { filepath: recordPath }),
+    );
+
     assert.equal(
       git(project.remote, 'rev-parse', 'main'),
       beforeRemote,
@@ -423,6 +435,28 @@ test('CI publishes only batch tags and keeps trusted recovery for historical tag
     ),
   );
   assert.deepEqual(release.on.push.tags, ['release-*']);
+  assert.equal(release.on.workflow_dispatch.inputs.release_tag.required, true);
+  assert.equal(
+    release.jobs.website.with.source_ref,
+    '${{ needs.check.outputs.source_sha }}',
+  );
+  const checkSteps = release.jobs.check.steps;
+  const restoreIndex = checkSteps.findIndex(
+    (step) => step.name === 'Restore exact tagged metadata before packing',
+  );
+  assert(
+    restoreIndex > checkSteps.findIndex((step) => step.run === 'npm run check'),
+  );
+  assert(
+    restoreIndex <
+      checkSteps.findIndex(
+        (step) => step.name === 'Pack tested release artifacts',
+      ),
+  );
+  assert.equal(
+    checkSteps[restoreIndex].if,
+    "always() && github.event_name == 'workflow_dispatch'",
+  );
   assert(release.jobs.check.steps.some((step) => step.run === 'npm run check'));
   assert.equal(release.jobs.publish['permissions']['id-token'], 'write');
   assert.equal(release.concurrency.group, retry.concurrency.group);

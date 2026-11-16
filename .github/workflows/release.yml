@@ -4,6 +4,15 @@ on:
   push:
     tags:
       - 'release-*'
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: Existing batch tag to fully retest and publish without moving tags
+        required: true
+        type: string
+
+env:
+  RELEASE_TAG: ${{ inputs.release_tag || github.ref_name }}
 
 permissions:
   contents: read
@@ -18,9 +27,13 @@ jobs:
     name: Verify, test and pack release
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    if: github.event_name == 'push' || github.ref == 'refs/heads/main'
+    outputs:
+      source_sha: ${{ steps.source.outputs.sha }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
+          ref: ${{ inputs.release_tag || github.ref }}
           fetch-depth: 0
           persist-credentials: false
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
@@ -29,14 +42,28 @@ jobs:
           package-manager-cache: false
       - run: npm ci
       - name: Verify release tag, versions and main ancestry
-        run: node scripts/release.mjs verify-tag
+        run: node scripts/release.mjs verify-tag "$RELEASE_TAG"
+      - name: Record verified source commit
+        id: source
+        run: echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+      - name: Normalize historical generated metadata for checks
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          cp ".releases/$RELEASE_TAG.json" "$RUNNER_TEMP/original-release-record.json"
+          npx prettier --write ".releases/$RELEASE_TAG.json"
       - run: npx playwright install --with-deps chromium
       - run: npm run check
+      - name: Restore exact tagged metadata before packing
+        if: always() && github.event_name == 'workflow_dispatch'
+        run: |
+          if [[ -f "$RUNNER_TEMP/original-release-record.json" ]]; then
+            cp "$RUNNER_TEMP/original-release-record.json" ".releases/$RELEASE_TAG.json"
+          fi
       - name: Pack tested release artifacts
         run: npm run release:pack
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
-          name: npm-release-${{ github.ref_name }}
+          name: npm-release-${{ inputs.release_tag || github.ref_name }}
           path: release-artifacts/
           if-no-files-found: error
           retention-days: 14
@@ -62,6 +89,7 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
+          ref: ${{ inputs.release_tag || github.ref }}
           fetch-depth: 0
           persist-credentials: false
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
@@ -72,18 +100,20 @@ jobs:
         run: npm install --global npm@11
       - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
-          name: npm-release-${{ github.ref_name }}
+          name: npm-release-${{ inputs.release_tag || github.ref_name }}
           path: release-artifacts/
       - run: npm ci --ignore-scripts
-      - run: node scripts/release.mjs verify-tag
+      - run: node scripts/release.mjs verify-tag "$RELEASE_TAG"
       - name: Publish exact tested tarballs in dependency order
         run: node scripts/release.mjs publish
       - name: Create GitHub release
         env:
           GH_TOKEN: ${{ github.token }}
-          RELEASE_TAG: ${{ github.ref_name }}
+          RELEASE_TAG: ${{ inputs.release_tag || github.ref_name }}
         run: |
           if ! gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
+            # JavaScript evaluates process.env; shell expansion is intentionally disabled.
+            # shellcheck disable=SC2016
             PRERELEASE=$(node --input-type=module -e 'import fs from "node:fs"; console.log(JSON.parse(fs.readFileSync(`.releases/${process.env.RELEASE_TAG}.json`)).prerelease)')
             if [[ "$PRERELEASE" == true ]]; then
               gh release create "$RELEASE_TAG" --verify-tag --generate-notes --title "$RELEASE_TAG" --prerelease
@@ -95,13 +125,13 @@ jobs:
 
   website:
     name: Deploy website after npm publication
-    needs: publish
+    needs: [check, publish]
     if: vars.WEBSITE_DEPLOY_ENABLED == 'true'
     permissions:
       contents: read
       packages: write
     uses: ./.github/workflows/website.yml
     with:
-      source_ref: ${{ github.sha }}
+      source_ref: ${{ needs.check.outputs.source_sha }}
     secrets:
       WEBSITE_GITOPS_SSH_KEY: ${{ secrets.WEBSITE_GITOPS_SSH_KEY }}

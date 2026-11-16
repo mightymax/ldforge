@@ -65,9 +65,7 @@
       "name": "@ldforge/yasgui",
       "type": "minor",
       "oldVersion": "1.0.0",
-      "changesets": [
-        "ldforge-bundle-b7a4d38a81af"
-      ],
+      "changesets": ["ldforge-bundle-b7a4d38a81af"],
       "newVersion": "1.1.0",
       "reasons": [
         "ldforge-bundle-b7a4d38a81af: Rebuild the standalone Yasgui browser bundle with @ldforge/editor@1.1.0.",

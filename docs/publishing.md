@@ -179,6 +179,15 @@ For a failed atomic push, fix connectivity/permissions and run `npm run release:
 Do not bump again. If main advanced meanwhile, resolve the history conflict first;
 never force-push a published release or move its tags.
 
+If checks failed because of a workflow/tooling defect before artifacts were
+produced, fix the tooling on main and manually dispatch the **Release** workflow
+from main with the existing `release_tag`. It checks out and verifies that exact
+tag, reruns all checks and packs its original source before publishing. Recovery
+normalizes generated release-record formatting during checks and restores the
+exact tagged bytes before packing; package source is unchanged. Tags and versions
+are never moved or bumped for this recovery. The website uses the verified source
+commit as well.
+
 For transient CI/publication failures, rerun failed jobs in the original Release
 run. Every target package/version is checked before the first upload. Matching
 registry integrity is skipped; different bytes stop the whole publication plan.
