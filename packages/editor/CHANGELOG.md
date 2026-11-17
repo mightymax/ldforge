@@ -1,5 +1,23 @@
 # @ldforge/editor
 
+## 1.3.0
+
+### Minor Changes
+
+- 113a664: Add an optional shortenShareUrl callback for host-owned synchronous or asynchronous URL shortening. Share actions wait for a valid HTTP(S) URL, report recoverable failures without copying, and discard stale results when the share context changes. Expose pending state for shortening and document integration and an ORM service example.
+- 113a664: Display the plugin wizard as an inline toolbar panel using the same surface, active-icon highlight, toggle and Escape behavior as Prefixes, sharing, keyboard shortcuts and settings. Keep only one panel open, remove the separate Close button and modal focus trap, and preserve the public wizard API and undoable header application.
+- 113a664: Add compact Add missing prefixes and Remove unused prefixes actions to the prefix panel, with Dutch labels and accessible feedback. Use syntax-aware analysis, preserve strings, comments and used aliases, add only namespaces from the configured catalog, and apply each batch as one undoable edit. Keep declarations intact when syntax errors make removal uncertain.
+- 113a664: Expand the share toolbar action into a localized, responsive inline panel with individually copyable editor links, SPARQL GET URLs, shell-quoted POST/GET cURL commands and a one-line query representation. Populate host-shortened links automatically, optionally including an explicitly opted-in execution variant. Retain the full link during shortening failures, reject stale snapshots, and report retryable service and clipboard errors. Preserve getShareLink() and copyShareLink() semantics; opening or copying from the panel does not edit or execute the query. Related: #14 and #11.
+
+  Use compact single-line fields and accessible clipboard icons that temporarily show an animated checkmark after copying, with reduced-motion support and screen-reader confirmation. Keep endpoint-dependent entries visible but disabled when no endpoint is configured. Safely remove comments and convert multiline literals for the one-line query, with an original-source fallback for incomplete literals.
+
+  Match Prefixes, sharing, settings and keyboard shortcuts as mutually exclusive inline panels with consistent styling, highlighted toolbar toggles, Escape handling and focus restoration. The toolbar icon replaces separate Close buttons; keyboard help no longer opens a modal.
+
+### Patch Changes
+
+- 113a664: Move Format query to the first position in the editor tools group, before Prefixes.
+- 113a664: Apply one shared hover overlay to every enabled editor button instead of separate button-specific treatments. Preserve neutral, selected and theme-colored primary backgrounds and leave disabled buttons unchanged.
+
 ## 1.2.1
 
 ### Patch Changes

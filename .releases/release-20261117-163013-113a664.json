@@ -1,0 +1,78 @@
+{
+  "schemaVersion": 2,
+  "releaseTag": "release-20261117-163013-113a664",
+  "baseCommit": "113a6649ce1049e7d7182de6d338d393be83b292",
+  "changesets": [
+    {
+      "releases": [{ "name": "@ldforge/editor", "type": "patch" }],
+      "summary": "Move Format query to the first position in the editor tools group, before Prefixes.",
+      "id": "format-toolbar-first"
+    },
+    {
+      "releases": [{ "name": "@ldforge/editor", "type": "minor" }],
+      "summary": "Add an optional shortenShareUrl callback for host-owned synchronous or asynchronous URL shortening. Share actions wait for a valid HTTP(S) URL, report recoverable failures without copying, and discard stale results when the share context changes. Expose pending state for shortening and document integration and an ORM service example.",
+      "id": "host-share-shortening"
+    },
+    {
+      "releases": [{ "name": "@ldforge/editor", "type": "minor" }],
+      "summary": "Display the plugin wizard as an inline toolbar panel using the same surface, active-icon highlight, toggle and Escape behavior as Prefixes, sharing, keyboard shortcuts and settings. Keep only one panel open, remove the separate Close button and modal focus trap, and preserve the public wizard API and undoable header application.",
+      "id": "inline-plugin-wizard"
+    },
+    {
+      "releases": [{ "name": "@ldforge/editor", "type": "minor" }],
+      "summary": "Add compact Add missing prefixes and Remove unused prefixes actions to the prefix panel, with Dutch labels and accessible feedback. Use syntax-aware analysis, preserve strings, comments and used aliases, add only namespaces from the configured catalog, and apply each batch as one undoable edit. Keep declarations intact when syntax errors make removal uncertain.",
+      "id": "prefix-panel-maintenance"
+    },
+    {
+      "releases": [{ "name": "@ldforge/editor", "type": "minor" }],
+      "summary": "Expand the share toolbar action into a localized, responsive inline panel with individually copyable editor links, SPARQL GET URLs, shell-quoted POST/GET cURL commands and a one-line query representation. Populate host-shortened links automatically, optionally including an explicitly opted-in execution variant. Retain the full link during shortening failures, reject stale snapshots, and report retryable service and clipboard errors. Preserve getShareLink() and copyShareLink() semantics; opening or copying from the panel does not edit or execute the query. Related: #14 and #11.\n\nUse compact single-line fields and accessible clipboard icons that temporarily show an animated checkmark after copying, with reduced-motion support and screen-reader confirmation. Keep endpoint-dependent entries visible but disabled when no endpoint is configured. Safely remove comments and convert multiline literals for the one-line query, with an original-source fallback for incomplete literals.\n\nMatch Prefixes, sharing, settings and keyboard shortcuts as mutually exclusive inline panels with consistent styling, highlighted toolbar toggles, Escape handling and focus restoration. The toolbar icon replaces separate Close buttons; keyboard help no longer opens a modal.",
+      "id": "query-sharing-dialog"
+    },
+    {
+      "releases": [{ "name": "@ldforge/editor", "type": "patch" }],
+      "summary": "Apply one shared hover overlay to every enabled editor button instead of separate button-specific treatments. Preserve neutral, selected and theme-colored primary backgrounds and leave disabled buttons unchanged.",
+      "id": "shared-button-hover"
+    },
+    {
+      "id": "ldforge-bundle-8ddfddab1e10",
+      "summary": "Rebuild the standalone Yasgui browser bundle with @ldforge/editor@1.3.0.",
+      "releases": [{ "name": "@ldforge/yasgui", "type": "minor" }]
+    }
+  ],
+  "releases": [
+    {
+      "name": "@ldforge/editor",
+      "type": "minor",
+      "oldVersion": "1.2.1",
+      "changesets": [
+        "format-toolbar-first",
+        "host-share-shortening",
+        "inline-plugin-wizard",
+        "prefix-panel-maintenance",
+        "query-sharing-dialog",
+        "shared-button-hover"
+      ],
+      "newVersion": "1.3.0",
+      "reasons": [
+        "format-toolbar-first: Move Format query to the first position in the editor tools group, before Prefixes.",
+        "host-share-shortening: Add an optional shortenShareUrl callback for host-owned synchronous or asynchronous URL shortening. Share actions wait for a valid HTTP(S) URL, report recoverable failures without copying, and discard stale results when the share context changes. Expose pending state for shortening and document integration and an ORM service example.",
+        "inline-plugin-wizard: Display the plugin wizard as an inline toolbar panel using the same surface, active-icon highlight, toggle and Escape behavior as Prefixes, sharing, keyboard shortcuts and settings. Keep only one panel open, remove the separate Close button and modal focus trap, and preserve the public wizard API and undoable header application.",
+        "prefix-panel-maintenance: Add compact Add missing prefixes and Remove unused prefixes actions to the prefix panel, with Dutch labels and accessible feedback. Use syntax-aware analysis, preserve strings, comments and used aliases, add only namespaces from the configured catalog, and apply each batch as one undoable edit. Keep declarations intact when syntax errors make removal uncertain.",
+        "query-sharing-dialog: Expand the share toolbar action into a localized, responsive inline panel with individually copyable editor links, SPARQL GET URLs, shell-quoted POST/GET cURL commands and a one-line query representation. Populate host-shortened links automatically, optionally including an explicitly opted-in execution variant. Retain the full link during shortening failures, reject stale snapshots, and report retryable service and clipboard errors. Preserve getShareLink() and copyShareLink() semantics; opening or copying from the panel does not edit or execute the query. Related: #14 and #11.\n\nUse compact single-line fields and accessible clipboard icons that temporarily show an animated checkmark after copying, with reduced-motion support and screen-reader confirmation. Keep endpoint-dependent entries visible but disabled when no endpoint is configured. Safely remove comments and convert multiline literals for the one-line query, with an original-source fallback for incomplete literals.\n\nMatch Prefixes, sharing, settings and keyboard shortcuts as mutually exclusive inline panels with consistent styling, highlighted toolbar toggles, Escape handling and focus restoration. The toolbar icon replaces separate Close buttons; keyboard help no longer opens a modal.",
+        "shared-button-hover: Apply one shared hover overlay to every enabled editor button instead of separate button-specific treatments. Preserve neutral, selected and theme-colored primary backgrounds and leave disabled buttons unchanged."
+      ]
+    },
+    {
+      "name": "@ldforge/yasgui",
+      "type": "minor",
+      "oldVersion": "1.2.1",
+      "changesets": ["ldforge-bundle-8ddfddab1e10"],
+      "newVersion": "1.3.0",
+      "reasons": [
+        "ldforge-bundle-8ddfddab1e10: Rebuild the standalone Yasgui browser bundle with @ldforge/editor@1.3.0.",
+        "Embedded bundle changes: @ldforge/editor"
+      ]
+    }
+  ],
+  "prerelease": false
+}
