@@ -60,7 +60,12 @@ function fixture() {
   git(remote, 'config', 'core.hooksPath', join(remote, 'hooks'));
   for (const folder of ['scripts', '.changeset', '.releases'])
     mkdirSync(join(root, folder));
-  for (const name of ['release.mjs', 'release-plan.mjs', 'release-legacy.mjs'])
+  for (const name of [
+    'release.mjs',
+    'release-plan.mjs',
+    'release-legacy.mjs',
+    'project-release-notes.mjs',
+  ])
     copyFileSync(
       join(repository, 'scripts', name),
       join(root, 'scripts', name),
@@ -170,6 +175,16 @@ function change(project, name = 'editor', bump = 'minor') {
     join(project.root, '.changeset/feature.md'),
     `---\n"@ldforge/${name}": ${bump}\n---\n\nAdd a feature.\n`,
   );
+  if (bump === 'major') {
+    mkdirSync(join(project.root, 'docs/releases'), { recursive: true });
+    json(join(project.root, 'docs/releases/editorial.json'), [
+      {
+        changeset: 'feature',
+        migration:
+          'Update the dependent package API for the new major version.',
+      },
+    ]);
+  }
   git(project.root, 'add', '.');
   git(project.root, 'commit', '-m', 'Add feature');
 }
@@ -268,6 +283,18 @@ test('prepare is local, publishes only planned artifacts and atomically pushes a
       `${record.releaseTag}.json`,
     );
     const recordSource = readFileSync(recordPath, 'utf8');
+    const projectNotes = readFileSync(
+      join(project.root, 'docs/releases', `${record.releaseTag}.md`),
+      'utf8',
+    );
+    assert.match(projectNotes, /## Updated packages/);
+    assert.match(projectNotes, /@ldforge\/editor/);
+    assert.match(projectNotes, /1\.1\.0/);
+    assert.equal(
+      git(project.root, 'status', '--porcelain'),
+      '',
+      'Generated project notes must be committed during preparation',
+    );
     assert.equal(
       recordSource,
       await format(recordSource, { filepath: recordPath }),

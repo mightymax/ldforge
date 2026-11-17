@@ -5,6 +5,8 @@ export function createKeyboardHelp(host: {
   root: HTMLElement;
   tools: HTMLElement;
   visible: boolean;
+  panelId: string;
+  onOpen(): void;
   getLocale(): Locale;
 }) {
   const doc = host.root.ownerDocument;
@@ -14,51 +16,52 @@ export function createKeyboardHelp(host: {
   const toggle = doc.createElement('button');
   toggle.type = 'button';
   toggle.className = 'ldforge-keyboard-toggle';
-  toggle.setAttribute('aria-haspopup', 'dialog');
+  toggle.setAttribute('aria-expanded', 'false');
+  toggle.setAttribute('aria-controls', host.panelId);
   toggle.append(
     createSvgIcon([
       'M3 5h18v14H3z',
       'M6 9h1m3 0h1m3 0h1m3 0h1M6 12h1m3 0h1m3 0h1m3 0h1M7 15h10',
     ])(doc),
   );
-  const dialog = doc.createElement('dialog');
-  dialog.className = 'ldforge-keyboard-help';
+  const dialog = doc.createElement('section');
+  dialog.id = host.panelId;
+  dialog.hidden = true;
+  dialog.setAttribute('role', 'region');
+  dialog.tabIndex = -1;
+  dialog.className = 'ldforge-keyboard-help ldforge-tool-panel';
   const header = doc.createElement('div');
   header.className = 'ldforge-keyboard-header';
   const title = doc.createElement('h2');
-  const close = doc.createElement('button');
-  close.type = 'button';
-  header.append(title, close);
+  header.append(title);
   const body = doc.createElement('div');
   const note = doc.createElement('p');
   dialog.append(header, body, note);
   host.root.append(dialog);
   if (host.visible) host.tools.append(toggle);
 
-  function hide() {
-    if (typeof dialog.close === 'function') dialog.close();
-    else {
-      dialog.removeAttribute('open');
-      toggle.focus();
-    }
+  function hide(restoreFocus = false) {
+    dialog.hidden = true;
+    toggle.setAttribute('aria-expanded', 'false');
+    if (restoreFocus) toggle.focus();
   }
-  close.addEventListener('click', hide);
-  dialog.addEventListener('close', () => toggle.focus());
   dialog.addEventListener('keydown', (event) => {
     if (event.key === 'Escape') {
       event.preventDefault();
       event.stopPropagation();
-      hide();
+      hide(true);
     }
   });
-  dialog.addEventListener('click', (event) => {
-    if (event.target === dialog) hide();
-  });
   toggle.addEventListener('click', () => {
+    if (!dialog.hidden) {
+      hide(true);
+      return;
+    }
+    host.onOpen();
     refreshLocale();
-    if (typeof dialog.showModal === 'function') dialog.showModal();
-    else dialog.setAttribute('open', '');
-    close.focus();
+    dialog.hidden = false;
+    toggle.setAttribute('aria-expanded', 'true');
+    dialog.focus();
   });
 
   function refreshLocale() {
@@ -68,7 +71,6 @@ export function createKeyboardHelp(host: {
     toggle.setAttribute('aria-label', label);
     title.textContent = label;
     dialog.setAttribute('aria-label', label);
-    close.textContent = nl ? 'Sluiten' : 'Close';
     const rows = [
       [nl ? 'Query uitvoeren' : 'Run query', runShortcutLabel(platform)],
       [nl ? 'Aanvullen' : 'Completion', mac ? 'Control+Space' : 'Ctrl+Space'],
@@ -102,6 +104,8 @@ export function createKeyboardHelp(host: {
   }
   refreshLocale();
   return {
+    panel: dialog,
+    close: hide,
     refreshLocale,
     destroy() {
       dialog.remove();

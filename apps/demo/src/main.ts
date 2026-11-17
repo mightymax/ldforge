@@ -310,7 +310,7 @@ app.innerHTML = `
   <div id="editor"></div>
   <p id="active-endpoint" class="active-endpoint" role="status"></p>
   <footer><span>01 / Write a query</span><span>02 / Run or press ${/Mac|iP(hone|ad|od)/.test(navigator.platform) ? '⌘Enter' : 'Ctrl+Enter'}</span><span>03 / Choose a result view</span></footer>
-  <aside><h2>Small pieces. Clear boundaries.</h2><div class="modules"><article><code>@ldforge/core</code><p>Query lifecycle, HTTP transport and typed plugin contracts.</p></article><article><code>@ldforge/editor</code><p>CodeMirror, accessible controls and your own button plugins.</p></article><article><code>@ldforge/prefixes</code><p>A searchable catalog of common namespaces, ready to import.</p></article><article><code>@ldforge/renderers</code><p>Independent table, cards, boolean and JSON result plugins.</p></article><article><code>@ldforge/charts</code><p>Chart views with an external library loaded only when opened.</p></article><article><code>@ldforge/geo</code><p>Interactive maps, clustering, heatmaps and 3D geometry.</p></article><article><code>@ldforge/network</code><p>Interactive graphs for exploring resources and their connections.</p></article><article><code>@ldforge/timeline</code><p>Interactive timelines for dated events and intervals.</p></article><article><code>@ldforge/pivot</code><p>Pivot tables for grouping and summarizing query results.</p></article><article><code>@ldforge/tree</code><p>Expandable trees for exploring hierarchical data.</p></article><article><code>@ldforge/yasgui</code><p>A Yasgui-compatible API for integrating the LDForge editor.</p></article></div></aside>`;
+  <aside><h2>Small pieces. Clear boundaries.</h2><div class="modules"><article><a href="https://www.npmjs.com/package/@ldforge/core" target="_blank" rel="noopener noreferrer"><code>@ldforge/core</code></a><p>Query lifecycle, HTTP transport and typed plugin contracts.</p></article><article><a href="https://www.npmjs.com/package/@ldforge/editor" target="_blank" rel="noopener noreferrer"><code>@ldforge/editor</code></a><p>CodeMirror, accessible controls and your own button plugins.</p></article><article><a href="https://www.npmjs.com/package/@ldforge/prefixes" target="_blank" rel="noopener noreferrer"><code>@ldforge/prefixes</code></a><p>A searchable catalog of common namespaces, ready to import.</p></article><article><a href="https://www.npmjs.com/package/@ldforge/renderers" target="_blank" rel="noopener noreferrer"><code>@ldforge/renderers</code></a><p>Independent table, cards, boolean and JSON result plugins.</p></article><article><a href="https://www.npmjs.com/package/@ldforge/charts" target="_blank" rel="noopener noreferrer"><code>@ldforge/charts</code></a><p>Chart views with an external library loaded only when opened.</p></article><article><a href="https://www.npmjs.com/package/@ldforge/geo" target="_blank" rel="noopener noreferrer"><code>@ldforge/geo</code></a><p>Interactive maps, clustering, heatmaps and 3D geometry.</p></article><article><a href="https://www.npmjs.com/package/@ldforge/network" target="_blank" rel="noopener noreferrer"><code>@ldforge/network</code></a><p>Interactive graphs for exploring resources and their connections.</p></article><article><a href="https://www.npmjs.com/package/@ldforge/timeline" target="_blank" rel="noopener noreferrer"><code>@ldforge/timeline</code></a><p>Interactive timelines for dated events and intervals.</p></article><article><a href="https://www.npmjs.com/package/@ldforge/pivot" target="_blank" rel="noopener noreferrer"><code>@ldforge/pivot</code></a><p>Pivot tables for grouping and summarizing query results.</p></article><article><a href="https://www.npmjs.com/package/@ldforge/tree" target="_blank" rel="noopener noreferrer"><code>@ldforge/tree</code></a><p>Expandable trees for exploring hierarchical data.</p></article><article><a href="https://www.npmjs.com/package/@ldforge/yasgui" target="_blank" rel="noopener noreferrer"><code>@ldforge/yasgui</code></a><p>A Yasgui-compatible API for integrating the LDForge editor.</p></article></div></aside>`;
 
 const endpointIndicator =
   document.querySelector<HTMLElement>('#active-endpoint');
@@ -340,6 +340,7 @@ const editor = createEditor(mount, {
   sparql: { prefixes: extendedPrefixes },
   executor: connection.executor,
   shareEndpoint: () => connection.getEndpoint(),
+  shareAutoRun: true,
   settings: [connection.plugin],
   userLocale: readUserLocale(),
   ...(restoredFontSize !== undefined ? { fontSize: restoredFontSize } : {}),
@@ -377,6 +378,13 @@ if (sharedQuery !== null && restoredWorkspace) {
       activate: true,
     });
 }
+
+// Auto-execution requires the explicit shared-link variant.
+if (
+  sharedQuery !== null &&
+  new URL(location.href).searchParams.get('execute') === 'true'
+)
+  void editor.run();
 
 function loadExampleQuery(query: string, endpoint: string | null): void {
   connection.setEndpoint(endpoint ?? '', 'GET');

@@ -1,3 +1,7 @@
+import {
+  writeProjectReleaseNotes,
+  validateProjectReleaseNotes,
+} from './project-release-notes.mjs';
 import { setTimeout as delay } from 'node:timers/promises';
 import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
@@ -228,6 +232,7 @@ function verifyRecord(root, record) {
     'package-lock.json',
     'apps/demo/package.json',
     `.releases/${record.releaseTag}.json`,
+    `docs/releases/${record.releaseTag}.md`,
     ...libraries.flatMap((entry) => [
       `${entry.directory}/package.json`,
       `${entry.directory}/CHANGELOG.md`,
@@ -299,6 +304,11 @@ export async function prepareRelease(
     }
     throw new Error(`Release tag already exists: ${tag}`);
   }
+  validateProjectReleaseNotes(root, {
+    releaseTag,
+    changesets: plan.changesets,
+    releases: plan.releases,
+  });
   await applyReleasePlan(
     plan.changesetsPlan,
     plan.packages,
@@ -352,6 +362,7 @@ export async function prepareRelease(
       filepath: recordPath,
     }),
   );
+  await writeProjectReleaseNotes(root, record);
   git(
     root,
     'add',
@@ -359,6 +370,7 @@ export async function prepareRelease(
     '--',
     '.changeset',
     '.releases',
+    `docs/releases/${releaseTag}.md`,
     'package.json',
     'package-lock.json',
     'apps/demo/package.json',

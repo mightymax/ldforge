@@ -21,7 +21,7 @@ test('plugin wizard previews registered renderer options, preserves query/CSS an
   });
   await expect(trigger).toHaveAttribute('title', 'Plugin wizard');
   await trigger.click();
-  const dialog = page.getByRole('dialog', {
+  const dialog = page.getByRole('region', {
     name: 'Plugin wizard',
     exact: false,
   });
@@ -71,7 +71,9 @@ test('plugin wizard previews registered renderer options, preserves query/CSS an
   const bounds = await dialog.boundingBox();
   expect(bounds?.x).toBeGreaterThanOrEqual(0);
   expect((bounds?.x ?? 0) + (bounds?.width ?? 0)).toBeLessThanOrEqual(390);
-  await dialog.getByRole('button', { name: 'Close', exact: true }).click();
+  await page
+    .getByRole('button', { name: 'Plugin wizard', exact: true })
+    .click();
 });
 
 test('every registered renderer can be configured and previewed', async ({
@@ -104,7 +106,7 @@ test('every registered renderer can be configured and previewed', async ({
     await page
       .getByRole('button', { name: 'Plugin wizard', exact: true })
       .click();
-    const dialog = page.getByRole('dialog');
+    const dialog = page.getByRole('region');
     await dialog.locator(`input[type=radio][value="${id}"]`).check();
     await dialog.getByRole('button', { name: 'Next', exact: true }).click();
     await expect(dialog.locator('[aria-current="step"]')).toContainText(
@@ -115,6 +117,8 @@ test('every registered renderer can be configured and previewed', async ({
       dialog.getByRole('textbox', { name: 'Generated header' }),
     ).toHaveValue(new RegExp(`^# view=${id}`));
     await expect(dialog.getByRole('alert')).toBeHidden();
-    await dialog.getByRole('button', { name: 'Close', exact: true }).click();
+    await page
+      .getByRole('button', { name: 'Plugin wizard', exact: true })
+      .click();
   }
 });

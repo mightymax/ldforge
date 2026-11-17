@@ -125,10 +125,14 @@ jobs:
             # JavaScript evaluates process.env; shell expansion is intentionally disabled.
             # shellcheck disable=SC2016
             PRERELEASE=$(node --input-type=module -e 'import fs from "node:fs"; console.log(JSON.parse(fs.readFileSync(`.releases/${process.env.RELEASE_TAG}.json`)).prerelease)')
+            NOTES_ARGS=(--generate-notes)
+            if [[ -f "docs/releases/$RELEASE_TAG.md" ]]; then
+              NOTES_ARGS=(--notes-file "docs/releases/$RELEASE_TAG.md")
+            fi
             if [[ "$PRERELEASE" == true ]]; then
-              gh release create "$RELEASE_TAG" --verify-tag --generate-notes --title "$RELEASE_TAG" --prerelease
+              gh release create "$RELEASE_TAG" --verify-tag "${NOTES_ARGS[@]}" --title "$RELEASE_TAG" --prerelease
             else
-              gh release create "$RELEASE_TAG" --verify-tag --generate-notes --title "$RELEASE_TAG"
+              gh release create "$RELEASE_TAG" --verify-tag "${NOTES_ARGS[@]}" --title "$RELEASE_TAG"
             fi
           fi
           gh release upload "$RELEASE_TAG" release-artifacts/*.tgz --clobber

@@ -423,7 +423,7 @@ test('groups icon-only core tools on the right and formats without loading a glo
   await expect(gear).toHaveCSS(
     'border-left-color',
     await tools
-      .getByRole('button', { name: 'Copy share link', exact: true })
+      .getByRole('button', { name: 'Share your query', exact: true })
       .evaluate((element) => getComputedStyle(element).borderLeftColor),
   );
   expect(
@@ -433,10 +433,10 @@ test('groups icon-only core tools on the right and formats without loading a glo
         buttons.map((button) => button.getAttribute('aria-label')),
       ),
   ).toEqual([
-    'Prefixes',
     'Format query',
+    'Prefixes',
     'Plugin wizard',
-    'Copy share link',
+    'Share your query',
     'Keyboard shortcuts',
     'IDE settings',
   ]);
@@ -452,7 +452,7 @@ test('groups icon-only core tools on the right and formats without loading a glo
     exact: true,
   });
   await shortcuts.click();
-  const help = page.getByRole('dialog', {
+  const help = page.getByRole('region', {
     name: 'Keyboard shortcuts',
     exact: true,
   });

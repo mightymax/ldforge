@@ -15,6 +15,12 @@ export function mountSiteChrome(): void {
     image.className = 'wordmark-symbol';
     wordmark.prepend(image);
   }
+  const releases = document.createElement('a');
+  releases.href = './releases.html';
+  releases.textContent = 'Release notes';
+  if (location.pathname.endsWith('/releases.html'))
+    releases.setAttribute('aria-current', 'page');
+  navigation.append(releases);
   const repository = document.createElement('a');
   repository.href = 'https://github.com/mightymax/ldforge';
   repository.className = 'repository-link';

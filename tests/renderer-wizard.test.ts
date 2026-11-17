@@ -187,7 +187,7 @@ describe('plugin wizard API and dialog', () => {
     const { node, editor } = mount({ query: 'SELECT * WHERE { ?s ?p ?o }' });
     const wizard = editor.getRendererWizard();
     wizard.open();
-    const dialog = node.querySelector('dialog');
+    const dialog = node.querySelector<HTMLElement>('.ldforge-renderer-wizard');
     if (!dialog) throw Error('Missing dialog');
     const choices = dialog.querySelectorAll<HTMLInputElement>('[type=radio]');
     expect(choices.length).toBe(4);
@@ -232,18 +232,29 @@ describe('plugin wizard API and dialog', () => {
     const { node, editor } = mount();
     const wizard = editor.getRendererWizard();
     wizard.open();
-    click(node.querySelector('dialog') as HTMLElement, 'Next');
-    editor.setLocale('nl');
-    expect(node.querySelector('dialog h3')?.textContent).toBe('Kies de opties');
-    click(node.querySelector('dialog') as HTMLElement, 'Volgende');
-    editor.getTabs().addTab({ query: 'ASK {}' });
-    click(node.querySelector('dialog') as HTMLElement, 'Toepassen op query');
-    expect(editor.getQuery()).toBe('ASK {}');
-    expect(node.querySelector('dialog [role=alert]')?.textContent).toContain(
-      'actieve query',
+    click(
+      node.querySelector('.ldforge-renderer-wizard') as HTMLElement,
+      'Next',
     );
+    editor.setLocale('nl');
+    expect(node.querySelector('.ldforge-renderer-wizard h3')?.textContent).toBe(
+      'Kies de opties',
+    );
+    click(
+      node.querySelector('.ldforge-renderer-wizard') as HTMLElement,
+      'Volgende',
+    );
+    editor.getTabs().addTab({ query: 'ASK {}' });
+    click(
+      node.querySelector('.ldforge-renderer-wizard') as HTMLElement,
+      'Toepassen op query',
+    );
+    expect(editor.getQuery()).toBe('ASK {}');
+    expect(
+      node.querySelector('.ldforge-renderer-wizard [role=alert]')?.textContent,
+    ).toContain('actieve query');
     node
-      .querySelector('dialog')
+      .querySelector('.ldforge-renderer-wizard')
       ?.dispatchEvent(
         new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }),
       );
@@ -251,14 +262,14 @@ describe('plugin wizard API and dialog', () => {
     wizard.open();
     editor.destroy();
     expect(() => wizard.generate({ rendererId: 'table' })).toThrow('destroyed');
-    expect(node.querySelector('dialog')).toBeNull();
+    expect(node.querySelector('.ldforge-renderer-wizard')).toBeNull();
   });
   it('handles no registered renderers and custom renderers with no options', () => {
     const { node, editor } = mount({ renderers: [] });
     editor.getRendererWizard().open();
-    expect(node.querySelector('dialog')?.textContent).toContain(
-      'No registered',
-    );
+    expect(
+      node.querySelector('.ldforge-renderer-wizard')?.textContent,
+    ).toContain('No registered');
     const custom = mount({
       renderers: [
         {
@@ -270,7 +281,9 @@ describe('plugin wizard API and dialog', () => {
       ],
     });
     custom.editor.getRendererWizard().open();
-    const dialog = custom.node.querySelector('dialog') as HTMLElement;
+    const dialog = custom.node.querySelector(
+      '.ldforge-renderer-wizard',
+    ) as HTMLElement;
     click(dialog, 'Next');
     expect(dialog.textContent).toContain('no header options');
     click(dialog, 'Next');

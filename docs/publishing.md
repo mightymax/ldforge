@@ -90,6 +90,12 @@ npm run release:prepare
 This checks branch, working tree, internal ranges and lockfile; fetches main and
 rejects behind/diverged history; applies the Changesets plan; updates the lockfile;
 and commits versions, changelogs and `.releases/release-<UTC timestamp>-<base SHA>.json`.
+It also generates and commits `docs/releases/<batch-tag>.md`, used by the demo
+release history and the GitHub release. Curate highlights, verified issue links
+and migration examples in `docs/releases/editorial.json` before preparing.
+The generator lists the exact old/new versions from the batch record; major
+releases require an explicit project upgrade guide. Review the generated Markdown
+alongside the release record. Older history is available under `docs/releases/`.
 It creates an annotated batch tag and `<package name>@<version>` tags at that commit.
 For example `@ldforge/editor@1.1.0`. Only participating packages are versioned.
 It does **not** push or publish. Review before continuing:

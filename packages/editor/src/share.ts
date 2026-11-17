@@ -1,4 +1,4 @@
-import { createSvgIcon, parseQueryViewDirectives } from '@ldforge/core';
+import { parseQueryViewDirectives } from '@ldforge/core';
 import type { Locale } from '@ldforge/core';
 
 /** Keep existing options/comments and make the selected renderer authoritative. */
@@ -47,79 +47,25 @@ function queryWithDirective(
 export function createShareLink(baseUrl: string, query: string): string {
   const url = new URL(baseUrl);
   if (!url.hash.startsWith('#/')) url.hash = '';
+  url.searchParams.delete('execute');
   url.searchParams.set('query', query);
   return url.href;
 }
 
-export function createShareControl(host: {
-  tools: HTMLElement;
-  visible: boolean;
-  getLocale(): Locale;
-  copy(): Promise<string>;
-  onError(error: unknown): void;
-}) {
-  const doc = host.tools.ownerDocument;
-  const button = doc.createElement('button');
-  button.type = 'button';
-  button.className = 'ldforge-share-toggle';
-  const live = doc.createElement('span');
-  live.className = 'ldforge-sr-only';
-  live.setAttribute('role', 'status');
-  let copied = false;
-  let pending = false;
-  let disposed = false;
-  let timer: ReturnType<typeof setTimeout> | undefined;
-  function refreshLocale() {
-    const nl = host.getLocale() === 'nl';
-    const label = copied
-      ? nl
-        ? 'Link gekopieerd'
-        : 'Link copied'
-      : nl
-        ? 'Deellink kopiëren'
-        : 'Copy share link';
-    button.title = label;
-    button.setAttribute('aria-label', label);
-    button.dataset.copied = String(copied);
-    const icon = createSvgIcon(
-      copied
-        ? ['M5 12l4 4L19 6']
-        : [
-            'M12 16V3m-5 5 5-5 5 5',
-            'M5 13v7a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-7',
-          ],
-    )(doc);
-    button.replaceChildren(icon);
-    live.textContent = copied ? label : '';
-  }
-  button.onclick = async () => {
-    if (pending) return;
-    pending = true;
+export function validateShortUrl(
+  value: unknown,
+  locale: Locale,
+): asserts value is string {
+  if (typeof value === 'string' && value.trim() === value) {
     try {
-      await host.copy();
-      if (disposed) return;
-      copied = true;
-      refreshLocale();
-      clearTimeout(timer);
-      timer = setTimeout(() => {
-        copied = false;
-        refreshLocale();
-      }, 1800);
-    } catch (error) {
-      if (!disposed) host.onError(error);
-    } finally {
-      pending = false;
+      if (['http:', 'https:'].includes(new URL(value).protocol)) return;
+    } catch {
+      /* Invalid host response. */
     }
-  };
-  if (host.visible) host.tools.append(button, live);
-  refreshLocale();
-  return {
-    refreshLocale,
-    destroy() {
-      disposed = true;
-      clearTimeout(timer);
-      button.remove();
-      live.remove();
-    },
-  };
+  }
+  throw new Error(
+    locale === 'nl'
+      ? 'De verkortingsservice gaf een ongeldige URL terug.'
+      : 'The shortening service returned an invalid URL.',
+  );
 }

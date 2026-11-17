@@ -70,6 +70,7 @@
             <a href="#standalone-chart">Chart without an editor</a>
             <a href="#lifecycle">Connect your host</a>
             <a href="#workspace">Tabs and language</a>
+            <a href="#share-shortening">Shorten share links</a>
             <a href="#yasgui">Migrate from Yasgui</a>
           </nav>
           <p class="api-note">
@@ -309,6 +310,116 @@ tabs.getByName('People')?.activate();</code></pre>
               The demo restores your last applied endpoint and method on
               refresh. It does not automatically execute a query or store
               authentication header values.
+            </p>
+          </section>
+          <section id="share-shortening" class="guide-section">
+            <h2>Shorten share links</h2>
+            <p>
+              URL shortening is optional and supplied by your embedding
+              application. LDForge does not select or operate a provider.
+              Configure the share dialog with a callback; keep credentials and
+              provider-specific response parsing in your application.
+            </p>
+            <pre><code>import { createEditor } from '@ldforge/editor';
+import { createHttpExecutor } from '@ldforge/core';
+
+const host = document.querySelector('#editor');
+if (!host) throw new Error('Missing editor container');
+const editor = createEditor(host, {
+  executor: createHttpExecutor({ endpoint: 'https://example.org/sparql' }),
+  query: 'SELECT * WHERE { ?s ?p ?o } LIMIT 10',
+  shareBaseUrl: 'https://example.org/editor',
+  shortenShareUrl: async (fullUrl, query) => {
+    // fullUrl already contains the encoded query and all existing share state.
+    // query is the same query before URL encoding, including share metadata.
+    const response = await fetch('https://example.org/links', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url: fullUrl }),
+      signal: AbortSignal.timeout(10_000),
+    });
+    if (!response.ok) throw new Error('Shortening service unavailable');
+    const result = await response.json();
+    return result.url;
+  },
+});
+
+// The toolbar opens a dialog and automatically loads short URLs.
+// For a custom host action that copies directly:
+// await editor.copyShareLink();
+// editor.getShareLink() always returns the original full URL.</code></pre>
+            <p>
+              The callback accepts the complete generated URL and its unencoded
+              query and may return a string or Promise of a string. Return an
+              absolute HTTP(S) URL without whitespace. Without the callback,
+              sharing works as before. The returned short URL is copied and
+              returned by copyShareLink(). Short-link fields fill automatically
+              when the dialog opens; each has independent loading, error and
+              retry feedback. The full URL remains available. Service failures,
+              invalid values and clipboard failures show a recoverable action
+              error and do not change the query; there is no automatic fallback.
+              Retry by clicking again. The API rejects those errors so custom
+              actions can catch them.
+            </p>
+            <p>
+              If the query, active tab or generated share context changes, the
+              pending result is discarded before copying. Destroying the editor
+              or starting a newer API copy request also invalidates it. Hosts
+              own request timeouts, as shown above.
+            </p>
+            <h3>Share your query panel</h3>
+            <p>
+              The share icon opens an inline panel below the toolbar with
+              separate Copy buttons for the full editor URL, automatically
+              generated short URLs, a SPARQL GET URL, cURL POST/GET commands and
+              an unescaped one-line query. Opening and copying never changes or
+              executes the query. Endpoint examples use the active query
+              endpoint or shareEndpoint; without an endpoint they remain visible
+              with disabled Copy buttons and a placeholder directing users to
+              settings. SELECT/ASK request SPARQL Results JSON; graph queries
+              request N-Triples/Turtle. Connection authentication is excluded
+              from request examples.
+            </p>
+            <p>
+              The one-line query removes comments and converts multiline
+              literals to quoted strings with escaped newlines while preserving
+              their values. An incomplete literal is shown separately as the
+              original query. Long values remain fully copyable. Escape or the
+              toolbar icon restores focus to the toolbar icon. If the query or
+              connection changes, use Refresh values to rebuild the snapshot
+              before copying.
+            </p>
+            <h3>Explicit automatic execution</h3>
+            <p>
+              Ordinary links never opt into execution. If your host implements
+              execute=true, set shareAutoRun: true. With a shortener configured,
+              the dialog then adds a separately labelled short link that opens
+              and runs the query. Your callback receives that URL with
+              execute=true and must preserve it in the stored destination. The
+              demo supports this parameter; it does not configure a public
+              shortener.
+            </p>
+            <pre><code>// Recipient host: initialize and restore shared state first.
+const params = new URL(location.href).searchParams;
+const sharedQuery = params.get('query');
+if (sharedQuery !== null) editor.setQuery(sharedQuery);
+if (sharedQuery !== null &amp;&amp; params.get('execute') === 'true') {
+  await editor.run();
+}
+// In createEditor options, opt in only when the recipient implements this:
+// shareAutoRun: true</code></pre>
+            <h3>A simple ORM service</h3>
+            <p>
+              The repository includes a runnable
+              <a
+                href="https://github.com/mightymax/ldforge/tree/main/examples/share-shortener"
+                >Prisma ORM 6 and SQLite example</a
+              >. Run npm install, set DATABASE_URL=file:./shares.db, run npx
+              prisma db push, then npm start in that directory. POST /links
+              stores the full URL and returns a short URL; GET /s/:id looks up
+              its database row and redirects to the stored URL. The example
+              restricts the recipient origin and path, and documents
+              configuration and deployment responsibilities.
             </p>
           </section>
           <section class="guide-section" id="language-support">

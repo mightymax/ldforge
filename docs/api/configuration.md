@@ -68,7 +68,7 @@ Every property is optional and defaults to `true`.
 | `renameTab`             | Rename icon and double-click renaming.                                                                                      |
 | `closeTab`              | Tab close buttons.                                                                                                          |
 
-The core tools group is ordered **Prefixes → Format query → Plugin wizard → Copy share link → Keyboard shortcuts → Settings**, with icons, localized accessible names and tooltips. Run/Stop is separate from custom project actions. Custom plugin buttons use their `group` identifier; a project cannot accidentally merge its buttons into the core action group just by using the same group name.
+The core tools group is ordered **Format query → Prefixes → Plugin wizard → Share your query → Keyboard shortcuts → Settings**, with icons, localized accessible names and tooltips. Run/Stop is separate from custom project actions. Custom plugin buttons use their `group` identifier; a project cannot accidentally merge its buttons into the core action group just by using the same group name.
 
 ```ts
 // Only hide these controls; all public methods remain available.
@@ -166,7 +166,31 @@ when that catalog is disabled). See [ForgeEditor](editor.md#inspecting-and-remov
 
 `shareBaseUrl` optionally sets the absolute recipient page URL. By default sharing uses the current page URL, removes ordinary page fragments, preserves hash-based application routes, preserves its other parameters and replaces `query` with the encoded query. Hosts should read that parameter when initializing their editor; the demo opens the shared query without automatically executing it and preserves existing saved tabs.
 
-`shareEndpoint` accepts an endpoint URL or a callback returning the current applied endpoint. When sharing, this is added as `# sparql-endpoint=…` if the query does not already declare one. The demo reads its active connection at copy time. Authentication headers are not part of the shared URL.
+`shareEndpoint` accepts an endpoint URL or a callback returning the current applied endpoint. When sharing, this is added as `# sparql-endpoint=…` if the query does not already declare one. The demo reads its active connection when opening the dialog or calling the copy API. Authentication headers are not part of the shared URL.
+
+## Optional share URL shortening
+
+`shortenShareUrl?: ShareUrlShortener` configures the existing share button and
+`copyShareLink()`. The exported type is
+`(url: string, query: string) => string | Promise<string>`. The first argument is
+the complete generated URL (including encoded query, renderer, endpoint, route
+and other parameters); the second is its unencoded query including share metadata.
+Return an absolute HTTP(S) URL without surrounding whitespace. LDForge does not
+choose or operate a provider; the host owns endpoints, authentication and parsing.
+
+Without this option, the dialog offers full links and request examples without shortening. `getShareLink()` always synchronously
+returns the full original URL and never invokes the integration. `copyShareLink()`
+resolves to the URL actually copied. In the dialog, each short-link row exposes
+loading with `aria-busy="true"` and remains unavailable for copying until ready.
+A thrown/rejected error or invalid URL rejects the API call or shows a retryable
+error on that dialog row; nothing is copied or edited. There is no automatic fallback. Hosts can implement timeouts with
+`AbortSignal.timeout()` in their callback. A changed query document, active tab,
+renderer, endpoint, base URL, destroyed editor or newer copy request makes the
+pending result stale: it rejects before clipboard access. Clipboard failures also
+reject. A query changed after clipboard writing starts is never overwritten.
+
+See the [integration guide](../../apps/demo/guide.html#share-shortening) for a
+complete callback and a standalone Prisma ORM service example.
 
 ## Query editor height
 
@@ -193,3 +217,64 @@ storage leaves the current session usable. Hide only the checkbox with
 The height API remains available. Options apply to the query editor across tabs,
 not the JSON result editor or other result renderers. Runtime methods and callbacks
 are described in [ForgeEditor](editor.md#query-editor-height).
+
+## Query sharing dialog
+
+The share toolbar icon expands the **Share your query** panel below the toolbar (NL: **Deel je query**).
+Opening and copying from this dialog never edits or executes the query. Each
+read-only field has its own Copy button and status. Values are a snapshot of the
+active tab, selected renderer and applied endpoint when opened; Refresh values
+rebuilds them. If the source changes, copying refuses stale values until refreshed.
+Escape or the toolbar icon collapses the panel and restores focus to the share icon.
+`controls.share: false` hides the icon; the existing `getShareLink()` and
+`copyShareLink()` APIs remain available with their existing semantics.
+
+- Full editor URL preserves renderer and endpoint directives. Ordinary editor
+  links remove the reserved `execute` parameter and never opt into execution.
+- With `shortenShareUrl`, short links populate automatically on open, asynchronously.
+  Each short entry has independent pending/error/retry state. The full URL stays
+  available even when the service fails. No shortening provider is built in.
+- `shareAutoRun?: boolean` defaults to false. Set true only when the recipient host
+  supports the reserved `execute=true` URL parameter. Together with a shortener,
+  it adds a clearly labelled **Short editor URL — opens and runs query** entry.
+  The callback receives the full editor URL with `execute=true` for that entry.
+  LDForge itself never runs a query when opening or copying the dialog. The host
+  must read `query` and explicitly call `editor.run()` only for `execute=true`.
+- SPARQL GET URL and GET/POST cURL commands use the original query and query-declared
+  endpoint, falling back to `shareEndpoint`. Without an endpoint, these rows remain visible with disabled Copy buttons and a placeholder directing users to endpoint settings. SELECT/ASK request SPARQL Results JSON; CONSTRUCT/DESCRIBE
+  request N-Triples with Turtle as a fallback, matching the HTTP executor.
+  Request examples exclude connection headers, URL user/password and recognized
+  credential parameters (`access_token`, `token`, `password`, `authorization`,
+  `api_key`, `api-key`, `apikey`, `secret`, `signature`). Non-credential endpoint
+  parameters such as `default-graph-uri` remain intact. cURL arguments are POSIX
+  shell quoted; POST uses `--data-binary` to preserve multiline query text.
+- The unescaped one-line query collapses only whitespace outside quoted strings.
+  Comments are removed outside strings and IRIs. Long literals are converted to
+  quoted strings with escaped newlines; unfinished literals retain the original
+  source under a separate label.
+
+For browser security, clipboard access requires a supported secure context and
+user action. Failures are displayed next to the entry and can be retried.
+
+The editor-link field is labelled **URL to this query in the editor**. Endpoint
+entries include **cURL command line for POST request**. Unconfigured short-link entries are omitted. Request entries stay visible without an endpoint and show a short placeholder instead of a separate notice.
+The one-line query removes comments outside strings/IRIs, compacts whitespace
+outside literals and converts long literals to quoted strings with escaped
+newlines, preserving their values. An unfinished literal uses a separately
+labelled **Original query** fallback.
+
+Prefixes, sharing, keyboard shortcuts and settings use the same inline toolbar panel styling. Only one is open at a time. Its toolbar icon is highlighted and exposes `aria-expanded=true`; click it again to close. Escape closes a focused panel and restores focus to its icon. These panels have no separate Close buttons.
+
+The Prefixes panel also offers **Add missing prefixes** and **Remove unused
+prefixes** (NL: **Voeg missende prefixes toe**, **Verwijder ongebruikte prefixes**).
+The first adds declarations for names actually used in the query, using the
+configured namespace catalog; unknown namespaces are reported without guessing.
+The second removes declarations with no syntactic usages, preserving comments,
+strings, full IRIs and declarations used in paths or datatypes. Syntax errors
+block removal until corrected. Each action is one undoable edit and never runs
+the query. The actions apply to the active tab, independent of the search filter.
+
+The plugin wizard also uses the shared inline toolbar panel. Its icon toggles the
+panel and highlights while open; opening any other toolbar panel collapses it.
+Escape closes it and restores focus. The existing wizard API, steps, preview and
+undoable Apply action remain available. Keyboard focus can move outside the panel.

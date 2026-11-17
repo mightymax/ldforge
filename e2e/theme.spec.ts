@@ -96,13 +96,15 @@ test('default and blue themes cover settings, wizard and result controls indepen
     .getByRole('button', { name: 'Plugin wizard', exact: true })
     .click();
   await expect(
-    standard.getByRole('dialog').locator('.ldforge-wizard-primary'),
+    standard
+      .getByRole('region', { name: /Plugin wizard/ })
+      .locator('.ldforge-wizard-primary'),
   ).toHaveCSS('background-color', 'rgb(33, 107, 80)');
   await page.keyboard.press('Escape');
   await blue
     .getByRole('button', { name: 'Plugin wizard', exact: true })
     .click();
-  const dialog = blue.getByRole('dialog');
+  const dialog = blue.getByRole('region', { name: /Plugin wizard/ });
   await expect(dialog).toBeVisible();
   await expect(dialog.locator('[aria-current="step"] > span')).toHaveCSS(
     'background-color',

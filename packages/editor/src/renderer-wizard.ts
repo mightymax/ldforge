@@ -92,8 +92,11 @@ export function createRendererWizard(host: Host) {
     '<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="m4 20 12-12 4 4L8 24M13 3v4M11 5h4M20 2v4M18 4h4M3 8v4M1 10h4" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>';
   button.hidden = !visible;
   if (visible) host.tools.append(button);
-  const dialog = doc.createElement('dialog');
-  dialog.className = 'ldforge-renderer-wizard';
+  const dialog = doc.createElement('section');
+  dialog.hidden = true;
+  dialog.tabIndex = -1;
+  dialog.setAttribute('role', 'region');
+  dialog.className = 'ldforge-renderer-wizard ldforge-tool-panel';
   host.root.append(dialog);
   const heading = doc.createElement('h2');
   heading.id = `${host.root.querySelector('[role=tabpanel]')?.id ?? 'ldforge'}-renderer-wizard-${++wizardNumber}`;
@@ -117,15 +120,14 @@ export function createRendererWizard(host: Host) {
       content.querySelector<HTMLElement>('input[type=radio]:checked') ??
       content.querySelector<HTMLElement>('select,input,textarea,button') ??
       footer.querySelector<HTMLElement>('button');
-    target?.focus();
+    (target ?? dialog).focus();
   }
-  function close() {
+  function close(restoreFocus = true) {
     if (!opened) return;
     opened = false;
-    if (typeof dialog.close === 'function') dialog.close();
-    else dialog.removeAttribute('open');
+    dialog.hidden = true;
     button.setAttribute('aria-expanded', 'false');
-    if (button.isConnected && !button.hidden) button.focus();
+    if (restoreFocus && button.isConnected && !button.hidden) button.focus();
   }
   const api: RendererWizardApi = Object.freeze<RendererWizardApi>({
     get isOpen() {
@@ -210,8 +212,7 @@ export function createRendererWizard(host: Host) {
       opened = true;
       button.setAttribute('aria-expanded', 'true');
       draw();
-      if (typeof dialog.showModal === 'function') dialog.showModal();
-      else dialog.setAttribute('open', '');
+      dialog.hidden = false;
       focusStep();
     },
   });
@@ -246,7 +247,6 @@ export function createRendererWizard(host: Host) {
       control.type = 'button';
       control.textContent = label;
       control.addEventListener('click', run);
-      if (label === text.close) control.className = 'ldforge-wizard-close';
       if (label === text.next || label === text.apply)
         control.className = 'ldforge-wizard-primary';
       footer.append(control);
@@ -256,7 +256,6 @@ export function createRendererWizard(host: Host) {
       const empty = doc.createElement('p');
       empty.textContent = text.none;
       content.append(empty);
-      action(text.close, close);
       return;
     }
     if (step === 0) {
@@ -402,7 +401,6 @@ export function createRendererWizard(host: Host) {
       }
       refresh();
     }
-    action(text.close, close);
     if (step > 0)
       action(text.back, () => {
         step--;
@@ -431,12 +429,10 @@ export function createRendererWizard(host: Host) {
         }
       });
   }
-  button.setAttribute('aria-haspopup', 'dialog');
   button.setAttribute('aria-expanded', 'false');
-  button.addEventListener('click', () => api.open());
-  dialog.addEventListener('cancel', (event) => {
-    event.preventDefault();
-    close();
+  button.addEventListener('click', () => {
+    if (opened) close();
+    else api.open();
   });
   dialog.addEventListener('keydown', (event) => {
     if (event.key === 'Escape') {
@@ -444,32 +440,12 @@ export function createRendererWizard(host: Host) {
       event.stopPropagation();
       close();
     }
-    if (event.key === 'Tab') {
-      const items = [
-        ...dialog.querySelectorAll<HTMLElement>(
-          'input:checked,select,input,textarea,button',
-        ),
-      ].filter(
-        (item) =>
-          !item.hasAttribute('disabled') &&
-          (!(item instanceof HTMLInputElement) ||
-            item.type !== 'radio' ||
-            item.checked),
-      );
-      const first = items[0],
-        last = items.at(-1);
-      if (event.shiftKey && doc.activeElement === first) {
-        event.preventDefault();
-        last?.focus();
-      } else if (!event.shiftKey && doc.activeElement === last) {
-        event.preventDefault();
-        first?.focus();
-      }
-    }
   });
   button.title = messages[host.getLocale()].title;
   button.setAttribute('aria-label', button.title);
   return {
+    panel: dialog,
+    close: () => close(false),
     api,
     refreshLocale() {
       if (opened) draw();

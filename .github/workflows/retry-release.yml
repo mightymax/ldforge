@@ -94,10 +94,17 @@ jobs:
         run: |
           if ! gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
             PRERELEASE=$(node --input-type=module -e 'import fs from "node:fs"; const p = `source/.releases/${process.env.RELEASE_TAG}.json`; console.log(fs.existsSync(p) ? JSON.parse(fs.readFileSync(p)).prerelease : /-/.test(process.env.RELEASE_TAG.split("+")[0]))')
+            NOTES_ARGS=(--generate-notes)
+            for NOTES_FILE in "source/docs/releases/$RELEASE_TAG.md" "tooling/docs/releases/$RELEASE_TAG.md"; do
+              if [[ -f "$NOTES_FILE" ]]; then
+                NOTES_ARGS=(--notes-file "$NOTES_FILE")
+                break
+              fi
+            done
             if [[ "$PRERELEASE" == true ]]; then
-              gh release create "$RELEASE_TAG" --verify-tag --generate-notes --title "$RELEASE_TAG" --prerelease
+              gh release create "$RELEASE_TAG" --verify-tag "${NOTES_ARGS[@]}" --title "$RELEASE_TAG" --prerelease
             else
-              gh release create "$RELEASE_TAG" --verify-tag --generate-notes --title "$RELEASE_TAG"
+              gh release create "$RELEASE_TAG" --verify-tag "${NOTES_ARGS[@]}" --title "$RELEASE_TAG"
             fi
           fi
           gh release upload "$RELEASE_TAG" source/release-artifacts/*.tgz --clobber

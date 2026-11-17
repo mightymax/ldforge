@@ -29,7 +29,7 @@
     "release:verify": "node scripts/release.mjs verify-tag",
     "release:pack": "node scripts/release.mjs pack",
     "release:publish": "node scripts/release.mjs publish",
-    "test:release": "node --test tests/release.test.mjs tests/release-legacy.test.mjs",
+    "test:release": "node --test tests/release.test.mjs tests/release-legacy.test.mjs tests/project-release-notes.test.mjs",
     "deploy:check": "node scripts/check-deployment.mjs",
     "deploy:image:build": "docker build --tag ldforge-demo:local .",
     "deploy:test": "node scripts/test-deployment.mjs",

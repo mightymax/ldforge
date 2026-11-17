@@ -40,3 +40,20 @@ merely because it bumps the same package.
 
 See [Changeset instructions](.changeset/README.md) and
 [Publishing](docs/publishing.md) for examples and the release commands.
+
+# Developer experience and project release notes
+
+A clear, consistent developer experience is a primary LDForge goal. Keep public
+APIs, configuration, examples, accessibility and migration guidance coherent.
+
+Every release must include project-wide Markdown notes in `docs/releases/`, in
+addition to package changelogs. The demo release page and GitHub release use these
+same notes. Document updated package versions, user-facing changes, related GitHub
+issues where known, and upgrade steps for API or behavior changes. Do not invent
+issue links or migration guarantees for historical releases.
+
+`release:prepare` generates and commits the version table and release notes from
+the release record. Write a curated narrative and upgrade examples in
+`docs/releases/editorial.json`, matched to a changeset ID, before preparation.
+Review the generated Markdown before pushing. Never describe unpublished tags as
+successful releases. See `docs/publishing.md` for the release workflow.

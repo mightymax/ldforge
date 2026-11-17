@@ -1,3 +1,4 @@
+import { createShareDialog } from './share-dialog.js';
 import { createKeyboardHelp } from './keyboard-help.js';
 import { runShortcutLabel } from './keyboard.js';
 import { createEditorResize } from './editor-resize.js';
@@ -9,7 +10,7 @@ import {
 import { renderRendererInfo } from './renderer-info.js';
 import { applyTheme, themeTokens } from './theme.js';
 import {
-  createShareControl,
+  validateShortUrl,
   createShareLink,
   queryWithRenderer,
   queryWithEndpoint,
@@ -116,11 +117,21 @@ export type {
   LocalePreference,
 } from '@ldforge/core';
 
+/** Host-owned shortening integration. Return an absolute HTTP(S) URL. */
+export type ShareUrlShortener = (
+  url: string,
+  query: string,
+) => string | Promise<string>;
+
 export interface EditorOptions {
   readonly executor: QueryExecutor;
   readonly query?: string;
   /** Absolute recipient page URL. Defaults to the current page URL. */
   readonly shareBaseUrl?: string;
+  /** Used by copyShareLink and the share button; failures reject without copying. */
+  readonly shortenShareUrl?: ShareUrlShortener;
+  /** Offer explicit execute=true short links; the host must implement URL execution. */
+  readonly shareAutoRun?: boolean;
   /** Applied connection endpoint to include when the query has none. Read at share time. */
   readonly shareEndpoint?: string | (() => string | undefined);
   /** Initially collapse PREFIX declarations on each tab. Defaults to false. */
@@ -378,7 +389,7 @@ export function createEditor(
   output.tabIndex = 0;
   output.setAttribute('aria-label', 'Query results');
   const settingsPanel = doc.createElement('div');
-  settingsPanel.className = 'ldforge-settings';
+  settingsPanel.className = 'ldforge-settings ldforge-tool-panel';
   settingsPanel.id = `ldforge-settings-${++settingsPanelNumber}`;
   settingsPanel.hidden = true;
   settingsPanel.setAttribute('role', 'region');
@@ -447,6 +458,7 @@ export function createEditor(
   let disposed = false;
   let cleanup: (() => void) | undefined;
   let selectedRenderer: string | undefined;
+  let shareRequest = 0;
   let formatting = false;
   let executedQuery = '';
   let executedDirectives = parseQueryViewDirectives('');
@@ -584,13 +596,32 @@ export function createEditor(
     },
     async copyShareLink() {
       assertAlive();
+      const request = ++shareRequest;
       const original = context.getQuery();
+      const document = view.state.doc;
       const tabId = queryTabs.snapshot().activeId;
       const query = sharingQuery();
-      const link = createShareLink(
+      const fullLink = createShareLink(
         options.shareBaseUrl ?? doc.location.href,
         query,
       );
+      let link = fullLink;
+      if (options.shortenShareUrl) {
+        link = await options.shortenShareUrl(fullLink, query);
+        validateShortUrl(link, locale);
+        if (
+          disposed ||
+          request !== shareRequest ||
+          document !== view.state.doc ||
+          tabId !== queryTabs.snapshot().activeId ||
+          fullLink !== context.getShareLink()
+        )
+          throw new Error(
+            locale === 'nl'
+              ? 'De deelcontext is gewijzigd. Probeer opnieuw.'
+              : 'The share context changed. Please try again.',
+          );
+      }
       const clipboard = doc.defaultView?.navigator.clipboard;
       if (!clipboard)
         throw new Error(
@@ -863,19 +894,31 @@ export function createEditor(
     throw error;
   }
 
+  function closeToolPanels(
+    except?: 'prefixes' | 'share' | 'keyboard' | 'settings' | 'wizard',
+  ) {
+    if (except !== 'wizard') rendererWizard.close();
+    if (except !== 'prefixes') prefixPicker.close();
+    if (except !== 'share') shareControl.close();
+    if (except !== 'keyboard') keyboardHelp.close();
+    if (except !== 'settings') {
+      settingsPanel.hidden = true;
+      toggle.setAttribute('aria-expanded', 'false');
+    }
+  }
+
   const prefixPicker = createPrefixPicker(
     view,
     catalog,
     () => locale,
     () => {
-      settingsPanel.hidden = true;
-      toggle.setAttribute('aria-expanded', 'false');
+      closeToolPanels('prefixes');
     },
   );
   prefixPicker.panel.id = `${editorHost.id}-prefixes`;
   prefixPicker.toggle.setAttribute('aria-controls', prefixPicker.panel.id);
-  if (controls.prefixes) tools.append(prefixPicker.toggle);
   if (controls.format) tools.append(formatButton);
+  if (controls.prefixes) tools.append(prefixPicker.toggle);
   const rendererWizard = createRendererWizard({
     root,
     tools,
@@ -887,29 +930,50 @@ export function createEditor(
     getTabId: () => queryTabs.snapshot().activeId,
     assertAlive,
     onOpen() {
-      prefixPicker.close();
-      settingsPanel.hidden = true;
-      toggle.setAttribute('aria-expanded', 'false');
+      closeToolPanels('wizard');
     },
   });
-  const shareControl = createShareControl({
+  const shareControl = createShareDialog({
+    panelId: `${editorHost.id}-share`,
+    root,
     tools,
     visible: controls.share,
     getLocale: () => locale,
-    copy: () => context.copyShareLink(),
-    onError(error) {
-      status.textContent = translate(locale, 'actionFailed', {
-        message: error instanceof Error ? error.message : String(error),
-      });
+    shorten: options.shortenShareUrl,
+    autoRun: options.shareAutoRun ?? false,
+    onOpen() {
+      closeToolPanels('share');
+    },
+    snapshot() {
+      const document = view.state.doc;
+      const tabId = queryTabs.snapshot().activeId;
+      const fullUrl = context.getShareLink();
+      const sharedQuery = sharingQuery();
+      return {
+        query: context.getQuery(),
+        sharedQuery,
+        fullUrl,
+        endpoint: parseQueryViewDirectives(sharedQuery)['sparql-endpoint'],
+        isCurrent: () =>
+          !disposed &&
+          document === view.state.doc &&
+          tabId === queryTabs.snapshot().activeId &&
+          fullUrl === context.getShareLink(),
+      };
     },
   });
   const keyboardHelp = createKeyboardHelp({
+    panelId: `${editorHost.id}-keyboard`,
+    onOpen: () => closeToolPanels('keyboard'),
     root,
     tools,
     visible: controls.keyboardHelp,
     getLocale: () => locale,
   });
+  root.insertBefore(rendererWizard.panel, tabBar);
   root.insertBefore(prefixPicker.panel, tabBar);
+  root.insertBefore(shareControl.panel, tabBar);
+  root.insertBefore(keyboardHelp.panel, tabBar);
 
   function refreshButtons(): void {
     formatButton.disabled =
@@ -1266,7 +1330,7 @@ export function createEditor(
         closeSettings();
         return;
       }
-      prefixPicker.close();
+      closeToolPanels('settings');
       settingsPanel.hidden = false;
       toggle.setAttribute('aria-expanded', 'true');
       settingsPanel

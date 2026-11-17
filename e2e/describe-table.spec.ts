@@ -46,7 +46,7 @@ test('local DESCRIBE example uses equal/custom table column widths', async ({
   await page
     .getByRole('button', { name: 'Plugin wizard', exact: true })
     .click();
-  const dialog = page.getByRole('dialog');
+  const dialog = page.getByRole('region', { name: /Plugin wizard/ });
   await dialog.getByRole('button', { name: 'Next', exact: true }).click();
   await expect(
     dialog.getByRole('textbox', {
@@ -54,7 +54,9 @@ test('local DESCRIBE example uses equal/custom table column widths', async ({
       exact: true,
     }),
   ).toHaveValue('40%,40%,20%');
-  await dialog.getByRole('button', { name: 'Close', exact: true }).click();
+  await page
+    .getByRole('button', { name: 'Plugin wizard', exact: true })
+    .click();
   await page.setViewportSize({ width: 390, height: 844 });
   expect(
     await page.evaluate(

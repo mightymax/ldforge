@@ -60,6 +60,7 @@ try {
     '/guide.html',
     '/api.html?page=toolbar',
     '/plugins.html',
+    '/releases.html',
   ]) {
     const response = await globalThis.fetch(`${plain.base}${path}`);
     assert.equal(response.status, 200, path);

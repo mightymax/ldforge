@@ -34,14 +34,12 @@ it('opens the localized shortcut overview from the right toolbar and restores fo
   const toggle = container.querySelector<HTMLButtonElement>(
     '.ldforge-keyboard-toggle',
   );
-  const dialog = container.querySelector<HTMLDialogElement>(
-    '.ldforge-keyboard-help',
-  );
+  const dialog = container.querySelector<HTMLElement>('.ldforge-keyboard-help');
   if (!toggle || !dialog) throw new Error('Missing shortcut controls');
   expect(toggle.closest('.ldforge-core-tools')).not.toBeNull();
   expect(toggle.title).toBe('Sneltoetsen');
   toggle.click();
-  expect(dialog.open).toBe(true);
+  expect(dialog.hidden).toBe(false);
   expect(dialog.textContent).toContain('⌘Enter');
   expect(dialog.textContent).not.toContain('Ctrl+Enter');
   editor.setLocale('en');
@@ -49,9 +47,7 @@ it('opens the localized shortcut overview from the right toolbar and restores fo
   dialog.dispatchEvent(
     new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }),
   );
-  expect(dialog.open).toBe(false);
-  // Native close events are queued by the browser; dispatch to check the handler.
-  dialog.dispatchEvent(new Event('close'));
+  expect(dialog.hidden).toBe(true);
   expect(document.activeElement).toBe(toggle);
   editor.destroy();
   expect(container.querySelector('dialog')).toBeNull();

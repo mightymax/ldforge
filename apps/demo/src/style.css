@@ -516,3 +516,18 @@ header nav .repository-link {
     margin-inline-start: 25px;
   }
 }
+
+.modules a {
+  text-decoration: none;
+}
+.modules a:hover,
+.modules a:focus-visible {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* Let card results grow with their content; the demo page owns scrolling. */
+.ldforge-results:has(.ldforge-cards) {
+  max-height: none;
+  overflow: visible;
+}

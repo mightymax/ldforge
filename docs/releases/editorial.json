@@ -1,0 +1,43 @@
+[
+  {
+    "changeset": "query-sharing-dialog",
+    "title": "Sharing, consistent toolbar panels and prefix maintenance",
+    "highlights": [
+      "Share queries from an inline panel: full editor links, automatically generated host-shortened links, SPARQL GET URLs, cURL POST/GET commands and a one-line query representation. Shortening is optional and provider-independent. Related: #11 and #14.",
+      "Short-link loading, retryable errors and stale-query protection keep the full link available. Explicit automatic-execution links require host opt-in; ordinary links remain non-executing.",
+      "Prefixes, sharing, keyboard shortcuts, settings and the plugin wizard now use consistent inline panels. Active toolbar icons highlight and toggle their panel; Escape restores focus. Format query is the first editor tool.",
+      "Add missing prefixes and remove unused prefixes from the prefix panel with one undoable edit. Analysis preserves literals, comments and used aliases; syntax errors prevent unsafe removal.",
+      "Clipboard-only copy buttons confirm success with a temporary checkmark and animation; screen readers receive a live announcement. Buttons share a consistent hover treatment and respect the theme and reduced-motion preferences.",
+      "The demo lets Cards grow to their content height, links all package names to npm, and adds project-wide release notes backed by Markdown in the repository.",
+      "The standalone Yasgui bundle includes the updated editor. Other packages keep their existing versions."
+    ],
+    "migration": "Existing editor APIs remain available. **Toolbar behavior changes:** the share icon now opens a panel instead of immediately copying; plugin wizard and shortcut help open inline instead of in modal dialogs. If a host action must copy immediately, keep using `await editor.copyShareLink()` (it still persists share metadata after successful copying). Opening or copying inside the new panel does not edit or execute the query.\n\nOptional host configuration:\n\n```ts\nconst editor = createEditor(container, {\n  executor,\n  shortenShareUrl: async (fullUrl, query) => {\n    const response = await fetch('/links', {\n      method: 'POST',\n      headers: { 'Content-Type': 'application/json' },\n      body: JSON.stringify({ url: fullUrl }),\n      signal: AbortSignal.timeout(10_000),\n    });\n    if (!response.ok) throw new Error('Shortening unavailable');\n    return (await response.json()).url;\n  },\n  // Enable only when your recipient host honors execute=true.\n  shareAutoRun: true,\n});\n```\n\n`getShareLink()` remains synchronous and always returns the complete, unshortened URL. Ordinary links strip the reserved `execute` parameter. The explicit execution variant passes `execute=true` to the shortener; the receiving host must read the shared query and run it only when that parameter is set. See the [integration guide](https://ldforge.nl/guide.html#share-shortening) for the input/output contract, failure behavior and the standalone Prisma/SQLite service example.\n\nThe Cards height override applies only to the demo's host CSS; the published Cards API and defaults are unchanged."
+  },
+  {
+    "changeset": "query-editor-resize",
+    "title": "Editor resizing and smarter variable completion",
+    "highlights": [
+      "Style table search and filter inputs inside the embedded editor without relying on demo form styles.",
+      "Add an accessible drag handle to resize the query editor, with keyboard controls and an option to hide it. Resizing switches to a fixed viewport and uses the existing row-count and auto-grow callbacks.",
+      "Complete variable names from the entire query, including variables used later in WHERE, while respecting subquery projections."
+    ]
+  },
+  {
+    "changeset": "full-height-table",
+    "title": "Full-height tables, map popups and keyboard help",
+    "highlights": [
+      "Show tables at full height by default instead of inside a capped result panel. Add scroll: true and per-query table-scroll/table-height configuration, with Plugin wizard controls, to opt into a bounded viewport and large-result virtualization. Restore shared result-panel sizing when leaving the table. Update the renderer guide and packaged editor API documentation with defaults, validation, accessibility and performance considerations.",
+      "Add renderPopup for trusted host popup DOM in Leaflet and MapLibre maps. Hosts can provide lists and action buttons, or return undefined to retain the safe default popup.",
+      "Add an icon-only keyboard-shortcut overview in the right toolbar. The localized modal automatically shows Mac or Windows/Linux combinations, supports Escape and focus return, and can be hidden with controls.keyboardHelp. Document the new control and toolbar order.",
+      "Show the active platform's query-execution shortcut in Run tooltips (Command on Mac/iOS, Control on Windows/Linux), matching existing CodeMirror Mod bindings. Document keyboard shortcuts, focus scope, operating-system conflicts and host keymap extensions."
+    ],
+    "migration": "Tables now expand to display all rows by default. To retain a bounded scroll viewport and large-result virtualization, configure `createTableRenderer({ scroll: true, viewportHeight: 480 })`, or add `# view=table; table-scroll=true; table-height=480` to the query header. The new map popup callback and keyboard-help controls are optional additions. See the [renderer guide](https://ldforge.nl/plugins.html#table) for details."
+  },
+  {
+    "changeset": "mit-license",
+    "title": "MIT licensing across LDForge",
+    "highlights": [
+      "Change the LDForge license from EUPL-1.2 to MIT. Update package license metadata, bundled LICENSE files and license documentation. Third-party dependencies retain their own licenses."
+    ]
+  }
+]

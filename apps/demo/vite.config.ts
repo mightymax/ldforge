@@ -13,6 +13,7 @@ export default defineConfig({
         guide: fileURLToPath(new URL('./guide.html', import.meta.url)),
         api: fileURLToPath(new URL('./api.html', import.meta.url)),
         plugins: fileURLToPath(new URL('./plugins.html', import.meta.url)),
+        releases: fileURLToPath(new URL('./releases.html', import.meta.url)),
       },
     },
   },
