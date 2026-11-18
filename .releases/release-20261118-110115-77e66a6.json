@@ -1,0 +1,41 @@
+{
+  "schemaVersion": 2,
+  "releaseTag": "release-20261118-110115-77e66a6",
+  "baseCommit": "77e66a6c7bfea67269830e6418d400eaaad937bf",
+  "changesets": [
+    {
+      "releases": [{ "name": "@ldforge/editor", "type": "minor" }],
+      "summary": "Add a subtle About LDForge icon to the editor footer with copyright, MIT license, GitHub, documentation and release-note links with matching icons, a miniature LDForge logo linking to the project website and an aligned copyright row at the bottom. The accessible popover supports outside-click and Escape dismissal. Hide it with controls.about: false.",
+      "id": "subtle-editor-about"
+    },
+    {
+      "id": "ldforge-bundle-9ff5e7dd510c",
+      "summary": "Rebuild the standalone Yasgui browser bundle with @ldforge/editor@1.4.0.",
+      "releases": [{ "name": "@ldforge/yasgui", "type": "minor" }]
+    }
+  ],
+  "releases": [
+    {
+      "name": "@ldforge/editor",
+      "type": "minor",
+      "oldVersion": "1.3.0",
+      "changesets": ["subtle-editor-about"],
+      "newVersion": "1.4.0",
+      "reasons": [
+        "subtle-editor-about: Add a subtle About LDForge icon to the editor footer with copyright, MIT license, GitHub, documentation and release-note links with matching icons, a miniature LDForge logo linking to the project website and an aligned copyright row at the bottom. The accessible popover supports outside-click and Escape dismissal. Hide it with controls.about: false."
+      ]
+    },
+    {
+      "name": "@ldforge/yasgui",
+      "type": "minor",
+      "oldVersion": "1.3.0",
+      "changesets": ["ldforge-bundle-9ff5e7dd510c"],
+      "newVersion": "1.4.0",
+      "reasons": [
+        "ldforge-bundle-9ff5e7dd510c: Rebuild the standalone Yasgui browser bundle with @ldforge/editor@1.4.0.",
+        "Embedded bundle changes: @ldforge/editor"
+      ]
+    }
+  ],
+  "prerelease": false
+}
