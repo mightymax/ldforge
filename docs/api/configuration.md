@@ -63,6 +63,7 @@ Every property is optional and defaults to `true`.
 | `format`                | Format-query icon.                                                                                                          |
 | `settings`              | Gear icon and settings plugin mounting. Hides access to the language selector too.                                          |
 | `language`              | Built-in language field inside settings; other settings stay available.                                                     |
+| `about`                 | About LDForge icon in the editor footer, with project links and copyright. Independent of tab-strip visibility.             |
 | `tabs`                  | Entire tab strip. Multiple tabs remain available through the API.                                                           |
 | `addTab`                | Plus button in the tab strip.                                                                                               |
 | `renameTab`             | Rename icon and double-click renaming.                                                                                      |

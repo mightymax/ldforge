@@ -39,5 +39,13 @@
     "highlights": [
       "Change the LDForge license from EUPL-1.2 to MIT. Update package license metadata, bundled LICENSE files and license documentation. Third-party dependencies retain their own licenses."
     ]
+  },
+  {
+    "changeset": "subtle-editor-about",
+    "title": "Project information in the editor footer",
+    "highlights": [
+      "A subtle info icon on the right of the editor footer opens project links with matching icons: documentation, GitHub, release notes and the MIT license. A miniature LDForge logo and title link to the project website, with an aligned copyright row at the bottom. The panel supports keyboard access, Escape and outside-click dismissal."
+    ],
+    "migration": "The icon is enabled by default. Set `controls: { about: false }` to hide it; the icon remains available when query tabs are hidden."
   }
 ]

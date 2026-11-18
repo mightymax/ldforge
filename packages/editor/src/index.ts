@@ -1,3 +1,4 @@
+import { createAboutControl } from './about.js';
 import { createShareDialog } from './share-dialog.js';
 import { createKeyboardHelp } from './keyboard-help.js';
 import { runShortcutLabel } from './keyboard.js';
@@ -442,6 +443,10 @@ export function createEditor(
     },
   });
   editorResize.element.hidden = !controls.resizeEditor;
+  const footer = doc.createElement('footer');
+  footer.className = 'ldforge-footer';
+  footer.hidden = !controls.about;
+  if (controls.about) footer.append(createAboutControl(doc, locale));
   const toggle = doc.createElement('button');
   root.append(
     toolbar,
@@ -453,6 +458,7 @@ export function createEditor(
     rendererWarning,
     rendererInfo,
     output,
+    footer,
   );
   container.append(root);
   let disposed = false;
@@ -1415,6 +1421,7 @@ export function createEditor(
   }
 
   function refreshLocale(): void {
+    if (controls.about) footer.replaceChildren(createAboutControl(doc, locale));
     editorResize.refresh();
     autoGrowControl.refresh();
     fontSizeControl.refresh();

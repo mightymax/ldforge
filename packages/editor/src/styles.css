@@ -1429,3 +1429,98 @@
   width: 15px;
   height: 15px;
 }
+
+.ldforge-footer {
+  display: flex;
+  justify-content: flex-end;
+  padding: 4px 12px;
+  border-top: 1px solid var(--ldforge-border);
+}
+.ldforge-footer[hidden] {
+  display: none;
+}
+.ldforge-about {
+  margin-left: auto;
+  align-self: center;
+  flex-shrink: 0;
+}
+.ldforge-about .ldforge-about-button {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--ldforge-muted, #65756f);
+}
+.ldforge-about .ldforge-about-button:hover,
+.ldforge-about .ldforge-about-button[aria-expanded='true'] {
+  background: var(--ldforge-hover, #edf2ef);
+  color: var(--ldforge-accent-text, var(--ldforge-accent));
+}
+.ldforge-about-button:focus-visible {
+  outline: 2px solid var(--ldforge-accent);
+  outline-offset: 2px;
+}
+.ldforge-about-panel {
+  position: fixed;
+  inset: auto;
+  margin: 0;
+  box-sizing: border-box;
+  width: 224px;
+  max-width: calc(100vw - 16px);
+  max-height: calc(100dvh - 16px);
+  overflow: auto;
+  padding: 16px;
+  border: 1px solid var(--ldforge-border, #d8e2dd);
+  border-radius: 10px;
+  background: var(--ldforge-surface, #fff);
+  color: var(--ldforge-text, #183d35);
+  box-shadow: 0 8px 28px #00000018;
+  font:
+    13px/1.5 system-ui,
+    sans-serif;
+}
+.ldforge-about-panel p {
+  margin: 14px 0 0;
+  color: var(--ldforge-muted, #65756f);
+}
+.ldforge-about-panel nav {
+  display: grid;
+  gap: 8px;
+}
+.ldforge-about-panel a {
+  color: var(--ldforge-accent-text, #075e55);
+  text-decoration: none;
+}
+.ldforge-about-panel a:hover {
+  text-decoration: underline;
+}
+
+.ldforge-about-title,
+.ldforge-about-copyright,
+.ldforge-about-panel nav a {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+.ldforge-about-copyright svg,
+.ldforge-about-panel nav a svg {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+
+.ldforge-about-title {
+  font-weight: 700;
+  margin-bottom: 14px;
+}
+.ldforge-about-title svg {
+  flex-shrink: 0;
+}
+.ldforge-about-copyright {
+  padding-top: 12px;
+  border-top: 1px solid var(--ldforge-border, #d8e2dd);
+}
