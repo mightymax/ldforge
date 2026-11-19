@@ -1,0 +1,138 @@
+{
+  "schemaVersion": 2,
+  "releaseTag": "release-20261119-102443-b2b5313",
+  "baseCommit": "b2b5313a2589899b4a2463a9de4980b47fa6a305",
+  "changesets": [
+    {
+      "releases": [
+        { "name": "@ldforge/core", "type": "patch" },
+        { "name": "@ldforge/prefixes", "type": "patch" },
+        { "name": "@ldforge/renderers", "type": "patch" },
+        { "name": "@ldforge/charts", "type": "patch" },
+        { "name": "@ldforge/geo", "type": "patch" },
+        { "name": "@ldforge/network", "type": "patch" },
+        { "name": "@ldforge/timeline", "type": "patch" },
+        { "name": "@ldforge/pivot", "type": "patch" },
+        { "name": "@ldforge/tree", "type": "patch" },
+        { "name": "@ldforge/editor", "type": "patch" },
+        { "name": "@ldforge/yasgui", "type": "patch" }
+      ],
+      "summary": "Add shared SPARQL, RDF and linked-data npm keywords plus package-specific keywords to improve package discoverability.",
+      "id": "npm-discovery-keywords"
+    }
+  ],
+  "releases": [
+    {
+      "name": "@ldforge/core",
+      "type": "patch",
+      "oldVersion": "1.0.1",
+      "changesets": ["npm-discovery-keywords"],
+      "newVersion": "1.0.2",
+      "reasons": [
+        "npm-discovery-keywords: Add shared SPARQL, RDF and linked-data npm keywords plus package-specific keywords to improve package discoverability."
+      ]
+    },
+    {
+      "name": "@ldforge/prefixes",
+      "type": "patch",
+      "oldVersion": "1.0.1",
+      "changesets": ["npm-discovery-keywords"],
+      "newVersion": "1.0.2",
+      "reasons": [
+        "npm-discovery-keywords: Add shared SPARQL, RDF and linked-data npm keywords plus package-specific keywords to improve package discoverability."
+      ]
+    },
+    {
+      "name": "@ldforge/renderers",
+      "type": "patch",
+      "oldVersion": "1.1.1",
+      "changesets": ["npm-discovery-keywords"],
+      "newVersion": "1.1.2",
+      "reasons": [
+        "npm-discovery-keywords: Add shared SPARQL, RDF and linked-data npm keywords plus package-specific keywords to improve package discoverability."
+      ]
+    },
+    {
+      "name": "@ldforge/charts",
+      "type": "patch",
+      "oldVersion": "1.0.1",
+      "changesets": ["npm-discovery-keywords"],
+      "newVersion": "1.0.2",
+      "reasons": [
+        "npm-discovery-keywords: Add shared SPARQL, RDF and linked-data npm keywords plus package-specific keywords to improve package discoverability."
+      ]
+    },
+    {
+      "name": "@ldforge/geo",
+      "type": "patch",
+      "oldVersion": "1.1.1",
+      "changesets": ["npm-discovery-keywords"],
+      "newVersion": "1.1.2",
+      "reasons": [
+        "npm-discovery-keywords: Add shared SPARQL, RDF and linked-data npm keywords plus package-specific keywords to improve package discoverability."
+      ]
+    },
+    {
+      "name": "@ldforge/network",
+      "type": "patch",
+      "oldVersion": "1.0.1",
+      "changesets": ["npm-discovery-keywords"],
+      "newVersion": "1.0.2",
+      "reasons": [
+        "npm-discovery-keywords: Add shared SPARQL, RDF and linked-data npm keywords plus package-specific keywords to improve package discoverability."
+      ]
+    },
+    {
+      "name": "@ldforge/timeline",
+      "type": "patch",
+      "oldVersion": "1.0.1",
+      "changesets": ["npm-discovery-keywords"],
+      "newVersion": "1.0.2",
+      "reasons": [
+        "npm-discovery-keywords: Add shared SPARQL, RDF and linked-data npm keywords plus package-specific keywords to improve package discoverability."
+      ]
+    },
+    {
+      "name": "@ldforge/pivot",
+      "type": "patch",
+      "oldVersion": "1.0.1",
+      "changesets": ["npm-discovery-keywords"],
+      "newVersion": "1.0.2",
+      "reasons": [
+        "npm-discovery-keywords: Add shared SPARQL, RDF and linked-data npm keywords plus package-specific keywords to improve package discoverability."
+      ]
+    },
+    {
+      "name": "@ldforge/tree",
+      "type": "patch",
+      "oldVersion": "1.0.1",
+      "changesets": ["npm-discovery-keywords"],
+      "newVersion": "1.0.2",
+      "reasons": [
+        "npm-discovery-keywords: Add shared SPARQL, RDF and linked-data npm keywords plus package-specific keywords to improve package discoverability."
+      ]
+    },
+    {
+      "name": "@ldforge/editor",
+      "type": "patch",
+      "oldVersion": "1.4.0",
+      "changesets": ["npm-discovery-keywords"],
+      "newVersion": "1.4.1",
+      "reasons": [
+        "npm-discovery-keywords: Add shared SPARQL, RDF and linked-data npm keywords plus package-specific keywords to improve package discoverability."
+      ]
+    },
+    {
+      "name": "@ldforge/yasgui",
+      "type": "patch",
+      "oldVersion": "1.4.0",
+      "changesets": ["npm-discovery-keywords"],
+      "newVersion": "1.4.1",
+      "reasons": [
+        "npm-discovery-keywords: Add shared SPARQL, RDF and linked-data npm keywords plus package-specific keywords to improve package discoverability.",
+        "Embedded bundle changes: @ldforge/core, @ldforge/prefixes, @ldforge/renderers, @ldforge/editor"
+      ]
+    }
+  ],
+  "prerelease": false
+}

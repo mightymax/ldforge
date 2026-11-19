@@ -1,5 +1,13 @@
 # @ldforge/tree
 
+## 1.0.2
+
+### Patch Changes
+
+- b2b5313: Add shared SPARQL, RDF and linked-data npm keywords plus package-specific keywords to improve package discoverability.
+- Updated dependencies [b2b5313]
+  - @ldforge/core@1.0.2
+
 ## 1.0.1
 
 ### Patch Changes

@@ -1,5 +1,15 @@
 # @ldforge/yasgui
 
+## 1.4.1
+
+### Patch Changes
+
+- b2b5313: Add shared SPARQL, RDF and linked-data npm keywords plus package-specific keywords to improve package discoverability.
+- Updated dependencies [b2b5313]
+  - @ldforge/core@1.0.2
+  - @ldforge/renderers@1.1.2
+  - @ldforge/editor@1.4.1
+
 ## 1.4.0
 
 ### Minor Changes

@@ -1,6 +1,6 @@
 {
   "name": "@ldforge/renderers",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "description": "LDForge renderers: composable SPARQL tooling",
   "keywords": [
     "ldforge",
@@ -39,7 +39,7 @@
     "@codemirror/language": "^6.13.1",
     "@codemirror/state": "^6.7.6",
     "@codemirror/view": "^6.43.15",
-    "@ldforge/core": "^1.0.1"
+    "@ldforge/core": "^1.0.2"
   },
   "repository": {
     "type": "git",

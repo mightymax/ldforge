@@ -1,6 +1,6 @@
 {
   "name": "@ldforge/charts",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Lazy-loaded Chart.js result renderer for LDForge",
   "keywords": [
     "ldforge",
@@ -36,7 +36,7 @@
     "access": "public"
   },
   "dependencies": {
-    "@ldforge/core": "^1.0.1"
+    "@ldforge/core": "^1.0.2"
   },
   "repository": {
     "type": "git",
