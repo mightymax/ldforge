@@ -2,6 +2,16 @@
   "name": "@ldforge/renderers",
   "version": "1.1.1",
   "description": "LDForge renderers: composable SPARQL tooling",
+  "keywords": [
+    "ldforge",
+    "sparql",
+    "rdf",
+    "linked-data",
+    "semantic-web",
+    "sparql-results",
+    "data-visualization",
+    "table"
+  ],
   "type": "module",
   "license": "MIT",
   "files": [

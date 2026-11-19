@@ -2,6 +2,17 @@
   "name": "@ldforge/charts",
   "version": "1.0.1",
   "description": "Lazy-loaded Chart.js result renderer for LDForge",
+  "keywords": [
+    "ldforge",
+    "sparql",
+    "rdf",
+    "linked-data",
+    "semantic-web",
+    "sparql-results",
+    "data-visualization",
+    "charts",
+    "chartjs"
+  ],
   "type": "module",
   "license": "MIT",
   "files": [

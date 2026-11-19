@@ -2,6 +2,16 @@
   "name": "@ldforge/prefixes",
   "version": "1.0.1",
   "description": "Compact and extended RDF/SPARQL prefix catalogs with namespace search",
+  "keywords": [
+    "ldforge",
+    "sparql",
+    "rdf",
+    "linked-data",
+    "semantic-web",
+    "prefixes",
+    "namespaces",
+    "vocabularies"
+  ],
   "type": "module",
   "license": "MIT",
   "files": [

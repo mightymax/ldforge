@@ -2,6 +2,16 @@
   "name": "@ldforge/core",
   "version": "1.0.1",
   "description": "LDForge core: composable SPARQL tooling",
+  "keywords": [
+    "ldforge",
+    "sparql",
+    "rdf",
+    "linked-data",
+    "semantic-web",
+    "sparql-client",
+    "sparql-results",
+    "typescript"
+  ],
   "type": "module",
   "license": "MIT",
   "files": [

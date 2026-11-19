@@ -2,6 +2,16 @@
   "name": "@ldforge/editor",
   "version": "1.4.0",
   "description": "LDForge editor: composable SPARQL tooling",
+  "keywords": [
+    "ldforge",
+    "sparql",
+    "rdf",
+    "linked-data",
+    "semantic-web",
+    "sparql-editor",
+    "query-editor",
+    "codemirror"
+  ],
   "type": "module",
   "license": "MIT",
   "files": [

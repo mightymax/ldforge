@@ -47,5 +47,12 @@
       "A subtle info icon on the right of the editor footer opens project links with matching icons: documentation, GitHub, release notes and the MIT license. A miniature LDForge logo and title link to the project website, with an aligned copyright row at the bottom. The panel supports keyboard access, Escape and outside-click dismissal."
     ],
     "migration": "The icon is enabled by default. Set `controls: { about: false }` to hide it; the icon remains available when query tabs are hidden."
+  },
+  {
+    "changeset": "npm-discovery-keywords",
+    "title": "Improved npm package discoverability",
+    "highlights": [
+      "Add SPARQL, RDF, linked-data and semantic-web keywords to all eleven public LDForge packages, with additional keywords for each package’s editor, prefix catalog or result visualization capabilities."
+    ]
   }
 ]

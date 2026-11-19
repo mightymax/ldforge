@@ -2,6 +2,18 @@
   "name": "@ldforge/network",
   "version": "1.0.1",
   "description": "Lazy-loaded interactive network result renderer for LDForge",
+  "keywords": [
+    "ldforge",
+    "sparql",
+    "rdf",
+    "linked-data",
+    "semantic-web",
+    "sparql-results",
+    "data-visualization",
+    "network",
+    "graph",
+    "vis-network"
+  ],
   "type": "module",
   "license": "MIT",
   "files": [

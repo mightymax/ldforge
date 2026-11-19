@@ -2,6 +2,16 @@
   "name": "@ldforge/pivot",
   "version": "1.0.1",
   "description": "Accessible pivot table result renderer for LDForge",
+  "keywords": [
+    "ldforge",
+    "sparql",
+    "rdf",
+    "linked-data",
+    "semantic-web",
+    "sparql-results",
+    "data-visualization",
+    "pivot-table"
+  ],
   "type": "module",
   "license": "MIT",
   "files": [

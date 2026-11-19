@@ -2,6 +2,17 @@
   "name": "@ldforge/yasgui",
   "version": "1.4.0",
   "description": "Yasgui-compatible facade for the LDForge SPARQL IDE",
+  "keywords": [
+    "ldforge",
+    "sparql",
+    "rdf",
+    "linked-data",
+    "semantic-web",
+    "yasgui",
+    "sparql-editor",
+    "sparql-client",
+    "ide"
+  ],
   "type": "module",
   "license": "MIT",
   "files": [
