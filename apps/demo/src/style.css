@@ -531,3 +531,53 @@ header nav .repository-link {
   max-height: none;
   overflow: visible;
 }
+
+#editor-layout.demo-split {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+#editor-layout > * {
+  min-width: 0;
+}
+@media (max-width: 800px) {
+  #editor-layout.demo-split {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* Demo-only layout group, immediately left of the standard editor tools. */
+#editor [data-button-group='layout'] {
+  margin-left: auto;
+  flex-shrink: 0;
+}
+#editor .ldforge-core-tools {
+  margin-left: 0;
+}
+#editor [data-button-group='layout'] .ldforge-button-label {
+  display: none;
+}
+#editor [data-button-group='layout'] > button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 7px 12px;
+}
+#editor [data-button-group='layout'] > button[aria-pressed='true'] {
+  color: var(--ldforge-accent);
+  background: var(--ldforge-selected, #e5efec);
+}
+#editor [data-button-group='layout'] svg {
+  width: 18px;
+  height: 18px;
+}
+
+@media (max-width: 800px) {
+  #editor [data-button-group='layout'] {
+    display: none;
+  }
+  #editor .ldforge-core-tools {
+    margin-left: auto;
+  }
+}

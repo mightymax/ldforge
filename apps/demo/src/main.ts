@@ -307,7 +307,7 @@ app.innerHTML = `
   <header><a class="wordmark" href="./">LD<span>Forge</span><span class="badge">DEVELOPER PREVIEW</span></a><nav aria-label="Main navigation"><a href="./" aria-current="page">Demo</a><a href="./guide.html">Integration guide</a><a href="./api.html">API reference</a><a href="./plugins.html">Plugins</a></nav></header>
   <section class="intro"><h1>A home for your <span>next SPARQL query.</span></h1><p>An embeddable editor. Your actions. Your result views. Built to fit the application you are building.</p></section>
 
-  <div id="editor"></div>
+  <div id="editor-layout"><div id="editor"></div><div id="separate-results" hidden></div></div>
   <p id="active-endpoint" class="active-endpoint" role="status"></p>
   <footer><span>01 / Write a query</span><span>02 / Run or press ${/Mac|iP(hone|ad|od)/.test(navigator.platform) ? '⌘Enter' : 'Ctrl+Enter'}</span><span>03 / Choose a result view</span></footer>
   <aside><h2>Small pieces. Clear boundaries.</h2><div class="modules"><article><a href="https://www.npmjs.com/package/@ldforge/core" target="_blank" rel="noopener noreferrer"><code>@ldforge/core</code></a><p>Query lifecycle, HTTP transport and typed plugin contracts.</p></article><article><a href="https://www.npmjs.com/package/@ldforge/editor" target="_blank" rel="noopener noreferrer"><code>@ldforge/editor</code></a><p>CodeMirror, accessible controls and your own button plugins.</p></article><article><a href="https://www.npmjs.com/package/@ldforge/prefixes" target="_blank" rel="noopener noreferrer"><code>@ldforge/prefixes</code></a><p>A searchable catalog of common namespaces, ready to import.</p></article><article><a href="https://www.npmjs.com/package/@ldforge/renderers" target="_blank" rel="noopener noreferrer"><code>@ldforge/renderers</code></a><p>Independent table, cards, boolean and JSON result plugins.</p></article><article><a href="https://www.npmjs.com/package/@ldforge/charts" target="_blank" rel="noopener noreferrer"><code>@ldforge/charts</code></a><p>Chart views with an external library loaded only when opened.</p></article><article><a href="https://www.npmjs.com/package/@ldforge/geo" target="_blank" rel="noopener noreferrer"><code>@ldforge/geo</code></a><p>Interactive maps, clustering, heatmaps and 3D geometry.</p></article><article><a href="https://www.npmjs.com/package/@ldforge/network" target="_blank" rel="noopener noreferrer"><code>@ldforge/network</code></a><p>Interactive graphs for exploring resources and their connections.</p></article><article><a href="https://www.npmjs.com/package/@ldforge/timeline" target="_blank" rel="noopener noreferrer"><code>@ldforge/timeline</code></a><p>Interactive timelines for dated events and intervals.</p></article><article><a href="https://www.npmjs.com/package/@ldforge/pivot" target="_blank" rel="noopener noreferrer"><code>@ldforge/pivot</code></a><p>Pivot tables for grouping and summarizing query results.</p></article><article><a href="https://www.npmjs.com/package/@ldforge/tree" target="_blank" rel="noopener noreferrer"><code>@ldforge/tree</code></a><p>Expandable trees for exploring hierarchical data.</p></article><article><a href="https://www.npmjs.com/package/@ldforge/yasgui" target="_blank" rel="noopener noreferrer"><code>@ldforge/yasgui</code></a><p>A Yasgui-compatible API for integrating the LDForge editor.</p></article></div></aside>`;
@@ -394,6 +394,56 @@ function loadExampleQuery(query: string, endpoint: string | null): void {
 
 // The public demo opts into menus through the runtime API; library defaults stay inline.
 const menuBar = editor.getToolBar();
+const layoutMenu = menuBar.addButtonGroup({
+  id: 'layout',
+  type: buttonGroupTypes.buttons,
+  label: { en: 'Layout', nl: 'Weergave' },
+});
+function setSplitLayout(split: boolean): void {
+  const results = document.querySelector<HTMLElement>('#separate-results');
+  if (!results) throw new Error('Results host is missing.');
+  editor.setResultsContainer(split ? results : undefined);
+  results.hidden = !split;
+  document
+    .querySelector('#editor-layout')
+    ?.classList.toggle('demo-split', split);
+  for (const mode of ['split', 'classic']) {
+    document
+      .querySelector(`[data-toolbar-button="layout-${mode}"]`)
+      ?.setAttribute(
+        'aria-pressed',
+        String(mode === (split ? 'split' : 'classic')),
+      );
+  }
+  window.dispatchEvent(new Event('resize'));
+}
+layoutMenu.addButton({
+  id: 'layout-split',
+  icon: createSvgIcon(['M3 3h18v18H3zM9 3v18']),
+  label: {
+    en: 'Split: query left, results right',
+    nl: 'Split screen: query links, resultaten rechts',
+  },
+  execute: () => setSplitLayout(true),
+});
+layoutMenu.addButton({
+  id: 'layout-classic',
+  icon: createSvgIcon(['M3 3h18v18H3zM3 12h18']),
+  label: { en: 'Classic: results below', nl: 'Klassiek: resultaten onder' },
+  execute: () => setSplitLayout(false),
+});
+document
+  .querySelector('[data-toolbar-button="layout-classic"]')
+  ?.setAttribute('aria-pressed', 'true');
+document
+  .querySelector('[data-toolbar-button="layout-split"]')
+  ?.setAttribute('aria-pressed', 'false');
+// Demo-only placement: keep the layout group immediately left of the editor tools.
+const layoutGroup = mount.querySelector<HTMLElement>(
+  '[data-button-group="layout"]',
+);
+const editorTools = mount.querySelector<HTMLElement>('.ldforge-core-tools');
+if (layoutGroup && editorTools) editorTools.before(layoutGroup);
 const queryExamples = menuBar.addButtonGroup({
   id: 'examples',
   dropdownWidth: 300,

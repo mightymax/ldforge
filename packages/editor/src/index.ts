@@ -126,6 +126,8 @@ export type ShareUrlShortener = (
 
 export interface EditorOptions {
   readonly executor: QueryExecutor;
+  /** Optional same-document host for the complete results panel. Host contents are preserved. */
+  readonly resultsContainer?: HTMLElement;
   readonly query?: string;
   /** Absolute recipient page URL. Defaults to the current page URL. */
   readonly shareBaseUrl?: string;
@@ -181,6 +183,8 @@ export interface ForgeEditor extends EditorContext {
   setPrefixesCollapsed(collapsed: boolean): void;
   /** Returns the resulting collapsed state. False when no PREFIX exists. */
   togglePrefixes(): boolean;
+  /** Move the complete results panel; omit the host to restore the classic layout. */
+  setResultsContainer(container?: HTMLElement): void;
   getToolBar(): ToolbarApi;
   /** Registered renderers only; does not load their external visual libraries. */
   getRenderers(): readonly ResultRendererPlugin[];
@@ -308,6 +312,11 @@ export function createEditor(
   const controller = new QueryController(options.executor);
   const queryTabs = new QueryTabs(options.query, options.workspace);
   const doc = container.ownerDocument;
+  if (
+    options.resultsContainer &&
+    options.resultsContainer.ownerDocument !== doc
+  )
+    throw new TypeError('resultsContainer must belong to the editor document.');
   const root = doc.createElement('section');
   root.className = 'ldforge';
   applyTheme(root, {}, tokens);
@@ -448,19 +457,36 @@ export function createEditor(
   footer.hidden = !controls.about;
   if (controls.about) footer.append(createAboutControl(doc, locale));
   const toggle = doc.createElement('button');
+  const resultsPanel = doc.createElement('section');
+  resultsPanel.className = 'ldforge-results-panel';
+  applyTheme(resultsPanel, {}, tokens);
+  resultsPanel.append(resultToolbar, rendererWarning, rendererInfo, output);
   root.append(
     toolbar,
     settingsPanel,
     tabBar,
     editorHost,
     editorResize.element,
-    resultToolbar,
-    rendererWarning,
-    rendererInfo,
-    output,
+    resultsPanel,
     footer,
   );
   container.append(root);
+  function placeResults(target?: HTMLElement): void {
+    if (
+      target &&
+      (target.ownerDocument !== doc ||
+        root.contains(target) ||
+        resultsPanel.contains(target))
+    )
+      throw new TypeError(
+        'resultsContainer must be a same-document host outside the editor and results panel.',
+      );
+    resultsPanel.classList.toggle('ldforge', target !== undefined);
+    resultsPanel.setAttribute('aria-label', translate(locale, 'results'));
+    if (target) target.append(resultsPanel);
+    else root.insertBefore(resultsPanel, footer);
+  }
+  placeResults(options.resultsContainer);
   let disposed = false;
   let cleanup: (() => void) | undefined;
   let selectedRenderer: string | undefined;
@@ -489,6 +515,10 @@ export function createEditor(
   }
   const prefixCollapseByTab = new Map<string, boolean>();
   const context: ForgeEditor = {
+    setResultsContainer(target) {
+      assertAlive();
+      placeResults(target);
+    },
     arePrefixesCollapsed() {
       assertAlive();
       return prefixesCollapsed(view.state);
@@ -510,6 +540,7 @@ export function createEditor(
       assertAlive();
       const next = themeTokens(color);
       applyTheme(root, tokens, next);
+      applyTheme(resultsPanel, tokens, next);
       tokens = next;
       themeMainColor = color;
     },
@@ -706,6 +737,7 @@ export function createEditor(
           for (const dispose of settingsCleanups) dispose();
         } finally {
           view.destroy();
+          resultsPanel.remove();
           root.remove();
         }
       }
@@ -896,6 +928,7 @@ export function createEditor(
   } catch (error) {
     controller.destroy();
     view.destroy();
+    resultsPanel.remove();
     root.remove();
     throw error;
   }
@@ -1435,6 +1468,8 @@ export function createEditor(
     formatButton.setAttribute('aria-label', translate(locale, 'formatQuery'));
     refreshTabs();
     root.lang = locale;
+    resultsPanel.lang = locale;
+    resultsPanel.setAttribute('aria-label', translate(locale, 'results'));
     root.setAttribute('aria-label', translate(locale, 'editor'));
     toolbar.setAttribute('aria-label', translate(locale, 'actions'));
     output.setAttribute('aria-label', translate(locale, 'results'));

@@ -1,5 +1,14 @@
 [
   {
+    "changeset": "separate-results-container",
+    "title": "Place complete results panels in host-owned layouts",
+    "highlights": [
+      "Add optional resultsContainer and setResultsContainer() to the editor. Move renderer selection, status, loading, errors, documentation and downloads together while preserving live results and instance isolation.",
+      "The demo adds an icon button group beside the editor tools to switch between classic and query-left/results-right layouts. The active layout is indicated accessibly. These demo-only controls are hidden on screens up to 800px; narrow layouts stack the query and results."
+    ],
+    "migration": "Existing integrations keep their classic layout. To separate results, provide a same-document host outside the editor. The complete panel moves together, including renderer selection, status, loading, errors, documentation and downloads. Moving it preserves live results and pending execution.\n\n```ts\nconst editor = createEditor(queryHost, {\n  executor,\n  renderers,\n  resultsContainer: resultsHost,\n});\n\neditor.setResultsContainer(otherResultsHost); // Move the live panel.\neditor.setResultsContainer(); // Restore the classic layout.\neditor.destroy(); // Clean up owned DOM in both hosts.\n```\n\nLoad the existing editor stylesheet and place shared CSS overrides on a common ancestor or both hosts. Language and themeMainColor changes apply to both sections. Destroy the editor before unmounting either host. The standalone Yasgui bundle includes the updated editor; unrelated packages retain their versions."
+  },
+  {
     "changeset": "query-sharing-dialog",
     "title": "Sharing, consistent toolbar panels and prefix maintenance",
     "highlights": [

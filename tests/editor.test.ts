@@ -712,3 +712,157 @@ it('rejects unregistered plugin configuration before mounting', () => {
   ).toThrow('Unknown result renderer');
   expect(host.children).toHaveLength(0);
 });
+
+describe('separate results host', () => {
+  it('moves the entire live panel, retains state, and cleans up only owned DOM', async () => {
+    const external = document.createElement('div');
+    const marker = document.createElement('span');
+    external.append(marker);
+    document.body.append(external);
+    const { host, editor } = mount({
+      executor,
+      resultsContainer: external,
+      query: 'ASK {}',
+      themeMainColor: '#123456',
+      renderers: [
+        {
+          ...createBooleanRenderer(),
+          documentationUrl: 'https://example.org/docs',
+        },
+        createJsonRenderer(),
+      ],
+    });
+    expect(host.querySelector('.ldforge-results')).toBeNull();
+    const panel = external.querySelector<HTMLElement>('.ldforge-results-panel');
+    if (!panel) throw new Error('Missing results panel');
+    expect(panel.classList.contains('ldforge')).toBe(true);
+    expect(panel.lang).toBe('en');
+    expect(panel.style.getPropertyValue('--ldforge-accent')).toBe('#123456');
+    await editor.run();
+    expect(panel.querySelector('.ldforge-results')?.textContent).toBe('True');
+    expect(panel.querySelector('.ldforge-status')?.textContent).toMatch(
+      /^True/,
+    );
+    expect(
+      panel.querySelector<HTMLAnchorElement>('.ldforge-renderer-docs')?.href,
+    ).toBe('https://example.org/docs');
+    panel
+      .querySelector<HTMLButtonElement>('[data-renderer-id="json"]')
+      ?.click();
+    editor.setResultsContainer();
+    expect(host.querySelector('.ldforge-results-panel')).toBe(panel);
+    expect(
+      panel
+        .querySelector('[data-renderer-id="json"]')
+        ?.getAttribute('aria-selected'),
+    ).toBe('true');
+    expect(external.children.length).toBe(1);
+    editor.setResultsContainer(external);
+    editor.setThemeMainColor('#abcdef');
+    expect(panel.style.getPropertyValue('--ldforge-accent')).toBe('#abcdef');
+    editor.setLocale('nl');
+    expect(panel.lang).toBe('nl');
+    editor.destroy();
+    editor.destroy();
+    expect(external.children.length).toBe(1);
+    expect(external.firstChild).toBe(marker);
+    expect(() => editor.setResultsContainer()).toThrow('destroyed');
+  });
+  it('keeps loading, errors and multiple instances isolated in a shared host', async () => {
+    const external = document.createElement('div');
+    document.body.append(external);
+    let reject!: (error: Error) => void;
+    const first = mount({
+      resultsContainer: external,
+      query: 'ASK {}',
+      executor: {
+        execute: () =>
+          new Promise((_, fail) => {
+            reject = fail;
+          }),
+      },
+    });
+    const second = mount({
+      resultsContainer: external,
+      query: 'ASK {}',
+      executor,
+      renderers: [createBooleanRenderer()],
+    });
+    const panels = external.querySelectorAll('.ldforge-results-panel');
+    const run = first.editor.run();
+    await vi.waitFor(() =>
+      expect(
+        panels[0]?.querySelector('.ldforge-loading-indicator'),
+      ).not.toBeNull(),
+    );
+    expect(
+      panels[0]?.querySelector('.ldforge-results')?.getAttribute('aria-busy'),
+    ).toBe('true');
+    await second.editor.run();
+    expect(panels[1]?.querySelector('.ldforge-results')?.textContent).toBe(
+      'True',
+    );
+    const ids = [...external.querySelectorAll('[id]')].map((node) => node.id);
+    expect(new Set(ids).size).toBe(ids.length);
+    reject(new Error('Endpoint unavailable'));
+    await run;
+    expect(panels[0]?.textContent).toContain('Endpoint unavailable');
+    expect(panels[0]?.querySelector('.ldforge-loading-indicator')).toBeNull();
+    expect(() =>
+      first.editor.setResultsContainer(
+        first.host.querySelector<HTMLElement>('.ldforge-code') ?? undefined,
+      ),
+    ).toThrow(TypeError);
+    expect(() =>
+      first.editor.setResultsContainer(
+        document.implementation.createHTMLDocument().body,
+      ),
+    ).toThrow(TypeError);
+    first.editor.destroy();
+    expect(external.querySelectorAll('.ldforge-results-panel')).toHaveLength(1);
+  });
+  it('moves pending execution and disposes the rendered view in its new host', async () => {
+    const external = document.createElement('div');
+    document.body.append(external);
+    let resolve!: (result: QueryResult) => void;
+    const cleanup = vi.fn();
+    const { editor, host } = mount({
+      query: 'ASK {}',
+      executor: {
+        execute: () =>
+          new Promise((done) => {
+            resolve = done;
+          }),
+      },
+      renderers: [
+        {
+          id: 'probe',
+          label: 'Probe',
+          supports: () => true,
+          render(container) {
+            container.textContent = 'Rendered';
+            return cleanup;
+          },
+        },
+      ],
+    });
+    const running = editor.run();
+    const panel = host.querySelector('.ldforge-results-panel');
+    editor.setResultsContainer(external);
+    expect(external.querySelector('.ldforge-results-panel')).toBe(panel);
+    expect(external.querySelector('.ldforge-loading-indicator')).not.toBeNull();
+    resolve({ kind: 'boolean', value: true });
+    await running;
+    expect(external.querySelector('.ldforge-results')?.textContent).toBe(
+      'Rendered',
+    );
+    expect(
+      external.querySelector<HTMLButtonElement>('.ldforge-result-download')
+        ?.hidden,
+    ).toBe(false);
+    expect(external.querySelector('.ldforge-loading-indicator')).toBeNull();
+    editor.destroy();
+    expect(cleanup).toHaveBeenCalledTimes(1);
+    expect(external.childElementCount).toBe(0);
+  });
+});

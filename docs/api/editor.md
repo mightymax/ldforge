@@ -10,6 +10,7 @@ Returned by `createEditor(container: HTMLElement, options: EditorOptions): Forge
 | `arePrefixesCollapsed()`                            | `boolean`                         | True when every PREFIX group is folded; false for expanded/partially folded queries or queries without declarations. Throws after destruction.                                                                                                                  |
 | `togglePrefixes()`                                  | `boolean`                         | Toggles all PREFIX groups and returns the resulting collapsed state. Returns false when no declarations exist. Throws after destruction.                                                                                                                        |
 | `getTabs()`                                         | `TabCollection`                   | The same live, indexable collection each time. Throws after destruction.                                                                                                                                                                                        |
+| `setResultsContainer(container?)`                   | `void`                            | Move the complete results panel; omit the host to restore the classic layout. See [Separate results container](#separate-results-container).                                                                                                                    |
 | `getToolBar()`                                      | `ToolbarApi`                      | Live toolbar API for standalone buttons, adjacent groups and dropdowns. See [Toolbar](toolbar.md).                                                                                                                                                              |
 | `getWorkspace()`                                    | `QueryWorkspace`                  | Detached plain-data snapshot for persistence.                                                                                                                                                                                                                   |
 | `getRenderers()`                                    | `readonly ResultRendererPlugin[]` | Registered renderers in registration order, without loading their external libraries.                                                                                                                                                                           |
@@ -354,3 +355,35 @@ The keyboard icon in the right toolbar opens this shortcut overview, localized
 and adapted to the current keyboard platform. Escape returns focus to
 the icon. Hide the entry point with `controls: { keyboardHelp: false }` without
 disabling any shortcuts.
+
+## Separate results container
+
+Pass `resultsContainer` to mount the complete results panel outside the query
+editor. It includes renderer selection, status, loading and errors, renderer
+warnings and information, documentation links and downloads. Omitting it retains
+the classic layout below the query.
+
+```ts
+const results = document.createElement('div');
+document.body.append(results);
+const editor = createEditor(container, {
+  executor,
+  resultsContainer: results,
+  renderers,
+});
+editor.setResultsContainer(otherResultsHost); // Move the same live panel.
+editor.setResultsContainer(); // Restore results below the query editor.
+editor.destroy(); // Remove owned DOM from both hosts; retain host contents.
+```
+
+The host must be an HTMLElement in the editor's document, outside the editor and
+results panel. Invalid targets throw TypeError; the runtime method throws after
+destruction. Multiple instances may share a host: each owns its own section,
+unique accessibility IDs, renderer resources and cleanup. Moving preserves the
+selected renderer, result DOM and in-flight execution; it does not rerun queries.
+Language and themeMainColor changes apply to both sections. Import the usual
+`@ldforge/editor/styles.css`: the external section has the `ldforge` styling scope.
+Place host CSS variables or font overrides on a shared ancestor or on both hosts
+when they should apply to both; CSS inherited only from the query host cannot
+cross to a different DOM branch. Hosts own responsive layout and may dispatch a
+window resize event after moving a renderer whose external library needs it.

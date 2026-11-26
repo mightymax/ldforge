@@ -154,3 +154,12 @@ The keyboard icon in the right toolbar opens this shortcut overview, localized
 and adapted to the current keyboard platform. Escape or Close returns focus to
 the icon. Hide the entry point with `controls: { keyboardHelp: false }` without
 disabling any shortcuts.
+
+## Separate results panel
+
+Pass `resultsContainer: resultsHost` to `createEditor()` to place the complete
+results UI in another container. Call `editor.setResultsContainer(otherHost)` to
+move it, or `editor.setResultsContainer()` to restore the classic layout without
+losing results. Both hosts retain their own contents on `destroy()`. See the
+[container API](docs/api/editor.md#separate-results-container) for styling,
+accessibility and lifecycle details.
