@@ -98,6 +98,7 @@ test('adds and edits profiles explicitly without switching the active endpoint o
     ),
   ).toBe(true);
   await page.reload();
+  await page.locator('.ldforge-tools-trigger').click();
   await page.getByRole('button', { name: 'IDE settings', exact: true }).click();
   await expect(
     page.getByRole('radio', {

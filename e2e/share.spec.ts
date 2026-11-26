@@ -171,7 +171,9 @@ test('share panel expands below the toolbar, toggles with prefixes and fits mobi
   const toggle = page.getByRole('button', {
     name: 'Share your query',
     exact: true,
+    includeHidden: true,
   });
+  await page.locator('.ldforge-tools-trigger').click();
   await toggle.click();
   const dialog = page.getByRole('region', { name: 'Share your query' });
   await expect(dialog).toBeVisible();
@@ -186,9 +188,11 @@ test('share panel expands below the toolbar, toggles with prefixes and fits mobi
     .locator('.ldforge-toolbar')
     .evaluate((element) => element.getBoundingClientRect().bottom);
   expect((await dialog.boundingBox())?.y).toBeGreaterThanOrEqual(toolbarBottom);
+  await page.locator('.ldforge-tools-trigger').click();
   await page.getByRole('button', { name: 'Prefixes', exact: true }).click();
   await expect(dialog).toBeHidden();
   await expect(toggle).toHaveAttribute('aria-expanded', 'false');
+  await page.locator('.ldforge-tools-trigger').click();
   await toggle.click();
   await expect(page.locator('.ldforge-prefix-picker')).toBeHidden();
   expect(
@@ -198,9 +202,11 @@ test('share panel expands below the toolbar, toggles with prefixes and fits mobi
   ).toBe(true);
   await page.keyboard.press('Escape');
   await expect(dialog).not.toBeVisible();
-  await expect(toggle).toBeFocused();
+  await expect(page.locator('.ldforge-tools-trigger')).toBeFocused();
+  await page.locator('.ldforge-tools-trigger').click();
   await toggle.click();
   await expect(dialog).toBeVisible();
+  await page.locator('.ldforge-tools-trigger').click();
   await toggle.click();
   await expect(dialog).toBeHidden();
 });

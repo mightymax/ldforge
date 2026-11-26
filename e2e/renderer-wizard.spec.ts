@@ -66,11 +66,13 @@ test('plugin wizard previews registered renderer options, preserves query/CSS an
   await expect(dialog).not.toBeVisible();
   await expect(trigger).toBeFocused();
   await page.setViewportSize({ width: 390, height: 844 });
+  await page.locator('.ldforge-tools-trigger').click();
   await trigger.click();
   await expect(dialog).toBeVisible();
   const bounds = await dialog.boundingBox();
   expect(bounds?.x).toBeGreaterThanOrEqual(0);
   expect((bounds?.x ?? 0) + (bounds?.width ?? 0)).toBeLessThanOrEqual(390);
+  await page.locator('.ldforge-tools-trigger').click();
   await page
     .getByRole('button', { name: 'Plugin wizard', exact: true })
     .click();

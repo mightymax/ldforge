@@ -1524,3 +1524,49 @@
   padding-top: 12px;
   border-top: 1px solid var(--ldforge-border, #d8e2dd);
 }
+
+.ldforge-tools-trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  min-height: 44px;
+  margin-left: auto;
+}
+.ldforge-tools-trigger[hidden] {
+  display: none;
+}
+@media (max-width: 540px) {
+  .ldforge-core-tools[popover] {
+    position: fixed;
+    inset: var(--ldforge-tools-top) var(--ldforge-tools-right) auto auto;
+    margin: 0;
+    padding: 5px;
+    width: min(260px, calc(100vw - 16px));
+    max-height: calc(100dvh - var(--ldforge-tools-top) - 8px);
+    overflow: auto;
+    border-radius: 9px;
+    background: var(--ldforge-surface, #fff);
+    color: var(--ldforge-text, #182e2b);
+    box-shadow: 0 8px 28px var(--ldforge-shadow, #183c3526);
+  }
+  .ldforge-core-tools[popover]:not(:popover-open) {
+    display: none;
+  }
+  .ldforge-core-tools[popover]:popover-open {
+    display: flex;
+    flex-direction: column;
+  }
+  .ldforge-core-tools[popover] > button {
+    justify-content: flex-start;
+    gap: 8px;
+    width: 100%;
+    min-height: 44px;
+    border: 0;
+    border-radius: 5px;
+  }
+  .ldforge-core-tools[popover] > button::after {
+    content: attr(aria-label);
+    text-align: left;
+  }
+}

@@ -333,7 +333,61 @@ export function createEditor(
   const tools = doc.createElement('div');
   tools.className = 'ldforge-button-group ldforge-core-tools';
   tools.setAttribute('role', 'group');
-  toolbar.append(coreActions, customActions, tools);
+  const toolsTrigger = doc.createElement('button');
+  toolsTrigger.type = 'button';
+  toolsTrigger.className = 'ldforge-tools-trigger';
+  appendIcon(toolsTrigger, createSvgIcon(['M4 6h16M4 12h16M4 18h16']));
+  toolsTrigger.setAttribute('aria-expanded', 'false');
+  tools.id = `ldforge-tools-${settingsPanelNumber + 1}`;
+  toolsTrigger.setAttribute('popovertarget', tools.id);
+  toolsTrigger.setAttribute('aria-controls', tools.id);
+  const compactTools = doc.defaultView?.matchMedia?.('(max-width: 540px)');
+  function updateToolsLayout(): void {
+    if (tools.matches(':popover-open')) tools.hidePopover();
+    tools.toggleAttribute('popover', Boolean(compactTools?.matches));
+    if (compactTools?.matches) tools.setAttribute('popover', 'auto');
+    if (!tools.childElementCount) toolsTrigger.remove();
+    else if (!toolsTrigger.parentElement) tools.before(toolsTrigger);
+    toolsTrigger.hidden = !compactTools?.matches;
+    toolsTrigger.setAttribute('aria-expanded', 'false');
+  }
+  tools.addEventListener('toggle', () => {
+    toolsTrigger.setAttribute(
+      'aria-expanded',
+      String(tools.matches(':popover-open')),
+    );
+  });
+  toolsTrigger.addEventListener('click', () => {
+    const rect = toolsTrigger.getBoundingClientRect();
+    tools.style.setProperty('--ldforge-tools-top', `${rect.bottom + 4}px`);
+    tools.style.setProperty(
+      '--ldforge-tools-right',
+      `${Math.max(8, (doc.defaultView?.innerWidth ?? 0) - rect.right)}px`,
+    );
+  });
+  tools.addEventListener('click', (event) => {
+    if (
+      (event.target as Element).closest('button') &&
+      tools.matches(':popover-open')
+    )
+      tools.hidePopover();
+  });
+  root.addEventListener(
+    'keydown',
+    (event) => {
+      if (event.key !== 'Escape' || !compactTools?.matches) return;
+      const panel = (event.target as Element).closest<HTMLElement>(
+        '.ldforge-tool-panel',
+      );
+      if (!panel) return;
+      setTimeout(() => {
+        if (panel.hidden && toolsTrigger.isConnected) toolsTrigger.focus();
+      }, 0);
+    },
+    true,
+  );
+  compactTools?.addEventListener('change', updateToolsLayout);
+  toolbar.append(coreActions, customActions, toolsTrigger, tools);
   const tabBar = doc.createElement('div');
   tabBar.className = 'ldforge-tabs';
   tabBar.hidden = !controls.tabs;
@@ -722,6 +776,7 @@ export function createEditor(
     destroy() {
       doc.removeEventListener('pointerdown', dismissRendererPicker);
       if (disposed) return;
+      compactTools?.removeEventListener('change', updateToolsLayout);
       editorResize.destroy();
       shareControl.destroy();
       keyboardHelp.destroy();
@@ -1463,6 +1518,9 @@ export function createEditor(
     keyboardHelp.refreshLocale();
     prefixPicker.refreshLocale();
     tools.setAttribute('aria-label', translate(locale, 'coreTools'));
+    toolsTrigger.setAttribute('aria-label', translate(locale, 'coreTools'));
+    toolsTrigger.title = translate(locale, 'coreTools');
+    updateToolsLayout();
     customActions.setAttribute('aria-label', translate(locale, 'extraActions'));
     formatButton.title = translate(locale, 'formatQuery');
     formatButton.setAttribute('aria-label', translate(locale, 'formatQuery'));

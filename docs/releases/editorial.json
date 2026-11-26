@@ -1,5 +1,15 @@
 [
   {
+    "changeset": "compact-mobile-toolbar",
+    "title": "A compact mobile editor toolbar",
+    "highlights": [
+      "On screens up to 540 px wide, the editor tools collapse into a hamburger menu with localized action labels and touch-friendly buttons.",
+      "The menu closes after choosing an action, pressing Escape or clicking outside. Larger screens retain the inline toolbar.",
+      "The standalone Yasgui bundle includes the updated editor. Unrelated packages retain their versions."
+    ],
+    "migration": "No configuration changes are required. The responsive toolbar applies automatically when using the editor stylesheet."
+  },
+  {
     "changeset": "separate-results-container",
     "title": "Place complete results panels in host-owned layouts",
     "highlights": [
