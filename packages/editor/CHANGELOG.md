@@ -1,5 +1,11 @@
 # @ldforge/editor
 
+## 1.5.0
+
+### Minor Changes
+
+- 78ac00b: Add an optional resultsContainer to createEditor() and setResultsContainer() to move the complete live results panel between host containers or restore the classic layout. Preserve renderer selection, status, loading, errors, documentation, downloads, theme, localization and accessible instance IDs, and clean up owned DOM from both hosts on destroy().
+
 ## 1.4.1
 
 ### Patch Changes

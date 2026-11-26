@@ -1,0 +1,41 @@
+{
+  "schemaVersion": 2,
+  "releaseTag": "release-20261126-210724-78ac00b",
+  "baseCommit": "78ac00bb462f898a854c9cb8177602160e1b118d",
+  "changesets": [
+    {
+      "releases": [{ "name": "@ldforge/editor", "type": "minor" }],
+      "summary": "Add an optional resultsContainer to createEditor() and setResultsContainer() to move the complete live results panel between host containers or restore the classic layout. Preserve renderer selection, status, loading, errors, documentation, downloads, theme, localization and accessible instance IDs, and clean up owned DOM from both hosts on destroy().",
+      "id": "separate-results-container"
+    },
+    {
+      "id": "ldforge-bundle-4b4c4557c91c",
+      "summary": "Rebuild the standalone Yasgui browser bundle with @ldforge/editor@1.5.0.",
+      "releases": [{ "name": "@ldforge/yasgui", "type": "minor" }]
+    }
+  ],
+  "releases": [
+    {
+      "name": "@ldforge/editor",
+      "type": "minor",
+      "oldVersion": "1.4.1",
+      "changesets": ["separate-results-container"],
+      "newVersion": "1.5.0",
+      "reasons": [
+        "separate-results-container: Add an optional resultsContainer to createEditor() and setResultsContainer() to move the complete live results panel between host containers or restore the classic layout. Preserve renderer selection, status, loading, errors, documentation, downloads, theme, localization and accessible instance IDs, and clean up owned DOM from both hosts on destroy()."
+      ]
+    },
+    {
+      "name": "@ldforge/yasgui",
+      "type": "minor",
+      "oldVersion": "1.4.1",
+      "changesets": ["ldforge-bundle-4b4c4557c91c"],
+      "newVersion": "1.5.0",
+      "reasons": [
+        "ldforge-bundle-4b4c4557c91c: Rebuild the standalone Yasgui browser bundle with @ldforge/editor@1.5.0.",
+        "Embedded bundle changes: @ldforge/editor"
+      ]
+    }
+  ],
+  "prerelease": false
+}
