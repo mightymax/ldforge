@@ -1,0 +1,41 @@
+{
+  "schemaVersion": 2,
+  "releaseTag": "release-20261126-214154-3be85dc",
+  "baseCommit": "3be85dc00a99d05c965335a54a890698080614af",
+  "changesets": [
+    {
+      "releases": [{ "name": "@ldforge/editor", "type": "patch" }],
+      "summary": "Collapse the editor's action toolbar into an accessible dropdown with a hamburger icon and localized labels on screens up to 540 px wide. Restore inline action buttons on larger screens while preserving configured dropdowns.",
+      "id": "compact-mobile-toolbar"
+    },
+    {
+      "id": "ldforge-bundle-3a8a30ed60fe",
+      "summary": "Rebuild the standalone Yasgui browser bundle with @ldforge/editor@1.5.1.",
+      "releases": [{ "name": "@ldforge/yasgui", "type": "patch" }]
+    }
+  ],
+  "releases": [
+    {
+      "name": "@ldforge/editor",
+      "type": "patch",
+      "oldVersion": "1.5.0",
+      "changesets": ["compact-mobile-toolbar"],
+      "newVersion": "1.5.1",
+      "reasons": [
+        "compact-mobile-toolbar: Collapse the editor's action toolbar into an accessible dropdown with a hamburger icon and localized labels on screens up to 540 px wide. Restore inline action buttons on larger screens while preserving configured dropdowns."
+      ]
+    },
+    {
+      "name": "@ldforge/yasgui",
+      "type": "patch",
+      "oldVersion": "1.5.0",
+      "changesets": ["ldforge-bundle-3a8a30ed60fe"],
+      "newVersion": "1.5.1",
+      "reasons": [
+        "ldforge-bundle-3a8a30ed60fe: Rebuild the standalone Yasgui browser bundle with @ldforge/editor@1.5.1.",
+        "Embedded bundle changes: @ldforge/editor"
+      ]
+    }
+  ],
+  "prerelease": false
+}

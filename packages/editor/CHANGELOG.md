@@ -1,5 +1,11 @@
 # @ldforge/editor
 
+## 1.5.1
+
+### Patch Changes
+
+- 3be85dc: Collapse the editor's action toolbar into an accessible dropdown with a hamburger icon and localized labels on screens up to 540 px wide. Restore inline action buttons on larger screens while preserving configured dropdowns.
+
 ## 1.5.0
 
 ### Minor Changes

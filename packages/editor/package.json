@@ -1,6 +1,6 @@
 {
   "name": "@ldforge/editor",
-  "version": "1.5.0",
+  "version": "1.5.1",
   "description": "LDForge editor: composable SPARQL tooling",
   "keywords": [
     "ldforge",

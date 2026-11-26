@@ -1,5 +1,13 @@
 # @ldforge/yasgui
 
+## 1.5.1
+
+### Patch Changes
+
+- Rebuild the standalone Yasgui browser bundle with @ldforge/editor@1.5.1.
+- Updated dependencies [3be85dc]
+  - @ldforge/editor@1.5.1
+
 ## 1.5.0
 
 ### Minor Changes
