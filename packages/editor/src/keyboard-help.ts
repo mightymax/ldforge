@@ -73,6 +73,22 @@ export function createKeyboardHelp(host: {
     dialog.setAttribute('aria-label', label);
     const rows = [
       [nl ? 'Query uitvoeren' : 'Run query', runShortcutLabel(platform)],
+      [
+        nl ? 'Nieuwe regel met inspringing' : 'New line with indentation',
+        'Enter',
+      ],
+      [
+        nl ? 'Inspringen (regel of selectie)' : 'Indent line or selection',
+        'Tab',
+      ],
+      [nl ? 'Terug inspringen' : 'Outdent', 'Shift+Tab'],
+      [
+        nl
+          ? 'Commentaar aan/uit (regel of selectie)'
+          : 'Toggle comment on line or selection',
+        mac ? '⌘/' : 'Ctrl+/',
+      ],
+      [nl ? 'Editor verlaten' : 'Leave editor', 'Escape, Tab'],
       [nl ? 'Aanvullen' : 'Completion', mac ? 'Control+Space' : 'Ctrl+Space'],
       [nl ? 'Ongedaan maken' : 'Undo', mac ? '⌘Z' : 'Ctrl+Z'],
       [

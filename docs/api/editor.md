@@ -334,14 +334,21 @@ Command on macOS/iOS, Control on Windows/Linux. The Run tooltip shows only the
 platform's shortcut (`⌘Enter` or `Ctrl+Enter`), in the current editor language.
 No manual Mac mode is required.
 
-| Action                 | Windows/Linux                    | Mac           |
-| ---------------------- | -------------------------------- | ------------- |
-| Execute the query      | Ctrl+Enter                       | ⌘Enter        |
-| Completion suggestions | Ctrl+Space                       | Control+Space |
-| Undo                   | Ctrl+Z                           | ⌘Z            |
-| Redo                   | Ctrl+Y (Linux also Ctrl+Shift+Z) | ⌘Shift+Z      |
-| Fold at cursor         | Ctrl+Shift+[                     | ⌘Option+[     |
-| Unfold at cursor       | Ctrl+Shift+]                     | ⌘Option+]     |
+| Action                                  | Windows/Linux                    | Mac              |
+| --------------------------------------- | -------------------------------- | ---------------- |
+| Execute the query                       | Ctrl+Enter                       | ⌘Enter           |
+| New line with context-aware indentation | Enter                            | Enter            |
+| Indent line or selection                | Tab                              | Tab              |
+| Outdent line or selection               | Shift+Tab                        | Shift+Tab        |
+| Toggle `#` comment on line or selection | Ctrl+/                           | ⌘/               |
+| Leave editor                            | Escape, then Tab                 | Escape, then Tab |
+| Completion suggestions                  | Ctrl+Space                       | Control+Space    |
+| Undo                                    | Ctrl+Z                           | ⌘Z               |
+| Redo                                    | Ctrl+Y (Linux also Ctrl+Shift+Z) | ⌘Shift+Z         |
+| Fold at cursor                          | Ctrl+Shift+[                     | ⌘Option+[        |
+| Unfold at cursor                        | Ctrl+Shift+]                     | ⌘Option+]        |
+
+Enter uses the local SPARQL syntax tree to indent nested blocks, including incomplete queries. Typing a closing brace, bracket or parenthesis on its own line restores the enclosing indentation. The default indentation unit is two spaces; hosts can override CodeMirror’s `indentUnit` through `EditorOptions.extensions`. Comment toggling adds or removes `#` on every selected line because SPARQL has no block-comment delimiter. Press Escape, then Tab to move keyboard focus out of the editor (close any completion popup with Escape first).
 
 These editor shortcuts apply while the query editor has focus. They are not
 global browser shortcuts; the browser or operating system can reserve a key

@@ -54,6 +54,7 @@ import {
   history,
   historyKeymap,
   isolateHistory,
+  indentWithTab,
 } from '@codemirror/commands';
 import {
   syntaxHighlighting,
@@ -835,6 +836,7 @@ export function createEditor(
               return true;
             },
           },
+          indentWithTab,
           ...foldKeymap,
           ...defaultKeymap,
           ...historyKeymap,

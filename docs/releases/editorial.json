@@ -1,5 +1,14 @@
 [
   {
+    "changeset": "sparql-auto-indentation",
+    "title": "Context-aware indentation and editing shortcuts",
+    "highlights": [
+      "Automatically indent nested SPARQL blocks while typing, including incomplete queries, and align closing delimiters using the local syntax tree. Resolves #16.",
+      "Use Tab and Shift+Tab to indent lines or selections, and Cmd+/ on macOS or Ctrl+/ on Windows/Linux to toggle SPARQL # comments across selected lines. The keyboard help lists the new bindings and how to move focus out of the editor."
+    ],
+    "migration": "No configuration changes are required. Enter now indents automatically, and Tab indents the current line or selection. Press Escape followed by Tab to move focus out of the query editor; dismiss completion first if it is open. Hosts can customize indentation using CodeMirror’s indentUnit extension. The standalone Yasgui bundle includes the updated editor."
+  },
+  {
     "changeset": "compact-mobile-toolbar",
     "title": "A compact mobile editor toolbar",
     "highlights": [

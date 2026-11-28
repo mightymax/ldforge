@@ -3,7 +3,9 @@ import { keymap } from '@codemirror/view';
 import { linter, lintGutter } from '@codemirror/lint';
 import type { Extension } from '@codemirror/state';
 import type { Locale } from '@ldforge/core';
+import { indentOnInput } from '@codemirror/language';
 import { sparql, SparqlLanguage } from 'codemirror-lang-sparql';
+import { sparqlIndentation } from './language.js';
 import { createSparqlCompletion } from './completion.js';
 import { automaticPrefixes } from './automatic-prefixes.js';
 import { sparqlDiagnostics } from './diagnostics.js';
@@ -29,6 +31,12 @@ export function sparqlSupport(
   const source = createSparqlCompletion(options);
   return [
     sparql(),
+    sparqlIndentation,
+    SparqlLanguage.data.of({
+      indentOnInput: /^\s*[}\])]$/,
+      commentTokens: { line: '#' },
+    }),
+    indentOnInput(),
     automaticPrefixes(options),
     autocompletion({ override: [source] }),
     keymap.of(completionKeymap),

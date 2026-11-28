@@ -41,6 +41,9 @@ it('opens the localized shortcut overview from the right toolbar and restores fo
   toggle.click();
   expect(dialog.hidden).toBe(false);
   expect(dialog.textContent).toContain('⌘Enter');
+  expect(dialog.textContent).toContain('⌘/');
+  expect(dialog.textContent).toContain('Shift+Tab');
+  expect(dialog.textContent).toContain('Commentaar aan/uit');
   expect(dialog.textContent).not.toContain('Ctrl+Enter');
   editor.setLocale('en');
   expect(dialog.getAttribute('aria-label')).toBe('Keyboard shortcuts');
@@ -64,3 +67,20 @@ it('can hide shortcut help without disabling the editor', () => {
   expect(editor.getQuery()).toBeDefined();
   editor.destroy();
 });
+
+it.each(['Win32', 'Linux x86_64'])(
+  'shows Control comment shortcuts on %s',
+  (platform) => {
+    vi.spyOn(navigator, 'platform', 'get').mockReturnValue(platform);
+    const container = document.createElement('div');
+    const editor = createEditor(container, {
+      locale: 'en',
+      executor: { execute: async () => ({ kind: 'boolean', value: true }) },
+    });
+    const help = container.querySelector('.ldforge-keyboard-help');
+    expect(help?.textContent).toContain('Ctrl+/');
+    expect(help?.textContent).toContain('Toggle comment on line or selection');
+    expect(help?.textContent).toContain('Escape, Tab');
+    editor.destroy();
+  },
+);
