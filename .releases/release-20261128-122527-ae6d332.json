@@ -1,0 +1,41 @@
+{
+  "schemaVersion": 2,
+  "releaseTag": "release-20261128-122527-ae6d332",
+  "baseCommit": "ae6d3326f2f6e39f0b124f4a2ddff42660d3afc3",
+  "changesets": [
+    {
+      "releases": [{ "name": "@ldforge/editor", "type": "patch" }],
+      "summary": "Add syntax-aware automatic indentation for nested and incomplete SPARQL blocks, and align closing delimiters as they are typed (#16). Enable Tab/Shift+Tab indentation and Cmd+/ (macOS) or Ctrl+/ (Windows/Linux) to toggle `#` comments on the current line or all selected lines. Update the localized keyboard help and embedding documentation, including Escape then Tab to move focus out of the editor.",
+      "id": "sparql-auto-indentation"
+    },
+    {
+      "id": "ldforge-bundle-0e2d65a61dd0",
+      "summary": "Rebuild the standalone Yasgui browser bundle with @ldforge/editor@1.5.2.",
+      "releases": [{ "name": "@ldforge/yasgui", "type": "patch" }]
+    }
+  ],
+  "releases": [
+    {
+      "name": "@ldforge/editor",
+      "type": "patch",
+      "oldVersion": "1.5.1",
+      "changesets": ["sparql-auto-indentation"],
+      "newVersion": "1.5.2",
+      "reasons": [
+        "sparql-auto-indentation: Add syntax-aware automatic indentation for nested and incomplete SPARQL blocks, and align closing delimiters as they are typed (#16). Enable Tab/Shift+Tab indentation and Cmd+/ (macOS) or Ctrl+/ (Windows/Linux) to toggle `#` comments on the current line or all selected lines. Update the localized keyboard help and embedding documentation, including Escape then Tab to move focus out of the editor."
+      ]
+    },
+    {
+      "name": "@ldforge/yasgui",
+      "type": "patch",
+      "oldVersion": "1.5.1",
+      "changesets": ["ldforge-bundle-0e2d65a61dd0"],
+      "newVersion": "1.5.2",
+      "reasons": [
+        "ldforge-bundle-0e2d65a61dd0: Rebuild the standalone Yasgui browser bundle with @ldforge/editor@1.5.2.",
+        "Embedded bundle changes: @ldforge/editor"
+      ]
+    }
+  ],
+  "prerelease": false
+}
